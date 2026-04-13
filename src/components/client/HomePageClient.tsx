@@ -72,9 +72,9 @@ export default function HomePageClient({ articles, banners }: HomePageClientProp
             <div>
               <h3 id="services-heading" className="text-2xl font-bold text-gray-800 mb-6 text-center">Available Services</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {servicesData.map((service) => (
-                  <ServiceCard key={service.id} {...service} />
-                ))}
+                {servicesData.map((service, index) => (
+  <ServiceCard key={index} {...service} />
+))}
                 <Link href="/services" className="group flex flex-col p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all duration-200">
                   <h4 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-emerald-700 transition-colors">More Services</h4>
                   <p className="text-gray-600 text-sm mb-6 flex-grow">Discover additional services available to you.</p>

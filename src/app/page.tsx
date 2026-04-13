@@ -28,8 +28,7 @@ export interface Banner {
 async function getLatestArticles(): Promise<Article[]> {
   const { data, error } = await supabase
     .from("articles")
-    .select(
-      `
+    .select(`
       article_id,
       slug,
       title,
@@ -41,8 +40,7 @@ async function getLatestArticles(): Promise<Article[]> {
       category:category_id (
         name
       )
-    `
-    )
+    `)
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(3);
@@ -51,15 +49,13 @@ async function getLatestArticles(): Promise<Article[]> {
     console.error("Failed to fetch articles for homepage:", error);
     return [];
   }
-
   return (data as unknown as Article[]) || [];
 }
 
 async function getLatestBanners(): Promise<Banner[]> {
   const { data, error } = await supabase
     .from("banners")
-    .select(
-      `
+    .select(`
       banner_id,
       title,
       description,
@@ -68,8 +64,7 @@ async function getLatestBanners(): Promise<Banner[]> {
         file_path,
         caption
       )
-    `
-    )
+    `)
     .eq("active", true)
     .order("order_index", { ascending: true })
     .limit(10);
@@ -78,7 +73,6 @@ async function getLatestBanners(): Promise<Banner[]> {
     console.error("Failed to fetch banners for homepage:", error);
     return [];
   }
-
   return (data as unknown as Banner[]) || [];
 }
 
@@ -88,18 +82,10 @@ export const metadata: Metadata = {
   description:
     "Official website of City of San Pablo, Laguna, Philippines. Access city services, news, ordinances, events, and eGov services. Your gateway to efficient local government services.",
   keywords: [
-    "San Pablo City",
-    "San Pablo Laguna",
-    "City of San Pablo",
-    "San Pablo City Hall",
-    "Laguna Philippines",
-    "City of Seven Lakes",
-    "eGov Philippines",
-    "San Pablo services",
-    "San Pablo news",
-    "San Pablo ordinances",
-    "San Pablo events",
-    "local government Philippines",
+    "San Pablo City", "San Pablo Laguna", "City of San Pablo",
+    "San Pablo City Hall", "Laguna Philippines", "City of Seven Lakes",
+    "eGov Philippines", "San Pablo services", "San Pablo news",
+    "San Pablo ordinances", "San Pablo events", "local government Philippines",
   ],
   authors: [{ name: "City of San Pablo" }],
   creator: "City of San Pablo",
@@ -112,15 +98,12 @@ export const metadata: Metadata = {
     title: "San Pablo City - Official Government Website",
     description:
       "Official website of City of San Pablo, Laguna, Philippines. Access city services, news, and eGov services online.",
-    images: [
-      {
-        url: "https://sanpablocity.gov.ph/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "City of San Pablo",
-        type: "image/jpeg",
-      },
-    ],
+    images: [{
+      url: "https://sanpablocity.gov.ph/og-image.jpg",
+      width: 1200, height: 630,
+      alt: "City of San Pablo",
+      type: "image/jpeg",
+    }],
   },
   twitter: {
     card: "summary_large_image",
@@ -131,11 +114,9 @@ export const metadata: Metadata = {
     creator: "@SanPabloCity",
   },
   robots: {
-    index: true,
-    follow: true,
+    index: true, follow: true,
     googleBot: {
-      index: true,
-      follow: true,
+      index: true, follow: true,
       "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
@@ -151,11 +132,27 @@ export const metadata: Metadata = {
 
 // ============= PAGE (SERVER COMPONENT) =============
 export default async function HomePage() {
-  // Fetch articles and banners in parallel — no sequential waterfall
   const [articles, banners] = await Promise.all([
     getLatestArticles(),
     getLatestBanners(),
   ]);
 
-  return <HomePageClient articles={articles} banners={banners} />;
+  // Preload the first banner image — tells browser to fetch it
+  // immediately as a high-priority resource, improving LCP
+  const firstBannerImage = banners[0]?.media?.file_path;
+
+  return (
+    <>
+      {firstBannerImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={firstBannerImage}
+          //@ts-expect-error — fetchPriority is valid HTML but not yet in React types
+          fetchPriority="high"
+        />
+      )}
+      <HomePageClient articles={articles} banners={banners} />
+    </>
+  );
 }

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { getBotResponse, generateId, ChatMessage } from "@/lib/chatEngine";
 import { SUGGESTED_QUESTIONS } from "@/lib/faq-data";
 
-const BOT_AVATAR = "/seal.png";
+const BOT_AVATAR = "/seal.webp";
 
 const INITIAL_MESSAGE: ChatMessage = {
   id: "init",
