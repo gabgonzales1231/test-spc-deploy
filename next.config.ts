@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "hvalkmxibjgrwipfuvhw.supabase.co",
+        pathname: "/storage/v1/object/public/**",
       },
       {
         protocol: "https",
@@ -28,7 +29,8 @@ const nextConfig: NextConfig = {
         hostname: "placehold.co",
       },
     ],
-    unoptimized: true,
+    // unoptimized: true  <-- REMOVED: this was disabling all WebP conversion,
+    //                        resizing, and compression (851 KiB savings)
   },
 
   typescript: { ignoreBuildErrors: false },

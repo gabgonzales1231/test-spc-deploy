@@ -1,50 +1,134 @@
 import { Metadata } from "next";
+import { supabase } from "@/backend/config/database";
 import HomePageClient from "@/components/client/HomePageClient";
 
-// SEO Metadata Configuration
+// ============= TYPES =============
+export interface Article {
+  article_id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  published_at: string;
+  category: { name: string } | null;
+  featured_media: { file_path: string } | null;
+}
+
+export interface Banner {
+  banner_id: number;
+  title: string | null;
+  description: string | null;
+  media?: {
+    media_id: number;
+    file_path: string;
+    caption: string | null;
+  };
+}
+
+// ============= SERVER-SIDE DATA FETCHING =============
+async function getLatestArticles(): Promise<Article[]> {
+  const { data, error } = await supabase
+    .from("articles")
+    .select(
+      `
+      article_id,
+      slug,
+      title,
+      excerpt,
+      published_at,
+      featured_media:featured_media_id (
+        file_path
+      ),
+      category:category_id (
+        name
+      )
+    `
+    )
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(3);
+
+  if (error) {
+    console.error("Failed to fetch articles for homepage:", error);
+    return [];
+  }
+
+  return (data as unknown as Article[]) || [];
+}
+
+async function getLatestBanners(): Promise<Banner[]> {
+  const { data, error } = await supabase
+    .from("banners")
+    .select(
+      `
+      banner_id,
+      title,
+      description,
+      media:image_media_id (
+        media_id,
+        file_path,
+        caption
+      )
+    `
+    )
+    .eq("active", true)
+    .order("order_index", { ascending: true })
+    .limit(10);
+
+  if (error) {
+    console.error("Failed to fetch banners for homepage:", error);
+    return [];
+  }
+
+  return (data as unknown as Banner[]) || [];
+}
+
+// ============= SEO METADATA =============
 export const metadata: Metadata = {
-  title: 'San Pablo City - Official Government Website | Laguna, Philippines',
-  description: 'Official website of City of San Pablo, Laguna, Philippines. Access city services, news, ordinances, events, and eGov services. Your gateway to efficient local government services.',
+  title: "San Pablo City - Official Government Website | Laguna, Philippines",
+  description:
+    "Official website of City of San Pablo, Laguna, Philippines. Access city services, news, ordinances, events, and eGov services. Your gateway to efficient local government services.",
   keywords: [
-    'San Pablo City',
-    'San Pablo Laguna',
-    'City of San Pablo',
-    'San Pablo City Hall',
-    'Laguna Philippines',
-    'City of Seven Lakes',
-    'eGov Philippines',
-    'San Pablo services',
-    'San Pablo news',
-    'San Pablo ordinances',
-    'San Pablo events',
-    'local government Philippines'
+    "San Pablo City",
+    "San Pablo Laguna",
+    "City of San Pablo",
+    "San Pablo City Hall",
+    "Laguna Philippines",
+    "City of Seven Lakes",
+    "eGov Philippines",
+    "San Pablo services",
+    "San Pablo news",
+    "San Pablo ordinances",
+    "San Pablo events",
+    "local government Philippines",
   ],
-  authors: [{ name: 'City of San Pablo' }],
-  creator: 'City of San Pablo',
-  publisher: 'City of San Pablo',
+  authors: [{ name: "City of San Pablo" }],
+  creator: "City of San Pablo",
+  publisher: "City of San Pablo",
   openGraph: {
-    type: 'website',
-    locale: 'en_PH',
-    url: 'https://sanpablocity.gov.ph',
-    siteName: 'City of San Pablo',
-    title: 'San Pablo City - Official Government Website',
-    description: 'Official website of City of San Pablo, Laguna, Philippines. Access city services, news, and eGov services online.',
+    type: "website",
+    locale: "en_PH",
+    url: "https://sanpablocity.gov.ph",
+    siteName: "City of San Pablo",
+    title: "San Pablo City - Official Government Website",
+    description:
+      "Official website of City of San Pablo, Laguna, Philippines. Access city services, news, and eGov services online.",
     images: [
       {
-        url: 'https://sanpablocity.gov.ph/og-image.jpg',
+        url: "https://sanpablocity.gov.ph/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: 'City of San Pablo',
-        type: 'image/jpeg',
-      }
+        alt: "City of San Pablo",
+        type: "image/jpeg",
+      },
     ],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'San Pablo City - Official Government Website',
-    description: 'Official website of City of San Pablo, Laguna, Philippines. Access city services, news, and eGov services.',
-    images: ['https://sanpablocity.gov.ph/twitter-image.jpg'],
-    creator: '@SanPabloCity',
+    card: "summary_large_image",
+    title: "San Pablo City - Official Government Website",
+    description:
+      "Official website of City of San Pablo, Laguna, Philippines. Access city services, news, and eGov services.",
+    images: ["https://sanpablocity.gov.ph/twitter-image.jpg"],
+    creator: "@SanPabloCity",
   },
   robots: {
     index: true,
@@ -52,19 +136,26 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
-  category: 'Government',
+  category: "Government",
   other: {
-    'geo.region': 'PH-LAG',
-    'geo.placename': 'San Pablo City',
-    'geo.position': '14.0683;121.3256',
+    "geo.region": "PH-LAG",
+    "geo.placename": "San Pablo City",
+    "geo.position": "14.0683;121.3256",
   },
-}
+};
 
-export default function HomePage() {
-  return <HomePageClient />
+// ============= PAGE (SERVER COMPONENT) =============
+export default async function HomePage() {
+  // Fetch articles and banners in parallel — no sequential waterfall
+  const [articles, banners] = await Promise.all([
+    getLatestArticles(),
+    getLatestBanners(),
+  ]);
+
+  return <HomePageClient articles={articles} banners={banners} />;
 }

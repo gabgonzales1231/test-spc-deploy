@@ -30,7 +30,6 @@ export default function NewsCard({
 
   return (
     <article className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col">
-      {/* Image */}
       <div className="relative overflow-hidden">
         <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
           {/* Blurred background */}
@@ -38,29 +37,27 @@ export default function NewsCard({
             src={imgSrc}
             alt=""
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover blur-lg scale-110 opacity-40"
+            aria-hidden="true"
           />
-
-          {/* Main image (portrait stays full) */}
+          {/* Main image */}
           <Image
             src={imgSrc}
             alt={title || "News Image"}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
-            onError={() =>
-              setImgSrc("https://placehold.co/500x300?text=No+Image")
-            }
+            onError={() => setImgSrc("https://placehold.co/500x300?text=No+Image")}
           />
         </div>
-
-        <div className="absolute top-2 left-2 z-99">
+        <div className="absolute top-2 left-2 z-20">
           <span className="inline-block bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg">
             {category}
           </span>
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
           <time>{date}</time>
@@ -69,8 +66,6 @@ export default function NewsCard({
           {title}
         </h3>
         <p className="text-gray-600 mb-4 line-clamp-3">{excerpt}</p>
-
-        {/* Push button to bottom */}
         <div className="mt-auto">
           {id && id.trim() !== "" ? (
             <Link
