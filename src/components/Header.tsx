@@ -73,10 +73,11 @@ export default function Header() {
           prefetch={false}
         >
           <Image
-            src="/seal.png"
+            src="/seal.webp"
             alt="City of San Pablo Logo"
             width={48}
             height={48}
+            priority
           />
           <span className="ml-2 text-md lg:text-2xl font-bold text-gray-900">
             City of San Pablo

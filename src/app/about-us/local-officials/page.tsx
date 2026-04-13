@@ -4,8 +4,6 @@ import { Mail, Phone, MapPin, Users } from 'lucide-react';
 import Image from 'next/image';
 import { officials, Officialnterface } from '@/data/officials';
 
-
-
 function OfficialCard({ official }: { official: Officialnterface }) {
   const isMayor = official.position === "City Mayor";
 
@@ -16,11 +14,11 @@ function OfficialCard({ official }: { official: Officialnterface }) {
     >
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      
+
       {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-200/20 to-transparent rounded-full -translate-y-16 translate-x-16" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-emerald-300/20 to-transparent rounded-full translate-y-12 -translate-x-12" />
-      
+
       <CardHeader className="relative p-4 pb-2">
         <div className="flex flex-col items-center text-center">
           {/* Profile Image */}
@@ -34,12 +32,14 @@ function OfficialCard({ official }: { official: Officialnterface }) {
                 src={official.image}
                 alt={official.name}
                 className="w-full h-full rounded-full object-cover border-2 border-white"
-                width={isMayor ? 112 : 80}
-                height={isMayor ? 112 : 80}
+                // w-56 = 224px, w-48 = 192px — provide 2× for retina displays
+                width={isMayor ? 224 : 192}
+                height={isMayor ? 224 : 192}
+                loading="lazy"
               />
             </div>
           </div>
-          
+
           {/* Name and Position */}
           <h3 className={`font-bold text-gray-900 mb-1 group-hover:text-emerald-900 transition-colors ${isMayor ? "text-xl md:text-2xl" : "text-xl"}`}>
             {official.name}
@@ -53,13 +53,13 @@ function OfficialCard({ official }: { official: Officialnterface }) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex flex-col items-center px-6 pb-6">
         {/* Description */}
         <p className="text-gray-700 text-sm text-center mb-4 leading-relaxed">
           {official.description}
         </p>
-        
+
         {/* Contact Info */}
         <div className="space-y-3">
           <div className="flex items-center group/item">
@@ -71,7 +71,7 @@ function OfficialCard({ official }: { official: Officialnterface }) {
               <p className="text-sm text-gray-900 truncate font-medium">{official.email}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center group/item">
             <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3 group-hover/item:bg-emerald-200 transition-colors">
               <Phone className="w-4 h-4 text-emerald-600" />
@@ -94,6 +94,7 @@ export default function OfficialsProfileCards() {
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-emerald-800/20" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-48 translate-x-48" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-32 -translate-x-32" />
+
         {/* Header */}
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
@@ -104,7 +105,7 @@ export default function OfficialsProfileCards() {
             Local Officials
           </h1>
           <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
-            Meet the dedicated leaders serving the City of San Pablo, working together to build a 
+            Meet the dedicated leaders serving the City of San Pablo, working together to build a
             better future for our community and constituents.
           </p>
         </div>
@@ -125,7 +126,7 @@ export default function OfficialsProfileCards() {
           </div>
         ))}
       </div>
-        
+
       {/* Footer Note */}
       <div className="text-center py-12">
         <div className="inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-emerald-200/30">

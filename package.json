@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "clear-cache": "rimraf .next/cache/images",
+    "clear-all": "rimraf .next"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
@@ -29,6 +30,7 @@
     "react-dom": "19.2.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.12"
@@ -41,6 +43,7 @@
     "@types/react-dom": "19.2.2",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
+    "rimraf": "^6.1.3",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.7",
     "typescript": "^5"

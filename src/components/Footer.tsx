@@ -110,10 +110,11 @@ export default function Footer() {
           <div className="md:col-span-1 flex flex-col items-start">
             <div className="flex items-center mb-3">
               <Image
-                src="/seal.png"
+              src="/seal.webp"
                 alt="City of San Pablo Logo"
                 width={64}
                 height={64}
+                loading="lazy"
               />
               <span className="ml-2 text-2xl font-bold">City of San Pablo</span>
             </div>

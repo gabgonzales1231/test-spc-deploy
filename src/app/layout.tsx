@@ -4,9 +4,12 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HotlinesSidebar from "@/components/home/HotlinesSidebar";
-import TawkChatWidget from "@/components/TawkChatWIdget";
+import dynamic from "next/dynamic";
+import ChatWidgetLoader from "@/components/ChatWidgetLoader";
+
 import "../styles/global.css";
 import DataPrivacyPolicyPopup from "@/components/home/DataPrivacyPolicy";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,7 +44,7 @@ export default function RootLayout({
           <DataPrivacyPolicyPopup />
           <Header />
           <HotlinesSidebar />
-          <TawkChatWidget />
+          <ChatWidgetLoader />
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>
