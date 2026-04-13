@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -9,6 +7,8 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+yarn.lock
 
 # testing
 /coverage
@@ -22,6 +22,8 @@
 
 # misc
 .DS_Store
+Thumbs.db
+Desktop.ini
 *.pem
 
 # debug
@@ -30,9 +32,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-local.env
+# env files — commit .env.example, never the real ones
+.env
+.env.*
+!.env.example
+!.env.template
 
 # vercel
 .vercel
@@ -40,3 +44,26 @@ local.env
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# bun
+.bun/
+*.bun
+
+# docker
+.dockerenv
+docker-compose.override.yml
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# supabase local dev
+supabase/.branches
+supabase/.temp
+
+#lighthouse performance tests
+.lighthouseci/reports
