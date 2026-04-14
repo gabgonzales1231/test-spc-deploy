@@ -32,16 +32,20 @@ function ImageCarouselItem({
     <CarouselItem className="pl-2 md:pl-4">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
         <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
-          {/* Blurred background */}
+
+          {/* Blurred background — low quality, small size, decorative only */}
           <Image
             src={src}
             alt=""
             fill
             className="object-cover scale-110 blur-2xl opacity-60"
+            // Blurred bg only needs a tiny image — 10% quality saves ~90% of its payload
+            quality={10}
+            sizes="33vw"
             priority={isPriority}
-            sizes="100vw"
             aria-hidden="true"
           />
+
           {/* Main image */}
           <Image
             src={src}
@@ -50,9 +54,14 @@ function ImageCarouselItem({
             className={`object-contain transition-all duration-700 ease-out
               ${isActive ? "scale-[1.02]" : "scale-100"}
               group-hover:scale-105`}
+            // quality 75 is Next.js default — 60 is a good balance for banner photography
+            quality={60}
+            // Responsive sizes: full width on mobile, constrained on larger screens
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
             priority={isPriority}
-            sizes="100vw"
+            loading={isPriority ? undefined : "lazy"}
           />
+
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 group-hover:opacity-0" />
         </div>
@@ -98,9 +107,6 @@ export default function HomeCarousel({ banners }: HomeCarouselProps) {
     return () => clearInterval(interval);
   }, [api, isAutoplay, banners.length]);
 
-  // Shared classes — always reserve height to prevent CLS.
-  // The space is claimed on first paint regardless of banner content,
-  // so nothing below shifts when the carousel mounts.
   const wrapperCls = "w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50/20 pt-8 sm:pt-12";
   const innerCls = "px-2 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-24 pt-32 sm:pt-28 md:pt-32";
   const reservedHeight = "h-[60vh] sm:h-[70vh] md:h-[80vh]";
@@ -134,6 +140,7 @@ export default function HomeCarousel({ banners }: HomeCarouselProps) {
                 title={banner.title || ""}
                 subtitle={banner.description || ""}
                 isActive={index === currentSlide}
+                // Only the first banner is priority — rest load lazily
                 isPriority={index === 0}
               />
             ))}

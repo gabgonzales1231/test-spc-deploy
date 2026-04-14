@@ -2,16 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-declare global {
-  interface Window {
-    Tawk_API?: {
-      hideWidget?: () => void;
-      showWidget?: () => void;
-      [key: string]: unknown;
-    };
-  }
-}
-
 const EXCLUDED_ROUTES = ["/privacy-policy", "/terms-of-service", "/cookie-policy"];
 
 export default function DataPrivacyPolicyPopup() {
@@ -67,22 +57,6 @@ export default function DataPrivacyPolicyPopup() {
       document.body.style.overflow = "";
       window.scrollTo(0, scrollY);
     };
-  }, [isOpen, isRejected, pathname]);
-
-  // Tawk.to widget hide/show
-  useEffect(() => {
-    if (EXCLUDED_ROUTES.includes(pathname)) return;
-
-    let interval: ReturnType<typeof setInterval>;
-    if (isOpen || isRejected) {
-      interval = setInterval(() => {
-        window.Tawk_API?.hideWidget?.();
-      }, 300);
-    } else if (!isOpen && !isRejected) {
-      window.Tawk_API?.showWidget?.();
-    }
-
-    return () => clearInterval(interval);
   }, [isOpen, isRejected, pathname]);
 
   // Restore body styles on excluded routes

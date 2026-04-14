@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "hvalkmxibjgrwipfuvhw.supabase.co",
+        pathname: "/storage/v1/object/sign/**",
+      },
+      {
+        protocol: "https",
         hostname: "webapi.sanpablocitygov.org",
       },
       {
@@ -29,8 +34,6 @@ const nextConfig: NextConfig = {
         hostname: "placehold.co",
       },
     ],
-    // unoptimized: true  <-- REMOVED: this was disabling all WebP conversion,
-    //                        resizing, and compression (851 KiB savings)
   },
 
   typescript: { ignoreBuildErrors: false },

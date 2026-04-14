@@ -148,7 +148,6 @@ export default async function HomePage() {
           rel="preload"
           as="image"
           href={firstBannerImage}
-          //@ts-expect-error — fetchPriority is valid HTML but not yet in React types
           fetchPriority="high"
         />
       )}
