@@ -137,21 +137,5 @@ export default async function HomePage() {
     getLatestBanners(),
   ]);
 
-  // Preload the first banner image — tells browser to fetch it
-  // immediately as a high-priority resource, improving LCP
-  const firstBannerImage = banners[0]?.media?.file_path;
-
-  return (
-    <>
-      {firstBannerImage && (
-        <link
-          rel="preload"
-          as="image"
-          href={firstBannerImage}
-          fetchPriority="high"
-        />
-      )}
-      <HomePageClient articles={articles} banners={banners} />
-    </>
-  );
+  return <HomePageClient articles={articles} banners={banners} />;
 }
