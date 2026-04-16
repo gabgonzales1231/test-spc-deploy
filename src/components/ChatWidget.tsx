@@ -91,8 +91,9 @@ export default function ChatWidget() {
           boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
           border: "0.5px solid rgba(0,0,0,0.08)",
           background: "var(--background)",
-          transition: "opacity 0.2s ease, transform 0.2s ease",
+          transition: "opacity 0.2s ease, transform 0.2s ease, visibility 0.2s",
           opacity: isOpen ? 1 : 0,
+          visibility: isOpen ? "visible" : "hidden",
           transform: isOpen ? "translateY(0) scale(1)" : "translateY(12px) scale(0.97)",
           pointerEvents: isOpen ? "auto" : "none",
         }}
@@ -141,6 +142,7 @@ export default function ChatWidget() {
           <button
             onClick={() => setIsOpen(false)}
             aria-label="Close chat"
+            tabIndex={isOpen ? undefined : -1}
             style={{
               background: "rgba(255,255,255,0.15)",
               border: "none",
@@ -277,6 +279,7 @@ export default function ChatWidget() {
                 <button
                   key={q}
                   onClick={() => handleSuggestion(q)}
+                  tabIndex={isOpen ? undefined : -1}
                   style={{
                     background: "transparent",
                     border: "0.5px solid #1a6b3c",
@@ -319,7 +322,8 @@ export default function ChatWidget() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your question..."
             aria-label="Type your message"
-            disabled={isTyping}
+            disabled={!isOpen || isTyping}
+            tabIndex={isOpen ? undefined : -1}
             style={{
               flex: 1,
               border: "0.5px solid var(--border, #e5e7eb)",
@@ -336,8 +340,9 @@ export default function ChatWidget() {
           />
           <button
             type="submit"
-            disabled={!input.trim() || isTyping}
+            disabled={!isOpen || !input.trim() || isTyping}
             aria-label="Send message"
+            tabIndex={isOpen ? undefined : -1}
             style={{
               background: input.trim() && !isTyping ? "#1a6b3c" : "var(--muted, #e5e7eb)",
               border: "none",

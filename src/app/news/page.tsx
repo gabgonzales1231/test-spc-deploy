@@ -101,7 +101,7 @@ export default function NewsPage() {
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             News and Updates
           </h1>
-          <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
+          <p className="text-xl text-emerald-50 max-w-3xl mx-auto">
             From upcoming events and community projects to local stories that
             inspire — here’s your hub for the latest updates that bring San
             Pableños together. Stay connected, stay informed!
@@ -123,7 +123,7 @@ export default function NewsPage() {
             ) : articles.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <Newspaper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No news articles found.</p>
+                <p className="text-gray-600 text-lg">No news articles found.</p>
               </div>
             ) : (
               articles.map((item) => {
@@ -168,7 +168,7 @@ export default function NewsPage() {
 
                     {/* Content */}
                     <div className="p-6 flex flex-col flex-grow">
-                      <time className="text-sm text-gray-500 mb-2">
+                      <time className="text-sm text-gray-600 mb-2">
                         {formatDate(item.published_at)}
                       </time>
                       <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">

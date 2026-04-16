@@ -187,7 +187,8 @@ export default function NewsArticlePage() {
                     <span className="inline-block bg-emerald-100 text-emerald-800 text-sm font-semibold px-3 py-1 rounded-full">
                       {article.category?.name || "Uncategorized"}
                     </span>
-                    <p className="text-sm text-gray-500">{articleDate}</p>
+                    {/* Fixed contrast ratio: Changed text-gray-500 to text-gray-700 */}
+                    <p className="text-sm text-gray-700">{articleDate}</p>
                   </div>
                   <CardTitle className="text-3xl font-bold text-gray-900 mt-2">
                     {article.title}
