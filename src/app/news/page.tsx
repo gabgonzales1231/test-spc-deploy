@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -22,6 +22,9 @@ interface Article {
   featured_media: { file_path: string } | null;
 }
 
+const ARTICLES_PER_PAGE = 6;
+const PLACEHOLDER = "https://placehold.co/500x300?text=No+Image";
+
 const formatDate = (dateString: string) => {
   if (!dateString) return "Date not available";
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -31,36 +34,83 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const ARTICLES_PER_PAGE = 6;
+// Extracted to prevent re-renders of the grid
+const ArticleCard = ({
+  item,
+  isFirst,
+}: {
+  item: Article;
+  isFirst: boolean;
+}) => {
+  const imageSrc = item.featured_media?.file_path || PLACEHOLDER;
 
-export default function NewsPage() {
-  const { data: articlesResponse, loading, error, execute: fetchArticles } = useGetArticles();
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const handleError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src = PLACEHOLDER;
+  }, []);
 
-  useEffect(() => {
-    fetchArticles({ page: 1, limit: 100 });
-  }, [fetchArticles]);
+  return (
+    <article className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col">
+      <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
+        {/* CSS blur bg — no extra image request */}
+        <div
+          className="absolute inset-0 scale-110 opacity-40 blur-lg"
+          style={{
+            backgroundImage: `url(${imageSrc})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
 
-  useEffect(() => {
-    if (Array.isArray(articlesResponse)) {
-      setArticles(articlesResponse as Article[]);
-    }
-  }, [articlesResponse]);
+        {/* Main image */}
+        <Image
+          src={imageSrc}
+          alt={item.title || "News Image"}
+          fill
+          priority={isFirst}
+          sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
+          className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
+          onError={handleError}
+        />
 
-  const totalPages = Math.ceil(articles.length / ARTICLES_PER_PAGE);
-  const paginatedArticles = articles.slice(
-    (currentPage - 1) * ARTICLES_PER_PAGE,
-    currentPage * ARTICLES_PER_PAGE
+        <div className="absolute top-2 left-2 z-10">
+          <span className="inline-block bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+            {item.category?.name || "Uncategorized"}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-6 flex flex-col flex-grow">
+        <time className="text-sm text-gray-600 mb-2">
+          {formatDate(item.published_at)}
+        </time>
+        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">
+          {item.title}
+        </h3>
+        <p className="text-gray-600 mb-4 line-clamp-3">{item.excerpt}</p>
+        <div className="mt-auto">
+          <Link
+            href={`/news/${item.slug}`}
+            className="inline-flex items-center text-emerald-600 hover:text-emerald-800 font-semibold"
+            aria-label={`Read more about ${item.title}`}
+          >
+            Read More
+            <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+      </div>
+    </article>
   );
+};
 
-  const renderLoadingSkeleton = () =>
-    [...Array(6)].map((_, index) => (
+// Skeleton outside component — stable reference, never re-created
+const LoadingSkeleton = () => (
+  <>
+    {[...Array(6)].map((_, index) => (
       <Card key={index} className="bg-white shadow-md transition-shadow">
         <CardHeader>
           <div className="flex justify-between items-center">
             <span className="inline-block bg-gray-200 h-6 w-24 rounded-full animate-pulse" />
-            <p className="text-sm bg-gray-200 h-4 w-20 rounded-full animate-pulse"></p>
+            <p className="text-sm bg-gray-200 h-4 w-20 rounded-full animate-pulse" />
           </div>
           <CardTitle className="text-2xl font-semibold text-gray-900 mt-2">
             <div>
@@ -79,7 +129,58 @@ export default function NewsPage() {
           <div className="bg-gray-200 h-5 w-24 rounded-full animate-pulse mt-2" />
         </CardHeader>
       </Card>
-    ));
+    ))}
+  </>
+);
+
+export default function NewsPage() {
+  const { data: articlesResponse, loading, error, execute: fetchArticles } = useGetArticles();
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    fetchArticles({ page: 1, limit: 100 });
+  }, [fetchArticles]);
+
+  useEffect(() => {
+    if (Array.isArray(articlesResponse)) {
+      setArticles(articlesResponse as Article[]);
+    }
+  }, [articlesResponse]);
+
+  const totalPages = useMemo(
+    () => Math.ceil(articles.length / ARTICLES_PER_PAGE),
+    [articles.length]
+  );
+
+  const paginatedArticles = useMemo(
+    () =>
+      articles.slice(
+        (currentPage - 1) * ARTICLES_PER_PAGE,
+        currentPage * ARTICLES_PER_PAGE
+      ),
+    [articles, currentPage]
+  );
+
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalPages }, (_, i) => i + 1),
+    [totalPages]
+  );
+
+  const goToPrev = useCallback(() => {
+    setCurrentPage((p) => Math.max(1, p - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const goToNext = useCallback(() => {
+    setCurrentPage((p) => Math.min(totalPages, p + 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [totalPages]);
+
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
@@ -106,7 +207,7 @@ export default function NewsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading && articles.length === 0 ? (
-              renderLoadingSkeleton()
+              <LoadingSkeleton />
             ) : error ? (
               <div className="col-span-full text-center py-12 bg-red-50 text-red-700 rounded-lg">
                 <p>Error loading articles: {error}</p>
@@ -117,75 +218,13 @@ export default function NewsPage() {
                 <p className="text-gray-600 text-lg">No news articles found.</p>
               </div>
             ) : (
-              paginatedArticles.map((item, index) => {
-                const isFirst = currentPage === 1 && index === 0;
-                const imageSrc =
-                  item.featured_media?.file_path ||
-                  "https://placehold.co/500x300?text=No+Image";
-
-                return (
-                  <article
-                    key={item.article_id}
-                    className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col"
-                  >
-                    <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
-                      {/* CSS blur background for all cards — no extra image request */}
-                      <div
-                        className="absolute inset-0 scale-110 opacity-40 blur-lg"
-                        style={{
-                          backgroundImage: `url(${imageSrc})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
-
-                      {/* Main image */}
-                      <Image
-                        src={imageSrc}
-                        alt={item.title || "News Image"}
-                        fill
-                        priority={isFirst}
-                        sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
-                        className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            "https://placehold.co/500x300?text=No+Image";
-                        }}
-                      />
-
-                      {/* Category badge */}
-                      <div className="absolute top-2 left-2 z-10">
-                        <span className="inline-block bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
-                          {item.category?.name || "Uncategorized"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-6 flex flex-col flex-grow">
-                      <time className="text-sm text-gray-600 mb-2">
-                        {formatDate(item.published_at)}
-                      </time>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3">
-                        {item.excerpt}
-                      </p>
-                      <div className="mt-auto">
-                        <Link
-                          href={`/news/${item.slug}`}
-                          className="inline-flex items-center text-emerald-600 hover:text-emerald-800 font-semibold"
-                          aria-label={`Read more about ${item.title}`}
-                        >
-                          Read More
-                          <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })
+              paginatedArticles.map((item, index) => (
+                <ArticleCard
+                  key={item.article_id}
+                  item={item}
+                  isFirst={currentPage === 1 && index === 0}
+                />
+              ))
             )}
           </div>
 
@@ -193,10 +232,7 @@ export default function NewsPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-12">
               <button
-                onClick={() => {
-                  setCurrentPage((p) => Math.max(1, p - 1));
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+                onClick={goToPrev}
                 disabled={currentPage === 1}
                 className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
@@ -204,13 +240,10 @@ export default function NewsPage() {
                 Previous
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              {pageNumbers.map((page) => (
                 <button
                   key={page}
-                  onClick={() => {
-                    setCurrentPage(page);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
+                  onClick={() => goToPage(page)}
                   className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
                     currentPage === page
                       ? "bg-emerald-600 text-white"
@@ -222,10 +255,7 @@ export default function NewsPage() {
               ))}
 
               <button
-                onClick={() => {
-                  setCurrentPage((p) => Math.min(totalPages, p + 1));
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+                onClick={goToNext}
                 disabled={currentPage === totalPages}
                 className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
