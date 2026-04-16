@@ -133,24 +133,21 @@ articles.map((item, index) => {
     "https://placehold.co/500x300?text=No+Image";
 
   return (
-    <article
-      key={item.article_id}
-      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col"
-    >
+    <article key={item.article_id} className="...">
       <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
 
-        {/* Blurred background — only render as real image for first card, CSS for the rest */}
+        {/* Blurred bg — real Image only for card 1 (LCP), CSS div for the rest */}
         {isFirst ? (
           <Image
             src={imageSrc}
             alt=""
             fill
-            priority                          // ← removes lazy, adds fetchpriority=high + preload
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority
+            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
             className="object-cover blur-lg scale-110 opacity-40"
           />
         ) : (
-          <div className="absolute inset-0 scale-110 opacity-40 blur-lg bg-gray-300" />
+          <div className="absolute inset-0 scale-110 opacity-40 blur-lg bg-gray-200" />
         )}
 
         {/* Main image */}
@@ -158,8 +155,8 @@ articles.map((item, index) => {
           src={imageSrc}
           alt={item.title || "News Image"}
           fill
-          priority={isFirst}                  // ← priority on first, lazy on rest
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={isFirst}
+          sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
           className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src =
@@ -167,13 +164,12 @@ articles.map((item, index) => {
           }}
         />
 
-                      {/* Category badge */}
-                      <div className="absolute top-2 left-2 z-10">
-                        <span className="inline-block bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
-                          {item.category?.name || "Uncategorized"}
-                        </span>
-                      </div>
-                    </div>
+        <div className="absolute top-2 left-2 z-10">
+          <span className="inline-block bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+            {item.category?.name || "Uncategorized"}
+          </span>
+        </div>
+      </div>
 
                     {/* Content */}
                     <div className="p-6 flex flex-col flex-grow">
