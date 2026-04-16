@@ -93,19 +93,20 @@ export default function Header() {
                   <div className="flex items-center">
                     <Link
                       href={item.href!}
-                      className="text-sm font-medium hover:text-primary-600 transition-colors text-gray-600"
+                      className="text-sm font-medium hover:text-emerald-700 transition-colors text-gray-700"
                       prefetch={false}
                     >
                       {item.label}
                     </Link>
                     <button
-                        type="button"
-                        className="ml-1 p-1 hover:text-primary-600 transition-colors text-gray-600"
-                        onClick={() => setIsAboutDropdownOpen(!isAboutDropdownOpen)}
-                        onMouseEnter={() => setIsAboutDropdownOpen(true)}
-                        aria-expanded={isAboutDropdownOpen}
-                        aria-haspopup="true"
->
+                      type="button"
+                      className="ml-1 p-1 hover:text-emerald-700 transition-colors text-gray-700"
+                      onClick={() => setIsAboutDropdownOpen(!isAboutDropdownOpen)}
+                      onMouseEnter={() => setIsAboutDropdownOpen(true)}
+                      aria-expanded={isAboutDropdownOpen}
+                      aria-haspopup="true"
+                      aria-label={isAboutDropdownOpen ? `Collapse ${item.label} menu` : `Expand ${item.label} menu`}
+                    >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
                           isAboutDropdownOpen ? "rotate-180" : ""
@@ -124,7 +125,7 @@ export default function Header() {
                         <Link
                           key={subItem.href}
                           href={subItem.href}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-emerald-700 transition-colors"
                           prefetch={false}
                           onClick={() => setIsAboutDropdownOpen(false)}
                         >
@@ -137,7 +138,7 @@ export default function Header() {
               ) : (
                 <Link
                   href={item.href!}
-                  className="text-sm font-medium hover:text-primary-600 transition-colors text-gray-600"
+                  className="text-sm font-medium hover:text-emerald-700 transition-colors text-gray-700"
                   prefetch={false}
                 >
                   {item.label}
@@ -165,16 +166,16 @@ export default function Header() {
       </div>
 
       {/* Mobile Navigation Menu */}
-<div
-  id="mobile-menu"
-  className={`rounded-lg lg:hidden absolute top-15 lg:top-15 right-5 lg:right-5 w-xs lg:w-xl bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
-    isMenuOpen ? "max-h-96" : "max-h-0"
-  }`}
-  
-  inert={!isMenuOpen}
-  aria-label="Mobile navigation"
->
-        <nav className="flex flex-col gap-2 p-6" aria-label="Mobile navigation">
+      <div
+        id="mobile-menu"
+        className={`rounded-lg lg:hidden absolute top-15 lg:top-15 right-5 lg:right-5 w-xs lg:w-xl bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
+          isMenuOpen ? "max-h-96" : "max-h-0"
+        }`}
+        // FIX: inert now accepts a boolean. !isMenuOpen means it is inert when closed.
+        inert={!isMenuOpen}
+        aria-label="Mobile navigation"
+      >
+        <nav className="flex flex-col gap-2 p-6">
           {navItems.map((item) => (
             <div key={item.label}>
               {item.hasDropdown ? (
@@ -182,7 +183,7 @@ export default function Header() {
                   <div className="flex items-center justify-between">
                     <Link
                       href={item.href!}
-                      className="flex-1 text-sm lg:text-base font-medium text-gray-600 hover:text-primary-600 transition-colors py-2"
+                      className="flex-1 text-sm lg:text-base font-medium text-gray-700 hover:text-emerald-700 transition-colors py-2"
                       prefetch={false}
                       onClick={toggleMenu}
                     >
@@ -190,9 +191,10 @@ export default function Header() {
                     </Link>
                     <button
                       type="button"
-                      className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
+                      className="p-2 text-gray-700 hover:text-emerald-700 transition-colors"
                       onClick={toggleMobileAbout}
-                      aria-label={isMobileAboutOpen ? "Collapse About Us menu" : "Expand About Us menu"}
+                      aria-label={isMobileAboutOpen ? `Collapse ${item.label} menu` : `Expand ${item.label} menu`}
+                      aria-expanded={isMobileAboutOpen}
                     >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
@@ -208,7 +210,7 @@ export default function Header() {
                         <Link
                           key={subItem.href}
                           href={subItem.href}
-                          className="block text-sm text-gray-600 hover:text-primary-600 transition-colors py-1"
+                          className="block text-sm text-gray-700 hover:text-emerald-700 transition-colors py-1"
                           prefetch={false}
                           onClick={toggleMenu}
                         >
@@ -221,7 +223,7 @@ export default function Header() {
               ) : (
                 <Link
                   href={item.href!}
-                  className="block text-sm lg:text-base font-medium text-gray-600 hover:text-primary-600 transition-colors py-2"
+                  className="block text-sm lg:text-base font-medium text-gray-700 hover:text-emerald-700 transition-colors py-2"
                   prefetch={false}
                   onClick={toggleMenu}
                 >
