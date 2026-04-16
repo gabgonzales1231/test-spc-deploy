@@ -85,7 +85,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex gap-6 items-center" role="navigation">
+        <nav className="hidden lg:flex gap-6 items-center" aria-label="Primary navigation">
           {navItems.map((item) => (
             <div key={item.label} className="relative about-dropdown">
               {item.hasDropdown ? (
@@ -99,13 +99,13 @@ export default function Header() {
                       {item.label}
                     </Link>
                     <button
-                      type="button"
-                      className="ml-1 p-1 hover:text-primary-600 transition-colors text-gray-600"
-                      onClick={() =>
-                        setIsAboutDropdownOpen(!isAboutDropdownOpen)
-                      }
-                      onMouseEnter={() => setIsAboutDropdownOpen(true)}
-                    >
+                        type="button"
+                        className="ml-1 p-1 hover:text-primary-600 transition-colors text-gray-600"
+                        onClick={() => setIsAboutDropdownOpen(!isAboutDropdownOpen)}
+                        onMouseEnter={() => setIsAboutDropdownOpen(true)}
+                        aria-expanded={isAboutDropdownOpen}
+                        aria-haspopup="true"
+>
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
                           isAboutDropdownOpen ? "rotate-180" : ""
@@ -165,14 +165,16 @@ export default function Header() {
       </div>
 
       {/* Mobile Navigation Menu */}
-      <div
-        id="mobile-menu"
-        className={`rounded-lg lg:hidden absolute top-15 lg:top-15 right-5 lg:right-5 w-xs lg:w-xl bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
-          isMenuOpen ? "max-h-96" : "max-h-0"
-        }`}
-        aria-hidden={!isMenuOpen}
-      >
-        <nav className="flex flex-col gap-2 p-6" role="navigation">
+<div
+  id="mobile-menu"
+  className={`rounded-lg lg:hidden absolute top-15 lg:top-15 right-5 lg:right-5 w-xs lg:w-xl bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
+    isMenuOpen ? "max-h-96" : "max-h-0"
+  }`}
+  
+  inert={!isMenuOpen}
+  aria-label="Mobile navigation"
+>
+        <nav className="flex flex-col gap-2 p-6" aria-label="Mobile navigation">
           {navItems.map((item) => (
             <div key={item.label}>
               {item.hasDropdown ? (

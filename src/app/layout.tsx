@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -5,20 +6,20 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HotlinesSidebar from "@/components/home/HotlinesSidebar";
 import ChatWidgetLoader from "@/components/ChatWidgetLoader";
+import DataPrivacyPolicyPopup from "@/components/home/DataPrivacyPolicy";
 
 import "../styles/global.css";
-import DataPrivacyPolicyPopup from "@/components/home/DataPrivacyPolicy";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: "swap", // prevents invisible text during font load (CLS fix)
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  display: "swap", // prevents invisible text during font load (CLS fix)
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -31,17 +32,33 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <head>
+        {/*
+          tw-animate-css deferred — animations never affect initial paint.
+          media="print" tricks the browser into not render-blocking it,
+          then onLoad swaps it to media="all" once the page is interactive.
+        */}
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/tw-animate-css@latest/dist/tw-animate.css"
+          media="print"
+          // @ts-ignore — onLoad on link tags is valid HTML but not in React's types
+          onLoad="this.media='all'"
+        />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://unpkg.com/tw-animate-css@latest/dist/tw-animate.css"
+          />
+        </noscript>
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          {/* DataPrivacyPolicyPopup is deferred — renders nothing on first
-              paint so it never becomes the LCP element or causes CLS */}
           <DataPrivacyPolicyPopup />
           <Header />
           <HotlinesSidebar />

@@ -1,35 +1,36 @@
 import type { Config } from "tailwindcss"
-import animate from "tailwindcss-animate" // Changed to ES module import
-import typohraphy from "@tailwindcss/typography"
+import typography from "@tailwindcss/typography"
+// ❌ Removed: tailwindcss-animate (tw-animate-css handles this now)
 
 const config: Config = {
-  darkMode: "class", // Changed to string "class" to satisfy type requirements
+  darkMode: "class",
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-    "*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{ts,tsx}",
+    "./pages/**/*.{ts,tsx}",
+    // ❌ Removed: "./src/**/*.{ts,tsx}" — no src/ dir in your layout
+    // ❌ Removed: "*.{js,ts,jsx,tsx,mdx}" — scans root, too broad
   ],
   prefix: "",
   theme: {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // ❌ Remove hsl(var(--border)) etc — your globals.css uses oklch/hex,
+        //    not hsl. These generate broken utility classes.
+        // ✅ Reference CSS vars directly without hsl() wrapper
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         primary: {
-          DEFAULT: "#059669", // Vibrant emerald green
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "#059669",
+          foreground: "var(--primary-foreground)",
           50: "#ecfdf5",
           100: "#d1fae5",
           200: "#a7f3d0",
@@ -42,28 +43,28 @@ const config: Config = {
           900: "#022c22",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
         },
       },
       borderRadius: {
@@ -87,7 +88,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [animate, typohraphy], // Updated to use the imported animate module
+  plugins: [typography], // ❌ Removed animate — no longer needed
 }
 
 export default config

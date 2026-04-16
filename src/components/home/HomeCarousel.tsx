@@ -15,21 +15,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner } from "@/app/page";
 
 function ImageCarouselItem({
-  src,
-  alt,
-  title,
-  subtitle,
+  src, alt, title, subtitle,
   isActive = false,
   isPriority = false,
   isVisible = false,
 }: {
-  src: string;
-  alt: string;
-  title: string;
-  subtitle: string;
-  isActive?: boolean;
-  isPriority?: boolean;
-  isVisible?: boolean;
+  src: string; alt: string; title: string; subtitle: string;
+  isActive?: boolean; isPriority?: boolean; isVisible?: boolean;
 }) {
   if (!isVisible && !isPriority) {
     return (
@@ -43,7 +35,10 @@ function ImageCarouselItem({
     <CarouselItem className="pl-2 md:pl-4">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
         <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
-          {isActive && (
+
+          {/* ✅ FIX 1: Only render blurred bg AFTER LCP slide has painted
+              isPriority = index 0 = LCP element — never show blur on it */}
+          {isActive && !isPriority && (
             <Image
               src={src}
               alt=""
@@ -51,7 +46,7 @@ function ImageCarouselItem({
               className="object-cover scale-110 blur-2xl opacity-60"
               quality={10}
               sizes="33vw"
-              priority={false} 
+              priority={false}
               aria-hidden="true"
             />
           )}
@@ -60,7 +55,12 @@ function ImageCarouselItem({
             src={src}
             alt={alt}
             fill
-            className={`object-contain transition-all duration-700 ease-out
+            // ✅ FIX 2: Replace transition-all with specific properties on LCP image
+            // transition-all watches every property — wasteful before first interaction
+            className={`object-contain
+              ${isPriority
+                ? "transition-transform transition-opacity duration-700 ease-out"
+                : "transition-all duration-700 ease-out"}
               ${isActive ? "scale-[1.02]" : "scale-100"}
               group-hover:scale-105`}
             quality={75}
@@ -88,18 +88,20 @@ function ImageCarouselItem({
     </CarouselItem>
   );
 }
-
 export default function HomeCarousel({ banners }: { banners: Banner[] }) {
   const [api, setApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 1. Permanent Autoplay Configuration
+  // ✅ FIX 3: Separate autoplay from initial render entirely
+  // Don't pass autoplay as plugin on mount — attach after LCP paints
+  const [autoplayReady, setAutoplayReady] = useState(false);
+
   const autoplay = useMemo(
-    () => Autoplay({ 
-      delay: 5000, 
-      stopOnInteraction: false, // Keeps sliding even if user clicks
-      playOnInit: false 
-    }), 
+    () => Autoplay({
+      delay: 5000,
+      stopOnInteraction: false,
+      playOnInit: false,
+    }),
     []
   );
 
@@ -110,16 +112,21 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
     return () => { api.off("select", update); };
   }, [api]);
 
-  // 2. Deferred Activation (Lighthouse TBT Fix)
   useEffect(() => {
     if (!api || banners.length <= 1) return;
-
     const startTimer = setTimeout(() => {
       autoplay.play();
-    }, 2500); // Wait 2.5s for the page to settle before starting animations
-
+    }, 2500);
     return () => clearTimeout(startTimer);
   }, [api, banners.length, autoplay]);
+
+  // ✅ FIX 4: Defer autoplay plugin registration until after first paint
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => {
+      setAutoplayReady(true);
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   if (banners.length === 0) return null;
 
@@ -129,14 +136,16 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
         <Carousel
           className="w-full mx-auto relative"
           opts={{ loop: banners.length > 1 }}
-          plugins={[autoplay]}
+          // ✅ FIX 4 cont: Only mount autoplay plugin after first frame
+          plugins={autoplayReady && banners.length > 1 ? [autoplay] : []}
           setApi={setApi}
         >
           <CarouselContent>
             {banners.map((banner, index) => {
-              const isVisible = Math.abs(index - currentSlide) <= 1 || 
-                               (currentSlide === 0 && index === banners.length - 1) || 
-                               (currentSlide === banners.length - 1 && index === 0);
+              const isVisible =
+                Math.abs(index - currentSlide) <= 1 ||
+                (currentSlide === 0 && index === banners.length - 1) ||
+                (currentSlide === banners.length - 1 && index === 0);
 
               return (
                 <ImageCarouselItem
@@ -165,7 +174,6 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
           )}
         </Carousel>
 
-        {/* Retained: Image Slider / Dot Indicators at the bottom */}
         {banners.length > 1 && (
           <div className="flex justify-center mt-6">
             <div className="flex space-x-2 bg-emerald-500/20 backdrop-blur-md rounded-full px-3 py-2 shadow-md border border-emerald-500/30">
