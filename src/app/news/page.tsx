@@ -126,37 +126,46 @@ export default function NewsPage() {
                 <p className="text-gray-600 text-lg">No news articles found.</p>
               </div>
             ) : (
-              articles.map((item) => {
-                const imageSrc =
-                  item.featured_media?.file_path ||
-                  "https://placehold.co/500x300?text=No+Image";
+articles.map((item, index) => {
+  const isFirst = index === 0;
+  const imageSrc =
+    item.featured_media?.file_path ||
+    "https://placehold.co/500x300?text=No+Image";
 
-                return (
-                  <article
-                    key={item.article_id}
-                    className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col"
-                  >
-                    {/* Image */}
-                    <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
-                      {/* Blurred background */}
-                      <Image
-                        src={imageSrc}
-                        alt=""
-                        fill
-                        className="object-cover blur-lg scale-110 opacity-40"
-                      />
+  return (
+    <article
+      key={item.article_id}
+      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col"
+    >
+      <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
 
-                      {/* Main image */}
-                      <Image
-                        src={imageSrc}
-                        alt={item.title || "News Image"}
-                        fill
-                        className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            "https://placehold.co/500x300?text=No+Image";
-                        }}
-                      />
+        {/* Blurred background — only render as real image for first card, CSS for the rest */}
+        {isFirst ? (
+          <Image
+            src={imageSrc}
+            alt=""
+            fill
+            priority                          // ← removes lazy, adds fetchpriority=high + preload
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover blur-lg scale-110 opacity-40"
+          />
+        ) : (
+          <div className="absolute inset-0 scale-110 opacity-40 blur-lg bg-gray-300" />
+        )}
+
+        {/* Main image */}
+        <Image
+          src={imageSrc}
+          alt={item.title || "News Image"}
+          fill
+          priority={isFirst}                  // ← priority on first, lazy on rest
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src =
+              "https://placehold.co/500x300?text=No+Image";
+          }}
+        />
 
                       {/* Category badge */}
                       <div className="absolute top-2 left-2 z-10">
@@ -180,12 +189,13 @@ export default function NewsPage() {
 
                       <div className="mt-auto">
                         <Link
-                          href={`/news/${item.slug}`}
-                          className="inline-flex items-center text-emerald-600 hover:text-emerald-800 font-semibold"
-                        >
-                          Read More
-                          <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                        </Link>
+  href={`/news/${item.slug}`}
+  className="inline-flex items-center text-emerald-600 hover:text-emerald-800 font-semibold"
+  aria-label={`Read more about ${item.title}`}
+>
+  Read More
+  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+</Link>
                       </div>
                     </div>
                   </article>
