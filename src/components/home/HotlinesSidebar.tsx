@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Phone, AlertCircle, Heart, Shield } from "lucide-react";
+import { Phone, AlertCircle } from "lucide-react";
 
 const hotlines = [
   {
@@ -9,7 +9,6 @@ const hotlines = [
     icon: AlertCircle,
     urgent: true,
   },
-
   { label: "City Information Office", number: "(049) 5611483", icon: Phone },
   { label: "City Admin's Office", number: "(049) 5210307", icon: Phone },
   { label: "CDRRM Office", number: "(049) 800 0405", icon: Phone },
@@ -19,24 +18,24 @@ export default function HotlinesSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detect if device is mobile
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+
+    // ✅ matchMedia listener — no reflow, no layout read on every resize
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   return (
     <div
       className="fixed right-0 top-2/3 transform -translate-y-1/2 z-50"
-      // keep open when hovering anywhere in the wrapper (button OR hotlines list)
       onMouseEnter={() => !isMobile && setIsOpen(true)}
       onMouseLeave={() => !isMobile && setIsOpen(false)}
     >
-      {/* Toggle button */}
       <button
-        onClick={() => isMobile && setIsOpen(!isOpen)} // tap only for mobile
+        onClick={() => isMobile && setIsOpen(!isOpen)}
         className="bg-red-600 hover:bg-red-700 text-white p-3 shadow-lg 
           transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300
           rounded-l-full"
@@ -49,7 +48,6 @@ export default function HotlinesSidebar() {
         />
       </button>
 
-      {/* Hotline list */}
       <div
         className={`
           absolute right-12 top-1/2 transform -translate-y-1/2
@@ -69,7 +67,7 @@ export default function HotlinesSidebar() {
           {hotlines.map((hotline, index) => (
             <a
               key={index}
-              href={`tel:${hotline.number.replace(/[^0-9+]/g, "")}`} // makes numbers clickable on mobile
+              href={`tel:${hotline.number.replace(/[^0-9+]/g, "")}`}
               className={`
                 flex items-center space-x-3 p-3 rounded-lg mb-2 transition-all hover:scale-105 cursor-pointer
                 ${

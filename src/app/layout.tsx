@@ -31,27 +31,25 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/*
-          tw-animate-css deferred — animations never affect initial paint.
-          media="print" tricks the browser into not render-blocking it,
-          then onLoad swaps it to media="all" once the page is interactive.
-        */}
-        <link
-          rel="stylesheet"
-          href="https://unpkg.com/tw-animate-css@latest/dist/tw-animate.css"
-          media="print"
-          // @ts-ignore — onLoad on link tags is valid HTML but not in React's types
-          onLoad="this.media='all'"
-        />
-        <noscript>
-          <link
-            rel="stylesheet"
-            href="https://unpkg.com/tw-animate-css@latest/dist/tw-animate.css"
-          />
-        </noscript>
-      </head>
+<html lang="en" suppressHydrationWarning>
+  <head>
+   
+    <link rel="preconnect" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
+    <link rel="dns-prefetch" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
+
+    {/* Existing — self-hosted animation CSS, non-blocking */}
+    <link
+      rel="stylesheet"
+      href="/tw-animate.css"
+      media="print"
+      // @ts-ignore
+      onLoad="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="/tw-animate.css" />
+    </noscript>
+  </head>
+ 
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
