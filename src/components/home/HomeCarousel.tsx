@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   Carousel,
@@ -11,7 +11,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner } from "@/app/page";
 
 function ImageCarouselItem({
@@ -21,7 +21,7 @@ function ImageCarouselItem({
   subtitle,
   isActive = false,
   isPriority = false,
-  isVisible = false, // New prop to handle sliding window
+  isVisible = false,
 }: {
   src: string;
   alt: string;
@@ -31,11 +31,10 @@ function ImageCarouselItem({
   isPriority?: boolean;
   isVisible?: boolean;
 }) {
-  // If the slide is far away, render a lightweight placeholder to save TBT
   if (!isVisible && !isPriority) {
     return (
       <CarouselItem className="pl-2 md:pl-4">
-        <div className="w-full h-[60vh] sm:h-[70vh] md:h-[80vh] bg-slate-100 rounded-2xl animate-pulse" />
+        <div className="w-full h-[60vh] sm:h-[70vh] md:h-[80vh] bg-slate-100 rounded-2xl" />
       </CarouselItem>
     );
   }
@@ -44,8 +43,6 @@ function ImageCarouselItem({
     <CarouselItem className="pl-2 md:pl-4">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
         <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
-          
-          {/* Optimization: Only render blur for active slide to save Paint/Composite time */}
           {isActive && (
             <Image
               src={src}
@@ -95,19 +92,17 @@ function ImageCarouselItem({
 export default function HomeCarousel({ banners }: { banners: Banner[] }) {
   const [api, setApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoplay, setIsAutoplay] = useState(true);
 
-  // 1. Setup specialized Autoplay plugin
+  // 1. Permanent Autoplay Configuration
   const autoplay = useMemo(
     () => Autoplay({ 
       delay: 5000, 
-      stopOnInteraction: true,
-      playOnInit: false // Optimization: Don't start until we say so
+      stopOnInteraction: false, // Keeps sliding even if user clicks
+      playOnInit: false 
     }), 
     []
   );
 
-  // 2. Track slide changes
   useEffect(() => {
     if (!api) return;
     const update = () => setCurrentSlide(api.selectedScrollSnap());
@@ -115,24 +110,16 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
     return () => { api.off("select", update); };
   }, [api]);
 
-  // 3. Deferred Autoplay Start: Wait until browser is idle
+  // 2. Deferred Activation (Lighthouse TBT Fix)
   useEffect(() => {
-    if (!api || !isAutoplay || banners.length <= 1) return;
+    if (!api || banners.length <= 1) return;
 
-    const startAutoplay = () => {
-      if (isAutoplay) autoplay.play();
-    };
+    const startTimer = setTimeout(() => {
+      autoplay.play();
+    }, 2500); // Wait 2.5s for the page to settle before starting animations
 
-    // Delay start by 2 seconds or until main thread is free
-    const idleHandler = window.requestIdleCallback 
-      ? window.requestIdleCallback(() => startAutoplay())
-      : setTimeout(startAutoplay, 2000);
-
-    return () => {
-      if (typeof idleHandler === "number") clearTimeout(idleHandler);
-      else window.cancelIdleCallback(idleHandler);
-    };
-  }, [api, isAutoplay, banners.length, autoplay]);
+    return () => clearTimeout(startTimer);
+  }, [api, banners.length, autoplay]);
 
   if (banners.length === 0) return null;
 
@@ -147,10 +134,9 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
         >
           <CarouselContent>
             {banners.map((banner, index) => {
-              // Sliding Window Logic: Only render current, next, and previous
-              const isNeighbor = Math.abs(index - currentSlide) <= 1;
-              const isEdgeLoop = (currentSlide === 0 && index === banners.length - 1) || 
-                                 (currentSlide === banners.length - 1 && index === 0);
+              const isVisible = Math.abs(index - currentSlide) <= 1 || 
+                               (currentSlide === 0 && index === banners.length - 1) || 
+                               (currentSlide === banners.length - 1 && index === 0);
 
               return (
                 <ImageCarouselItem
@@ -161,7 +147,7 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
                   subtitle={banner.description || ""}
                   isActive={index === currentSlide}
                   isPriority={index === 0}
-                  isVisible={isNeighbor || isEdgeLoop}
+                  isVisible={isVisible}
                 />
               );
             })}
@@ -175,18 +161,28 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
               <CarouselNext aria-label="Next slide" className="hidden xs:flex absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:bg-emerald-500 hover:text-white transition-all">
                 <ChevronRight className="w-6 h-6" />
               </CarouselNext>
-              
-              <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
-                <button
-                  onClick={() => setIsAutoplay(!isAutoplay)}
-                  className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-emerald-500 transition-all flex items-center justify-center"
-                >
-                  {isAutoplay ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white" />}
-                </button>
-              </div>
             </>
           )}
         </Carousel>
+
+        {/* Retained: Image Slider / Dot Indicators at the bottom */}
+        {banners.length > 1 && (
+          <div className="flex justify-center mt-6">
+            <div className="flex space-x-2 bg-emerald-500/20 backdrop-blur-md rounded-full px-3 py-2 shadow-md border border-emerald-500/30">
+              {banners.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => api?.scrollTo(index)}
+                  aria-label={`Show banner slide ${index + 1}`}
+                  className={`h-2 w-2 md:h-3 md:w-3 rounded-full transition-all duration-300
+                    ${index === currentSlide
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 w-6 md:w-8 shadow"
+                      : "bg-emerald-300/70 hover:bg-emerald-400/90"}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

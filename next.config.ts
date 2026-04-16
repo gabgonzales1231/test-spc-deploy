@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable CSS optimization to inline critical CSS and defer the rest
+  experimental: {
+    optimizeCss: true,
+  },
   images: {
     remotePatterns: [
       {

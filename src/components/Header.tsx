@@ -170,6 +170,7 @@ export default function Header() {
         className={`rounded-lg lg:hidden absolute top-15 lg:top-15 right-5 lg:right-5 w-xs lg:w-xl bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
           isMenuOpen ? "max-h-96" : "max-h-0"
         }`}
+        aria-hidden={!isMenuOpen}
       >
         <nav className="flex flex-col gap-2 p-6" role="navigation">
           {navItems.map((item) => (
@@ -189,6 +190,7 @@ export default function Header() {
                       type="button"
                       className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
                       onClick={toggleMobileAbout}
+                      aria-label={isMobileAboutOpen ? "Collapse About Us menu" : "Expand About Us menu"}
                     >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
