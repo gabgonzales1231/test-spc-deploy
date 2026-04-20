@@ -36,17 +36,18 @@ function ImageCarouselItem({
       <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
         <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
 
-          {/* ✅ FIX 1: Only render blurred bg AFTER LCP slide has painted
-              isPriority = index 0 = LCP element — never show blur on it */}
-          {isActive && !isPriority && (
+          {/* ✅ FIX: Removed the custom 'quality' prop to prevent Next.js config errors.
+              Using sizes="10vw" alone is enough to force Next.js to serve a tiny, 
+              lightweight thumbnail for this blurred background. */}
+          {isActive && (
             <Image
               src={src}
               alt=""
               fill
               className="object-cover scale-110 blur-2xl opacity-60"
-              quality={10}
-              sizes="33vw"
-              priority={false}
+              sizes="10vw"
+              priority={isPriority}
+              {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
               aria-hidden="true"
             />
           )}
@@ -55,15 +56,12 @@ function ImageCarouselItem({
             src={src}
             alt={alt}
             fill
-            // ✅ FIX 2: Replace transition-all with specific properties on LCP image
-            // transition-all watches every property — wasteful before first interaction
             className={`object-contain
               ${isPriority
                 ? "transition-transform transition-opacity duration-700 ease-out"
                 : "transition-all duration-700 ease-out"}
               ${isActive ? "scale-[1.02]" : "scale-100"}
               group-hover:scale-105`}
-            quality={75}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
             priority={isPriority}
             {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
@@ -88,12 +86,11 @@ function ImageCarouselItem({
     </CarouselItem>
   );
 }
+
 export default function HomeCarousel({ banners }: { banners: Banner[] }) {
   const [api, setApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // ✅ FIX 3: Separate autoplay from initial render entirely
-  // Don't pass autoplay as plugin on mount — attach after LCP paints
   const [autoplayReady, setAutoplayReady] = useState(false);
 
   const autoplay = useMemo(
@@ -120,7 +117,6 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
     return () => clearTimeout(startTimer);
   }, [api, banners.length, autoplay]);
 
-  // ✅ FIX 4: Defer autoplay plugin registration until after first paint
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
       setAutoplayReady(true);
@@ -136,7 +132,6 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
         <Carousel
           className="w-full mx-auto relative"
           opts={{ loop: banners.length > 1 }}
-          // ✅ FIX 4 cont: Only mount autoplay plugin after first frame
           plugins={autoplayReady && banners.length > 1 ? [autoplay] : []}
           setApi={setApi}
         >

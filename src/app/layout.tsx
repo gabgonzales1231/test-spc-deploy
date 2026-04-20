@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import HotlinesSidebar from "@/components/home/HotlinesSidebar";
 import ChatWidgetLoader from "@/components/ChatWidgetLoader";
 import DataPrivacyPolicyPopup from "@/components/home/DataPrivacyPolicy";
+import AnimationCSS from "@/components/AnimationCSS";
 
 import "../styles/global.css";
 
@@ -37,17 +38,7 @@ export default function RootLayout({
     <link rel="preconnect" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
     <link rel="dns-prefetch" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
 
-    {/* Existing — self-hosted animation CSS, non-blocking */}
-    <link
-      rel="stylesheet"
-      href="/tw-animate.css"
-      media="print"
-      // @ts-ignore
-      onLoad="this.media='all'"
-    />
-    <noscript>
-      <link rel="stylesheet" href="/tw-animate.css" />
-    </noscript>
+    <AnimationCSS />
   </head>
  
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
