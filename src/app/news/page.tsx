@@ -1,3 +1,5 @@
+//src/app/news/page.tsx
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -34,7 +36,6 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// Extracted to prevent re-renders of the grid
 const ArticleCard = ({
   item,
   isFirst,
@@ -50,17 +51,9 @@ const ArticleCard = ({
 
   return (
     <article className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col">
-      <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
-        {/* CSS blur bg — no extra image request */}
-        <div
-          className="absolute inset-0 scale-110 opacity-40 blur-lg"
-          style={{
-            backgroundImage: `url(${imageSrc})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-
+      {/* Optimized: Using a solid subtle green background instead of an image blur */}
+      <div className="relative w-full h-52 bg-emerald-900/5 flex items-center justify-center overflow-hidden">
+        
         {/* Main image */}
         <Image
           src={imageSrc}
@@ -68,7 +61,7 @@ const ArticleCard = ({
           fill
           priority={isFirst}
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
-          className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
+          className="object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-110"
           onError={handleError}
         />
 
@@ -102,7 +95,6 @@ const ArticleCard = ({
   );
 };
 
-// Skeleton outside component — stable reference, never re-created
 const LoadingSkeleton = () => (
   <>
     {[...Array(6)].map((_, index) => (
@@ -184,7 +176,6 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-      {/* Hero Section */}
       <section className="relative py-20 pt-40 px-4 bg-gradient-to-r from-emerald-600 to-emerald-800 text-white overflow-hidden">
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
@@ -202,7 +193,6 @@ export default function NewsPage() {
         </div>
       </section>
 
-      {/* News Articles */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -228,7 +218,6 @@ export default function NewsPage() {
             )}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-12">
               <button
