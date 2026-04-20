@@ -31,23 +31,16 @@ export default function NewsCard({
   return (
     <article className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col">
       <div className="relative overflow-hidden">
-        <div className="relative w-full h-52 bg-gray-100 overflow-hidden">
-          {/* Blurred background */}
-          <Image
-            src={imgSrc}
-            alt=""
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover blur-lg scale-110 opacity-40"
-            aria-hidden="true"
-          />
+        {/* Optimized: Updated to a subtle emerald background and removed the blurred Image component */}
+        <div className="relative w-full h-52 bg-emerald-900/5 flex items-center justify-center overflow-hidden">
+          
           {/* Main image */}
           <Image
             src={imgSrc}
             alt={title || "News Image"}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain z-10 transition-transform duration-300 group-hover:scale-110"
+            className="object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-110"
             onError={() => setImgSrc("https://placehold.co/500x300?text=No+Image")}
           />
         </div>

@@ -15,7 +15,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Arcadio B. Gapangada Jr., MNSA",
     position: "City Mayor",
     department: "Office of the Mayor",
-    image: "/officials/mayor.png",
+    image: "/officials/mayor.webp",
     email: "mayor@sanpablocity.gov.ph",
     phone: "(049) 562-1234",
     description:
@@ -26,7 +26,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Justin G. Colago",
     position: "Vice Mayor",
     department: "Office of the Vice Mayor",
-    image: "/officials/vm.png",
+    image: "/officials/vm.webp",
     email: "vicemayor@sanpablocity.gov.ph",
     phone: "(049) 562-1235",
     description:
@@ -37,7 +37,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Carmela A. Acebedo",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_acebedo.png",
+    image: "/officials/sp_acebedo.webp",
     email: "caacebedo@sanpablocity.gov.ph",
     phone: "(049) 562-1236",
     description:
@@ -48,7 +48,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Shaira Aliya A. Diaz",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_diaz.png",
+    image: "/officials/sp_diaz.webp",
     email: "@sanpablocity.gov.ph",
     phone: "(049) 562-1237",
     description:
@@ -59,7 +59,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Martin Angelo B. Adriano, Jr.",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_adriano.png",
+    image: "/officials/sp_adriano.webp",
     email: "councilor3@sanpablocity.gov.ph",
     phone: "(049) 562-1238",
     description:
@@ -70,7 +70,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. John Edgar C. Adajar",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_adajar.png",
+    image: "/officials/sp_adajar.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -81,7 +81,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Leonardo C. Villanueva",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_villanueva.png",
+    image: "/officials/sp_villanueva.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -92,7 +92,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Syra A. Medina",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_medina.png",
+    image: "/officials/sp_medina.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -103,7 +103,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Richard C. Pavico",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_pavico.png",
+    image: "/officials/sp_pavico.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -114,7 +114,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Lou Vicent B. Amante",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_lou_amante.png",
+    image: "/officials/sp_lou_amante.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -125,7 +125,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Cesarito C. Ticzon",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_ticzon.png",
+    image: "/officials/sp_ticzon.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -136,7 +136,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Francis A. Calatraba",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_calatraba.png",
+    image: "/officials/sp_calatraba.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -147,7 +147,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Ariston A. Amante",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_aris_amante.png",
+    image: "/officials/sp_aris_amante.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
@@ -158,7 +158,7 @@ export const officials: Officialnterface[] = [
     name: "Hon. Eldrich Khristoffer B. Villanueva",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
-    image: "/officials/sp_eldrich_villanueva.png",
+    image: "/officials/sp_eldrich_villanueva.webp",
     email: "councilor4@sanpablocity.gov.ph",
     phone: "(049) 562-1239",
     description:
