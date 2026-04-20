@@ -1,8 +1,6 @@
-//src/app/news/page.tsx
-
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardHeader,
@@ -51,10 +49,7 @@ const ArticleCard = ({
 
   return (
     <article className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group hover:scale-105 h-full flex flex-col">
-      {/* Optimized: Using a solid subtle green background instead of an image blur */}
       <div className="relative w-full h-52 bg-emerald-900/5 flex items-center justify-center overflow-hidden">
-        
-        {/* Main image */}
         <Image
           src={imageSrc}
           alt={item.title || "News Image"}
@@ -64,7 +59,6 @@ const ArticleCard = ({
           className="object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-110"
           onError={handleError}
         />
-
         <div className="absolute top-2 left-2 z-10">
           <span className="inline-block bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
             {item.category?.name || "Uncategorized"}
@@ -97,7 +91,7 @@ const ArticleCard = ({
 
 const LoadingSkeleton = () => (
   <>
-    {[...Array(6)].map((_, index) => (
+    {[...Array(ARTICLES_PER_PAGE)].map((_, index) => (
       <Card key={index} className="bg-white shadow-md transition-shadow">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -126,53 +120,53 @@ const LoadingSkeleton = () => (
 );
 
 export default function NewsPage() {
-  const { data: articlesResponse, loading, error, execute: fetchArticles } = useGetArticles();
-  const [articles, setArticles] = useState<Article[]>([]);
+  // useApi already splits the response: `data` = Article[], `pagination` = pagination object
+  const { data, loading, error, pagination, execute: fetchArticles } = useGetArticles();
   const [currentPage, setCurrentPage] = useState(1);
 
+  const loadPage = useCallback(
+    (page: number) => {
+      fetchArticles({ page, limit: ARTICLES_PER_PAGE });
+    },
+    [fetchArticles]
+  );
+
   useEffect(() => {
-    fetchArticles({ page: 1, limit: 100 });
-  }, [fetchArticles]);
+    loadPage(1);
+  }, [loadPage]);
 
-  useEffect(() => {
-    if (Array.isArray(articlesResponse)) {
-      setArticles(articlesResponse as Article[]);
-    }
-  }, [articlesResponse]);
-
-  const totalPages = useMemo(
-    () => Math.ceil(articles.length / ARTICLES_PER_PAGE),
-    [articles.length]
-  );
-
-  const paginatedArticles = useMemo(
-    () =>
-      articles.slice(
-        (currentPage - 1) * ARTICLES_PER_PAGE,
-        currentPage * ARTICLES_PER_PAGE
-      ),
-    [articles, currentPage]
-  );
-
-  const pageNumbers = useMemo(
-    () => Array.from({ length: totalPages }, (_, i) => i + 1),
-    [totalPages]
-  );
+  const articles = (data as Article[] | null) ?? [];
 
   const goToPrev = useCallback(() => {
-    setCurrentPage((p) => Math.max(1, p - 1));
+    const prev = currentPage - 1;
+    setCurrentPage(prev);
+    loadPage(prev);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [currentPage, loadPage]);
 
   const goToNext = useCallback(() => {
-    setCurrentPage((p) => Math.min(totalPages, p + 1));
+    const next = currentPage + 1;
+    setCurrentPage(next);
+    loadPage(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [totalPages]);
+  }, [currentPage, loadPage]);
 
-  const goToPage = useCallback((page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  const goToPage = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+      loadPage(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [loadPage]
+  );
+
+  const visiblePages = (() => {
+    if (!pagination) return [];
+    const delta = 2;
+    const start = Math.max(1, currentPage - delta);
+    const end = Math.min(pagination.totalPages, currentPage + delta);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  })();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
@@ -190,17 +184,28 @@ export default function NewsPage() {
             inspire — here's your hub for the latest updates that bring San
             Pableños together. Stay connected, stay informed!
           </p>
+          {pagination && (
+            <p className="mt-4 text-sm text-emerald-200">
+              {pagination.total} article{pagination.total !== 1 ? "s" : ""} · Page {currentPage} of {pagination.totalPages}
+            </p>
+          )}
         </div>
       </section>
 
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading && articles.length === 0 ? (
+            {loading ? (
               <LoadingSkeleton />
             ) : error ? (
               <div className="col-span-full text-center py-12 bg-red-50 text-red-700 rounded-lg">
                 <p>Error loading articles: {error}</p>
+                <button
+                  onClick={() => loadPage(currentPage)}
+                  className="mt-3 text-sm underline font-semibold"
+                >
+                  Try again
+                </button>
               </div>
             ) : articles.length === 0 ? (
               <div className="col-span-full text-center py-12">
@@ -208,7 +213,7 @@ export default function NewsPage() {
                 <p className="text-gray-600 text-lg">No news articles found.</p>
               </div>
             ) : (
-              paginatedArticles.map((item, index) => (
+              articles.map((item, index) => (
                 <ArticleCard
                   key={item.article_id}
                   item={item}
@@ -218,23 +223,38 @@ export default function NewsPage() {
             )}
           </div>
 
-          {totalPages > 1 && (
+          {pagination && pagination.totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-12">
               <button
                 onClick={goToPrev}
-                disabled={currentPage === 1}
+                disabled={!pagination.hasPrevious || loading}
                 className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Previous
               </button>
 
-              {pageNumbers.map((page) => (
+              {visiblePages[0] > 1 && (
+                <>
+                  <button
+                    onClick={() => goToPage(1)}
+                    disabled={loading}
+                    className="w-10 h-10 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors disabled:opacity-40"
+                  >
+                    1
+                  </button>
+                  {visiblePages[0] > 2 && <span className="px-1 text-gray-400">…</span>}
+                </>
+              )}
+
+              {visiblePages.map((page) => (
                 <button
                   key={page}
                   onClick={() => goToPage(page)}
-                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                    currentPage === page
+                  disabled={loading}
+                  aria-current={page === currentPage ? "page" : undefined}
+                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${
+                    page === currentPage
                       ? "bg-emerald-600 text-white"
                       : "border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700"
                   }`}
@@ -243,9 +263,24 @@ export default function NewsPage() {
                 </button>
               ))}
 
+              {visiblePages[visiblePages.length - 1] < pagination.totalPages && (
+                <>
+                  {visiblePages[visiblePages.length - 1] < pagination.totalPages - 1 && (
+                    <span className="px-1 text-gray-400">…</span>
+                  )}
+                  <button
+                    onClick={() => goToPage(pagination.totalPages)}
+                    disabled={loading}
+                    className="w-10 h-10 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors disabled:opacity-40"
+                  >
+                    {pagination.totalPages}
+                  </button>
+                </>
+              )}
+
               <button
                 onClick={goToNext}
-                disabled={currentPage === totalPages}
+                disabled={!pagination.hasNext || loading}
                 className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Next
