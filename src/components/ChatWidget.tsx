@@ -10,7 +10,7 @@ const BOT_AVATAR = "/seal.webp";
 const INITIAL_MESSAGE: ChatMessage = {
   id: "init",
   role: "bot",
-  text: "Magandang araw! 👋 I'm the San Pablo City virtual assistant. Ask me about office hours, fees, departments, or city services.",
+  text: "Magandang araw! 👋 I'm Juan Pablo, the City Government of San Pablo Chatbot. Ask me about office hours, fees, departments, or city services.",
   timestamp: new Date(),
 };
 
@@ -124,7 +124,7 @@ export default function ChatWidget() {
           />
           <div style={{ flex: 1 }}>
             <div style={{ color: "white", fontSize: "14px", fontWeight: 500, lineHeight: 1.2 }}>
-              San Pablo City
+              Juan Pablo
             </div>
             <div style={{ color: "rgba(255,255,255,0.75)", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
               <span

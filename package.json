@@ -8,7 +8,7 @@
     "start": "next start",
     "clear-cache": "rimraf .next/cache/images",
     "clear-all": "rimraf .next",
-     "postinstall": "cp node_modules/tw-animate-css/dist/tw-animate.css public/tw-animate.css"
+       "postinstall": "node -e \"require('fs').copyFileSync('node_modules/tw-animate-css/dist/tw-animate.css', 'public/tw-animate.css')\""
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",

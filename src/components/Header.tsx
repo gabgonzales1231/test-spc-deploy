@@ -61,6 +61,7 @@ export default function Header() {
     { href: "/services", label: "Services" },
     { href: "/disclosure-portal", label: "Disclosure Portal" },
     { href: "/forms", label: "Forms" },
+    { href: "/publications", label: "Publications" },
   ];
 
   return (
