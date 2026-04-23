@@ -4,44 +4,35 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronDown } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false);
-  const [isMobileAboutOpen, setIsMobileAboutOpen] = useState(false);
+  const [openDesktopDropdown, setOpenDesktopDropdown] = useState<string | null>(null);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-    setIsMobileAboutOpen(false); // Close about submenu when main menu toggles
+    setIsMenuOpen((prev) => !prev);
+    setOpenMobileDropdown(null);
   };
 
-  const toggleMobileAbout = () => {
-    setIsMobileAboutOpen(!isMobileAboutOpen);
+  const toggleMobileDropdown = (label: string) => {
+    setOpenMobileDropdown((prev) => (prev === label ? null : label));
   };
 
-  // Lock body scroll when menu is open
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = isMenuOpen ? "hidden" : "";
   }, [isMenuOpen]);
 
-  // Close dropdown when clicking outside (desktop)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest(".about-dropdown")) {
-        setIsAboutDropdownOpen(false);
+      if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
+        setOpenDesktopDropdown(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const navItems = [
@@ -62,17 +53,24 @@ export default function Header() {
     { href: "/disclosure-portal", label: "Disclosure Portal" },
     { href: "/forms", label: "Forms" },
     { href: "/publications", label: "Publications" },
+    {
+      label: "ARTA Corner",
+      href: "/arta",
+      hasDropdown: true,
+      subItems: [
+        { label: "Citizen's Charter", href: "/arta/citizens-charter" },
+      ],
+    },
   ];
 
   return (
-    <header className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl px-4">
+    <header
+      ref={headerRef}
+      className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl px-4"
+    >
       <div className="bg-white rounded-full shadow-xl border border-gray-100 px-6 py-3 flex items-center justify-between">
         {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center justify-center"
-          prefetch={false}
-        >
+        <Link href="/" className="flex items-center justify-center" prefetch={false}>
           <Image
             src="/seal.webp"
             alt="City of San Pablo Logo"
@@ -88,9 +86,13 @@ export default function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex gap-6 items-center" aria-label="Primary navigation">
           {navItems.map((item) => (
-            <div key={item.label} className="relative about-dropdown">
+            <div key={item.label} className="relative">
               {item.hasDropdown ? (
-                <div className="relative">
+                <div
+                  className="relative"
+                  onMouseEnter={() => setOpenDesktopDropdown(item.label)}
+                  onMouseLeave={() => setOpenDesktopDropdown(null)}
+                >
                   <div className="flex items-center">
                     <Link
                       href={item.href!}
@@ -102,33 +104,36 @@ export default function Header() {
                     <button
                       type="button"
                       className="ml-1 p-1 hover:text-emerald-700 transition-colors text-gray-700"
-                      onClick={() => setIsAboutDropdownOpen(!isAboutDropdownOpen)}
-                      onMouseEnter={() => setIsAboutDropdownOpen(true)}
-                      aria-expanded={isAboutDropdownOpen}
+                      onClick={() =>
+                        setOpenDesktopDropdown((prev) =>
+                          prev === item.label ? null : item.label
+                        )
+                      }
+                      aria-expanded={openDesktopDropdown === item.label}
                       aria-haspopup="true"
-                      aria-label={isAboutDropdownOpen ? `Collapse ${item.label} menu` : `Expand ${item.label} menu`}
+                      aria-label={
+                        openDesktopDropdown === item.label
+                          ? `Collapse ${item.label} menu`
+                          : `Expand ${item.label} menu`
+                      }
                     >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          isAboutDropdownOpen ? "rotate-180" : ""
+                          openDesktopDropdown === item.label ? "rotate-180" : ""
                         }`}
                       />
                     </button>
                   </div>
 
-                  {isAboutDropdownOpen && (
-                    <div
-                      className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50"
-                      onMouseEnter={() => setIsAboutDropdownOpen(true)}
-                      onMouseLeave={() => setIsAboutDropdownOpen(false)}
-                    >
-                      {item.subItems.map((subItem) => (
+                  {openDesktopDropdown === item.label && (
+                    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                      {item.subItems!.map((subItem) => (
                         <Link
                           key={subItem.href}
                           href={subItem.href}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-emerald-700 transition-colors"
                           prefetch={false}
-                          onClick={() => setIsAboutDropdownOpen(false)}
+                          onClick={() => setOpenDesktopDropdown(null)}
                         >
                           {subItem.label}
                         </Link>
@@ -157,11 +162,7 @@ export default function Header() {
           aria-expanded={isMenuOpen}
           aria-controls="mobile-menu"
         >
-          {isMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
+          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           <span className="sr-only">Toggle menu</span>
         </Button>
       </div>
@@ -169,10 +170,9 @@ export default function Header() {
       {/* Mobile Navigation Menu */}
       <div
         id="mobile-menu"
-        className={`rounded-lg lg:hidden absolute top-15 lg:top-15 right-5 lg:right-5 w-xs lg:w-xl bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
-          isMenuOpen ? "max-h-96" : "max-h-0"
+        className={`rounded-lg lg:hidden absolute top-15 right-5 w-xs bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
+          isMenuOpen ? "max-h-screen" : "max-h-0"
         }`}
-        // FIX: inert now accepts a boolean. !isMenuOpen means it is inert when closed.
         inert={!isMenuOpen}
         aria-label="Mobile navigation"
       >
@@ -184,7 +184,7 @@ export default function Header() {
                   <div className="flex items-center justify-between">
                     <Link
                       href={item.href!}
-                      className="flex-1 text-sm lg:text-base font-medium text-gray-700 hover:text-emerald-700 transition-colors py-2"
+                      className="flex-1 text-sm font-medium text-gray-700 hover:text-emerald-700 transition-colors py-2"
                       prefetch={false}
                       onClick={toggleMenu}
                     >
@@ -193,21 +193,25 @@ export default function Header() {
                     <button
                       type="button"
                       className="p-2 text-gray-700 hover:text-emerald-700 transition-colors"
-                      onClick={toggleMobileAbout}
-                      aria-label={isMobileAboutOpen ? `Collapse ${item.label} menu` : `Expand ${item.label} menu`}
-                      aria-expanded={isMobileAboutOpen}
+                      onClick={() => toggleMobileDropdown(item.label)}
+                      aria-label={
+                        openMobileDropdown === item.label
+                          ? `Collapse ${item.label} menu`
+                          : `Expand ${item.label} menu`
+                      }
+                      aria-expanded={openMobileDropdown === item.label}
                     >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          isMobileAboutOpen ? "rotate-180" : ""
+                          openMobileDropdown === item.label ? "rotate-180" : ""
                         }`}
                       />
                     </button>
                   </div>
 
-                  {isMobileAboutOpen && (
+                  {openMobileDropdown === item.label && (
                     <div className="pl-4 mt-2 space-y-2">
-                      {item.subItems.map((subItem) => (
+                      {item.subItems!.map((subItem) => (
                         <Link
                           key={subItem.href}
                           href={subItem.href}
@@ -224,7 +228,7 @@ export default function Header() {
               ) : (
                 <Link
                   href={item.href!}
-                  className="block text-sm lg:text-base font-medium text-gray-700 hover:text-emerald-700 transition-colors py-2"
+                  className="block text-sm font-medium text-gray-700 hover:text-emerald-700 transition-colors py-2"
                   prefetch={false}
                   onClick={toggleMenu}
                 >

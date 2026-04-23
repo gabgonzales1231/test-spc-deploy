@@ -25,6 +25,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["react-pdf", "pdfjs-dist"],
+
   experimental: {
     optimizeCss: true,
   },
@@ -85,5 +87,7 @@ const nextConfig: NextConfig = {
 
   typescript: { ignoreBuildErrors: false },
 };
+
+
 
 export default nextConfig;
