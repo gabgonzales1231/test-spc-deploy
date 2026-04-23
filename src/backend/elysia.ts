@@ -6,12 +6,13 @@ import { categoryRoutes } from '@/backend/routes/categories'
 import { articleRoutes } from '@/backend/routes/articles'
 import { mediaRoutes } from '@/backend/routes/media'
 import { bannerRoutes } from '@/backend/routes/banners'
+import { faqsRouter } from '@/backend/routes/faqs'
+import { servicesRouter } from '@/backend/routes/services'
 import { errorHandler } from './utils/error'
-
 
 export const app = new Elysia()
   .use(cors({
-    origin: process.env.NEXT_PUBLIC_FRONTEND_URL|| 'http://localhost:3000',
+    origin: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
     credentials: true
   }))
   .use(jwt({
@@ -72,9 +73,13 @@ export const app = new Elysia()
       .use(articleRoutes)
       .use(mediaRoutes)
       .use(bannerRoutes)
+      .use(faqsRouter)
+      .use(servicesRouter)
   })
   // Static assets
   .use(staticPlugin({
     assets: 'public',
     prefix: '/'
   }))
+
+

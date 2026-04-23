@@ -1,419 +1,327 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import Image from "next/image";
-import { getBotResponse, generateId, ChatMessage } from "@/lib/chatEngine";
-import { SUGGESTED_QUESTIONS } from "@/lib/faq-data";
+import { useState, useEffect, useCallback } from "react";
+import { ChatMessage, ChatStage, UserInfo, CMSContent, generateId } from "@/lib/chatTypes";
+import { getNode, getMainMenuNode, resolveNodeByKeyword, getSmallTalkResponse, injectContent, submitFeedback, fetchCMSContent } from "@/lib/chatEngine";
+import { FlowNode, MAIN_MENU_KEY } from "@/lib/flowData";
 
-const BOT_AVATAR = "/seal.webp";
+import { ChatForm }      from "./chat/ChatForm";
+import { ChatHeader }    from "./chat/ChatHeader";
+import { ChatMessages }  from "./chat/ChatMessages";
+import { ChatInputArea } from "./chat/ChatInputArea";
+import { ChatEnded }     from "./chat/ChatEnded";
+import { PreOpenBubble } from "./chat/ui/PreOpenBubble";
+import { JPAvatar }      from "./chat/ui/JPAvatar";
 
-const INITIAL_MESSAGE: ChatMessage = {
-  id: "init",
-  role: "bot",
-  text: "Magandang araw! 👋 I'm Juan Pablo, the City Government of San Pablo Chatbot. Ask me about office hours, fees, departments, or city services.",
-  timestamp: new Date(),
-};
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" });
-}
+interface NegosyoForm   { businessId: string; complaint: string }
+interface TraysikelForm { plateNumber: string; complaint: string }
 
 export default function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(true);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  // ── Widget ────────────────────────────────────────────────────────────
+  const [isOpen, setIsOpen]          = useState(false);
+  const [bubbleDismissed, setBubble] = useState(false);
+  const [stage, setStage]            = useState<ChatStage>("form");
+
+  // ── User ──────────────────────────────────────────────────────────────
+  const [userInfo, setUserInfo]     = useState<UserInfo>({ fullName: "", email: "", phone: "" });
+  const [formErrors, setFormErrors] = useState<Partial<UserInfo>>({});
+
+  // ── Chat ──────────────────────────────────────────────────────────────
+  const [messages, setMessages]      = useState<ChatMessage[]>([]);
+  const [isTyping, setIsTyping]      = useState(false);
+  const [currentNodeKey, setNodeKey] = useState<string>(MAIN_MENU_KEY);
+  const [history, setHistory]        = useState<string[]>([]);
+  const [menuOpen, setMenuOpen]      = useState(false);
+
+  // ── Forms ─────────────────────────────────────────────────────────────
+  const [negosyoForm, setNegosyoForm]   = useState<NegosyoForm>({ businessId: "", complaint: "" });
+  const [traysikelForm, setTraysikel]   = useState<TraysikelForm>({ plateNumber: "", complaint: "" });
+  const [helpdeskText, setHelpdesk]     = useState("");
+  const [papuriText, setPapuri]         = useState("");
+  const [formSubmitting, setSubmitting] = useState(false);
+
+  // ── CMS ───────────────────────────────────────────────────────────────
+  const [cms, setCms] = useState<CMSContent>({ services: {}, faqs: {}, loaded: false, error: null });
+
+  // ── Effects ───────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (isOpen) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-      inputRef.current?.focus();
-    }
-  }, [isOpen, messages]);
-
-  const sendMessage = useCallback((text: string) => {
-    if (!text.trim()) return;
-
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: "user",
-      text: text.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setIsTyping(true);
-    setShowSuggestions(false);
-
-    setTimeout(() => {
-      const responseText = getBotResponse(text);
-      const botMsg: ChatMessage = {
-        id: generateId(),
-        role: "bot",
-        text: responseText,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMsg]);
-      setIsTyping(false);
-    }, 600);
+    fetchCMSContent()
+      .then(({ services, faqs }) => setCms({ services, faqs, loaded: true, error: null }))
+      .catch(() => setCms((p) => ({ ...p, loaded: true, error: "CMS unavailable." })));
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage(input);
-  };
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("jp_user");
+      if (saved) setUserInfo(JSON.parse(saved) as UserInfo);
+    } catch {}
+  }, []);
 
-  const handleSuggestion = (question: string) => {
-    sendMessage(question);
-  };
+  // ── Message helpers ───────────────────────────────────────────────────
+
+  const pushBotMessage = useCallback((text: string, node?: FlowNode) => {
+    setMessages((prev) => [...prev, {
+      id: generateId(), role: "bot", text, timestamp: new Date(),
+      quickReplies: node?.options?.length
+        ? node.options.map((o) => ({ label: o.label, value: o.value }))
+        : undefined,
+    }]);
+  }, []);
+
+  const pushUserMessage = useCallback((text: string) => {
+    setMessages((prev) => [...prev, { id: generateId(), role: "user", text, timestamp: new Date() }]);
+  }, []);
+
+  const navigateTo = useCallback((nodeKey: string, pushToHistory = true, fromKey?: string) => {
+    const node = getNode(nodeKey);
+    if (pushToHistory) setHistory((h) => [...h, fromKey ?? currentNodeKey]);
+    setNodeKey(nodeKey);
+    setIsTyping(true);
+    setTimeout(() => {
+      pushBotMessage(injectContent(node.message, cms), node);
+      setIsTyping(false);
+    }, 600);
+  }, [cms, currentNodeKey, pushBotMessage]);
+
+  // ── Registration ──────────────────────────────────────────────────────
+
+  function validateForm(): boolean {
+    const errors: Partial<UserInfo> = {};
+    if (!userInfo.fullName.trim())
+      errors.fullName = "Kinakailangan ang buong pangalan.";
+    if (!userInfo.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInfo.email))
+      errors.email = "Magbigay ng valid na email.";
+    if (!userInfo.phone.trim() || userInfo.phone.trim().length < 7)
+      errors.phone = "Magbigay ng valid na numero.";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  function handleStartChat() {
+    if (!validateForm()) return;
+    try { localStorage.setItem("jp_user", JSON.stringify(userInfo)); } catch {}
+    setStage("chat");
+    setTimeout(() => {
+      const main = getMainMenuNode();
+      pushBotMessage(
+        `Kamusta, ${userInfo.fullName.split(" ")[0]}! 👋 Welcome sa Opisyal na chatbot ng San Pablo.\n\nI-type o piliin ang iyong kailangan:`,
+        main
+      );
+      setNodeKey(MAIN_MENU_KEY);
+    }, 300);
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────
+
+  const handleQuickReply = useCallback((value: string, label: string) => {
+    pushUserMessage(label);
+    navigateTo(value, true, currentNodeKey);
+  }, [currentNodeKey, navigateTo, pushUserMessage]);
+
+  const handleTextSend = useCallback((text: string) => {
+    if (!text.trim()) return;
+    pushUserMessage(text.trim());
+    const smallTalk = getSmallTalkResponse(text);
+    if (smallTalk) {
+      setIsTyping(true);
+      setTimeout(() => {
+        const main = getMainMenuNode();
+        pushBotMessage(smallTalk + "\n\n" + injectContent(main.message, cms), main);
+        setNodeKey(MAIN_MENU_KEY);
+        setIsTyping(false);
+      }, 600);
+      return;
+    }
+    const matched = resolveNodeByKeyword(text);
+    if (matched) { navigateTo(matched.key, true, currentNodeKey); return; }
+    setIsTyping(true);
+    setTimeout(() => {
+      const main = getMainMenuNode();
+      pushBotMessage(
+        "Hindi ko maintindihan ang iyong mensahe. Piliin ang isa sa mga pagpipilian:\n\n" + injectContent(main.message, cms),
+        main
+      );
+      setNodeKey(MAIN_MENU_KEY);
+      setIsTyping(false);
+    }, 600);
+  }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage]);
+
+  // ── Feedback shared helper ────────────────────────────────────────────
+
+  async function submitAndReturn(subject: string, message: string, successMsg: string) {
+    const result = await submitFeedback({
+      name: userInfo.fullName, email: userInfo.email || null, subject, message,
+    });
+    setSubmitting(false);
+    setIsTyping(true);
+    setTimeout(() => {
+      const main = getMainMenuNode();
+      pushBotMessage(
+        (result.success ? successMsg : `May error: ${result.error}`) +
+        "\n\n" + injectContent(main.message, cms),
+        main
+      );
+      setNodeKey(MAIN_MENU_KEY);
+      setIsTyping(false);
+    }, 600);
+  }
+
+  async function handleNegosyoSubmit() {
+    if (!negosyoForm.businessId.trim() || !negosyoForm.complaint.trim()) return;
+    setSubmitting(true);
+    pushUserMessage(`Business No./Pangalan: ${negosyoForm.businessId}\nReklamo: ${negosyoForm.complaint}`);
+    const msg = `Business No./Pangalan: ${negosyoForm.businessId}\n\n${negosyoForm.complaint}`;
+    setNegosyoForm({ businessId: "", complaint: "" });
+    await submitAndReturn("Sumbong sa Negosyo", msg, "Natanggap ang iyong reklamo. Ipapasa namin ito sa tamang departamento. Salamat! 🙏");
+  }
+
+  async function handleTraysikelSubmit() {
+    if (!traysikelForm.plateNumber.trim() || !traysikelForm.complaint.trim()) return;
+    setSubmitting(true);
+    pushUserMessage(`Plate/No. ng Traysikel: ${traysikelForm.plateNumber}\nReklamo: ${traysikelForm.complaint}`);
+    const msg = `Plate/No. ng Traysikel: ${traysikelForm.plateNumber}\n\n${traysikelForm.complaint}`;
+    setTraysikel({ plateNumber: "", complaint: "" });
+    await submitAndReturn("Sumbong sa Traysikel", msg, "Natanggap ang iyong reklamo. Ipapasa namin ito sa tamang departamento. Salamat! 🙏");
+  }
+
+  async function handleHelpdeskSubmit() {
+    if (!helpdeskText.trim()) return;
+    setSubmitting(true);
+    pushUserMessage(helpdeskText.trim());
+    const msg = helpdeskText.trim();
+    setHelpdesk("");
+    await submitAndReturn("Tanong o Suhestiyon", msg, "Natanggap ang iyong mensahe. Sasagutin ito ng aming help desk. Salamat! 🙏");
+  }
+
+  async function handlePapuriSubmit() {
+    if (!papuriText.trim()) return;
+    setSubmitting(true);
+    pushUserMessage(papuriText.trim());
+    const msg = papuriText.trim();
+    setPapuri("");
+    await submitAndReturn("Papuri", msg, "Salamat sa iyong papuri! Ipapasa namin ito sa tamang departamento. 🙏");
+  }
+
+  // ── Hamburger ─────────────────────────────────────────────────────────
+
+  function handleBack() {
+    setMenuOpen(false);
+    if (!history.length) return;
+    const prev = history[history.length - 1];
+    setHistory((h) => h.slice(0, -1));
+    navigateTo(prev, false);
+  }
+
+  function handleGoToMenu() {
+    setMenuOpen(false);
+    setHistory([]);
+    navigateTo(MAIN_MENU_KEY, false);
+  }
+
+  function handleEndSession() {
+    setMenuOpen(false);
+    setStage("ended");
+  }
+
+  // ── Reset ─────────────────────────────────────────────────────────────
+
+  function handleNewChat() {
+    setMessages([]);
+    setHistory([]);
+    setNodeKey(MAIN_MENU_KEY);
+    setNegosyoForm({ businessId: "", complaint: "" });
+    setTraysikel({ plateNumber: "", complaint: "" });
+    setHelpdesk("");
+    setPapuri("");
+    setStage("form");
+  }
+
+  // ── Derived ───────────────────────────────────────────────────────────
+
+  const currentNode = getNode(currentNodeKey);
+
+  // ── Render ────────────────────────────────────────────────────────────
 
   return (
     <>
+      {!isOpen && !bubbleDismissed && (
+        <PreOpenBubble onDismiss={() => setBubble(true)} />
+      )}
+
       {/* Chat panel */}
       <div
         aria-label="City virtual assistant chat"
         aria-hidden={!isOpen}
-        style={{
-          position: "fixed",
-          bottom: "88px",
-          right: "24px",
-          width: "340px",
-          maxHeight: "520px",
-          zIndex: 9998,
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: "16px",
-          overflow: "hidden",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
-          border: "0.5px solid rgba(0,0,0,0.08)",
-          background: "var(--background)",
-          transition: "opacity 0.2s ease, transform 0.2s ease, visibility 0.2s",
-          opacity: isOpen ? 1 : 0,
-          visibility: isOpen ? "visible" : "hidden",
-          transform: isOpen ? "translateY(0) scale(1)" : "translateY(12px) scale(0.97)",
-          pointerEvents: isOpen ? "auto" : "none",
-        }}
+        className={`fixed bottom-[88px] right-6 w-[340px] max-h-[560px] h-[calc(100vh-120px)] z-[9998] flex flex-col rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] border border-black/10 bg-background transition-all duration-200 ${
+          isOpen
+            ? "opacity-100 visible translate-y-0 scale-100 pointer-events-auto"
+            : "opacity-0 invisible translate-y-3 scale-95 pointer-events-none"
+        }`}
       >
-        {/* Header */}
-        <div
-          style={{
-            background: "#1a6b3c",
-            padding: "14px 16px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            flexShrink: 0,
-          }}
-        >
-          <Image
-            src={BOT_AVATAR}
-            alt="San Pablo City Seal"
-            width={32}
-            height={32}
-            loading="lazy"
-            style={{
-              borderRadius: "50%",
-              background: "white",
-              padding: "2px",
-              objectFit: "contain",
-            }}
+        {stage === "form" && (
+          <ChatForm
+            userInfo={userInfo}
+            formErrors={formErrors}
+            onChange={(field, value) => setUserInfo((u) => ({ ...u, [field]: value }))}
+            onSubmit={handleStartChat}
           />
-          <div style={{ flex: 1 }}>
-            <div style={{ color: "white", fontSize: "14px", fontWeight: 500, lineHeight: 1.2 }}>
-              Juan Pablo
-            </div>
-            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
-              <span
-                style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "50%",
-                  background: "#4ade80",
-                  display: "inline-block",
-                }}
-              />
-              Virtual Assistant
-            </div>
-          </div>
-          <button
-            onClick={() => setIsOpen(false)}
-            aria-label="Close chat"
-            tabIndex={isOpen ? undefined : -1}
-            style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "none",
-              borderRadius: "6px",
-              color: "white",
-              cursor: "pointer",
-              padding: "4px 8px",
-              fontSize: "18px",
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            ×
-          </button>
-        </div>
+        )}
 
-        {/* Messages */}
-        <div
-          role="log"
-          aria-live="polite"
-          aria-label="Chat messages"
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "16px 12px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            background: "var(--background)",
-          }}
-        >
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              style={{
-                display: "flex",
-                flexDirection: msg.role === "user" ? "row-reverse" : "row",
-                alignItems: "flex-end",
-                gap: "6px",
-              }}
-            >
-              {msg.role === "bot" && (
-                <Image
-                  src={BOT_AVATAR}
-                  alt=""
-                  aria-hidden={true}
-                  width={24}
-                  height={24}
-                  loading="lazy"
-                  style={{
-                    borderRadius: "50%",
-                    background: "#1a6b3c",
-                    padding: "2px",
-                    objectFit: "contain",
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-              <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", gap: "2px", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                <div
-                  style={{
-                    padding: "9px 12px",
-                    borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                    background: msg.role === "user" ? "#1a6b3c" : "var(--muted, #f3f4f6)",
-                    color: msg.role === "user" ? "white" : "var(--foreground)",
-                    fontSize: "13px",
-                    lineHeight: "1.5",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {msg.text}
-                </div>
-                <span style={{ fontSize: "10px", color: "var(--muted-foreground, #9ca3af)", padding: "0 4px" }}>
-                  {formatTime(msg.timestamp)}
-                </span>
-              </div>
-            </div>
-          ))}
+        {stage === "chat" && (
+          <>
+            <ChatHeader
+              menuOpen={menuOpen}
+              hasHistory={history.length > 0}
+              onToggleMenu={() => setMenuOpen((v) => !v)}
+              onBack={handleBack}
+              onGoToMenu={handleGoToMenu}
+              onEndSession={handleEndSession}
+              onCloseMenu={() => setMenuOpen(false)}
+            />
+            <ChatMessages
+              messages={messages}
+              isTyping={isTyping}
+              onQuickReply={handleQuickReply}
+            />
+            <ChatInputArea
+              mode={currentNode.inputMode}
+              submitting={formSubmitting}
+              negosyoForm={negosyoForm}
+              traysikelForm={traysikelForm}
+              helpdeskText={helpdeskText}
+              papuriText={papuriText}
+              onNegosyoChange={(f, v) => setNegosyoForm((p) => ({ ...p, [f]: v }))}
+              onTraysikelChange={(f, v) => setTraysikel((p) => ({ ...p, [f]: v }))}
+              onHelpdeskChange={setHelpdesk}
+              onPapuriChange={setPapuri}
+              onNegosyoSubmit={handleNegosyoSubmit}
+              onTraysikelSubmit={handleTraysikelSubmit}
+              onHelpdeskSubmit={handleHelpdeskSubmit}
+              onPapuriSubmit={handlePapuriSubmit}
+            />
+          </>
+        )}
 
-          {/* Typing indicator */}
-          {isTyping && (
-            <div style={{ display: "flex", alignItems: "flex-end", gap: "6px" }}>
-              <Image
-                src={BOT_AVATAR}
-                alt=""
-                aria-hidden={true}
-                width={24}
-                height={24}
-                loading="lazy"
-                style={{
-                  borderRadius: "50%",
-                  background: "#1a6b3c",
-                  padding: "2px",
-                  objectFit: "contain",
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{
-                padding: "10px 14px",
-                borderRadius: "14px 14px 14px 4px",
-                background: "var(--muted, #f3f4f6)",
-                display: "flex",
-                gap: "4px",
-                alignItems: "center",
-              }}>
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    style={{
-                      width: "6px",
-                      height: "6px",
-                      borderRadius: "50%",
-                      background: "#9ca3af",
-                      display: "inline-block",
-                      animation: "chatBounce 1.2s ease infinite",
-                      animationDelay: `${i * 0.2}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Suggested questions */}
-          {showSuggestions && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
-              <span style={{ fontSize: "11px", color: "var(--muted-foreground, #9ca3af)", paddingLeft: "2px" }}>
-                Suggested questions
-              </span>
-              {SUGGESTED_QUESTIONS.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => handleSuggestion(q)}
-                  tabIndex={isOpen ? undefined : -1}
-                  style={{
-                    background: "transparent",
-                    border: "0.5px solid #1a6b3c",
-                    borderRadius: "20px",
-                    color: "#1a6b3c",
-                    fontSize: "12px",
-                    padding: "6px 12px",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    lineHeight: 1.4,
-                    transition: "background 0.15s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f0fdf4")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Input */}
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            padding: "10px 12px",
-            borderTop: "0.5px solid var(--border, #e5e7eb)",
-            display: "flex",
-            gap: "8px",
-            background: "var(--background)",
-            flexShrink: 0,
-          }}
-        >
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your question..."
-            aria-label="Type your message"
-            disabled={!isOpen || isTyping}
-            tabIndex={isOpen ? undefined : -1}
-            style={{
-              flex: 1,
-              border: "0.5px solid var(--border, #e5e7eb)",
-              borderRadius: "20px",
-              padding: "8px 14px",
-              fontSize: "13px",
-              background: "var(--background)",
-              color: "var(--foreground)",
-              outline: "none",
-              transition: "border-color 0.15s",
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#1a6b3c")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border, #e5e7eb)")}
-          />
-          <button
-            type="submit"
-            disabled={!isOpen || !input.trim() || isTyping}
-            aria-label="Send message"
-            tabIndex={isOpen ? undefined : -1}
-            style={{
-              background: input.trim() && !isTyping ? "#1a6b3c" : "var(--muted, #e5e7eb)",
-              border: "none",
-              borderRadius: "50%",
-              width: "36px",
-              height: "36px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: input.trim() && !isTyping ? "pointer" : "not-allowed",
-              flexShrink: 0,
-              transition: "background 0.15s",
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M22 2L11 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </form>
+        {stage === "ended" && <ChatEnded onNewChat={handleNewChat} />}
       </div>
 
-      {/* Floating button */}
+      {/* FAB */}
       <button
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => { setIsOpen((v) => !v); setBubble(true); }}
         aria-label={isOpen ? "Close chat" : "Open city virtual assistant"}
         aria-expanded={isOpen}
-        style={{
-          position: "fixed",
-          bottom: "24px",
-          right: "24px",
-          width: "56px",
-          height: "56px",
-          borderRadius: "50%",
-          background: "#1a6b3c",
-          border: "none",
-          cursor: "pointer",
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 4px 16px rgba(26,107,60,0.35), 0 2px 4px rgba(0,0,0,0.1)",
-          transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "scale(1.08)";
-          e.currentTarget.style.boxShadow = "0 6px 24px rgba(26,107,60,0.45), 0 2px 6px rgba(0,0,0,0.12)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow = "0 4px 16px rgba(26,107,60,0.35), 0 2px 4px rgba(0,0,0,0.1)";
-        }}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#08A872] border-none cursor-pointer z-[9999] flex items-center justify-center shadow-[0_4px_16px_rgba(8,168,114,0.35),0_2px_4px_rgba(0,0,0,0.1)] transition-transform duration-200 hover:scale-[1.08]"
       >
         {isOpen ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6L18 18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <JPAvatar size={32} />
         )}
       </button>
-
-      {/* Bounce animation for typing dots */}
-      <style>{`
-        @keyframes chatBounce {
-          0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-4px); }
-        }
-      `}</style>
     </>
   );
 }

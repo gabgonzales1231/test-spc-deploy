@@ -1,83 +1,149 @@
-import { FAQ_DATA, FaqEntry } from "./faq-data";
+// ─────────────────────────────────────────────
+// chatEngine.ts — Flow-based navigation engine
+// ─────────────────────────────────────────────
 
-export interface ChatMessage {
-  id: string;
-  role: "user" | "bot";
-  text: string;
-  timestamp: Date;
+import {
+  FLOW_NODES,
+  KEYWORD_MAP,
+  MAIN_MENU_KEY,
+  FlowNode,
+} from "./flowData";
+import { CMSContent, ComplaintPayload } from "./chatTypes";
+
+// ── Placeholder injection ──────────────────────────────────────────────────
+
+const STATIC_FALLBACKS: Record<string, string> = {
+  citizens_charter_link:
+    "https://files.sanpablocity.gov.ph/A7d9F3kH2mX0QwL5Z8vR1tY4nP6sB0.pdf",
+  fare_price_link:
+    "https://files.sanpablocity.gov.ph/A7d9F3kH2mX0QwL5Z8vR1tY4nP6sB0.pdf",
+  office_contacts: `Bureau of Fire Protection:\nLandline: 5627-654\n\nCDRRMO\nLandline: 8000-405\nSmart: 09089078124\nGlobe: 09955619456\n\nCHO\nLandline: 576-9119\nSmart: 09392022318\nGlobe: 09673625480\n\nPolice\nLandline: 5626-474\nLandline: 5210-610\n\nWelfare & Development Office\nLandline: (049) 3000-065`,
+  terminal_locations:
+    "Para sa kumpletong listahan ng mga terminal, mangyaring bisitahin ang City Hall o makipag-ugnayan sa LTFRB San Pablo.",
+};
+
+export function injectContent(
+  template: string,
+  cms: CMSContent
+): string {
+  return template.replace(/{{(\w+)}}/g, (_, key) => {
+    // Try CMS services by slug-derived key first
+    if (key === "citizens_charter_link" || key === "fare_price_link") {
+      const slug =
+        key === "citizens_charter_link" ? "citizens-charter" : "fare-price";
+      const svc = cms.services[slug];
+      if (svc?.online_application_url) return svc.online_application_url;
+    }
+
+    // Try CMS FAQs for contacts / terminal
+    if (key === "office_contacts") {
+      const faq = Object.values(cms.faqs).find(
+        (f) => f.category_id === 1 // convention: category 1 = contacts
+      );
+      if (faq?.answer) return faq.answer;
+    }
+
+    if (key === "terminal_locations") {
+      const faq = Object.values(cms.faqs).find(
+        (f) => f.category_id === 2 // convention: category 2 = transport
+      );
+      if (faq?.answer) return faq.answer;
+    }
+
+    // Static fallback
+    return STATIC_FALLBACKS[key] ?? `[${key}]`;
+  });
 }
 
-const GREETINGS = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "kumusta", "musta"];
-const THANKS = ["thank", "thanks", "thank you", "salamat", "ok", "okay", "noted"];
-const FAREWELLS = ["bye", "goodbye", "paalam", "see you"];
+// ── Node resolution ────────────────────────────────────────────────────────
 
-function normalize(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
-}
+export function resolveNodeByKeyword(input: string): FlowNode | null {
+  const normalized = input.toLowerCase().trim();
 
-function scoreEntry(query: string, entry: FaqEntry): number {
-  const words = normalize(query).split(/\s+/);
-  let score = 0;
-  for (const word of words) {
-    if (word.length < 2) continue;
-    for (const keyword of entry.keywords) {
-      if (keyword === word) {
-        score += 3; // exact match
-      } else if (keyword.includes(word) || word.includes(keyword)) {
-        score += 1; // partial match
-      }
+  // Exact match in keyword map
+  if (KEYWORD_MAP[normalized]) {
+    return FLOW_NODES[KEYWORD_MAP[normalized]] ?? null;
+  }
+
+  // Partial match
+  for (const [kw, nodeKey] of Object.entries(KEYWORD_MAP)) {
+    if (normalized.includes(kw)) {
+      return FLOW_NODES[nodeKey] ?? null;
     }
   }
-  return score;
+
+  return null;
 }
 
-export function getBotResponse(userInput: string): string {
-  const normalized = normalize(userInput);
-
-  // Greetings
-  if (GREETINGS.some((g) => normalized.includes(g))) {
-    return "Magandang araw! 👋 I'm the San Pablo City virtual assistant. I can help you with office hours, fees, department contacts, and city services. What would you like to know?";
-  }
-
-  // Thank you
-  if (THANKS.some((t) => normalized.includes(t))) {
-    return "You're welcome! Is there anything else I can help you with? 😊";
-  }
-
-  // Farewell
-  if (FAREWELLS.some((f) => normalized.includes(f))) {
-    return "Goodbye! Feel free to come back if you have more questions. Have a great day! 🙏";
-  }
-
-  // Score all FAQ entries
-  const scored = FAQ_DATA.map((entry) => ({
-    entry,
-    score: scoreEntry(userInput, entry),
-  })).filter((r) => r.score > 0);
-
-  if (scored.length === 0) {
-    return "I'm sorry, I couldn't find an answer to that. For more specific inquiries, please visit City Hall during office hours (Mon–Fri, 8AM–5PM) or call our hotline. Is there something else I can help you with?";
-  }
-
-  // Sort by score descending
-  scored.sort((a, b) => b.score - a.score);
-
-  // Return the best match
-  const best = scored[0];
-
-  // If multiple entries tie closely, list them
-  const topMatches = scored.filter((r) => r.score >= best.score - 1 && r.score > 1);
-  if (topMatches.length > 1 && best.score <= 2) {
-    const options = topMatches
-      .slice(0, 3)
-      .map((r) => `• ${r.entry.question}`)
-      .join("\n");
-    return `I found a few topics that might help:\n\n${options}\n\nCould you be more specific about what you need?`;
-  }
-
-  return best.entry.answer;
+export function getNode(key: string): FlowNode {
+  return FLOW_NODES[key] ?? FLOW_NODES[MAIN_MENU_KEY];
 }
 
-export function generateId(): string {
-  return Math.random().toString(36).slice(2, 9);
+export function getMainMenuNode(): FlowNode {
+  return FLOW_NODES[MAIN_MENU_KEY];
+}
+
+// ── Greeting / small talk ──────────────────────────────────────────────────
+
+const GREETINGS = ["hi", "hello", "hey", "kumusta", "musta", "good morning", "good afternoon", "good evening"];
+const THANKS    = ["thank", "thanks", "thank you", "salamat", "ok", "okay", "noted"];
+
+export function getSmallTalkResponse(input: string): string | null {
+  const n = input.toLowerCase();
+  if (GREETINGS.some((g) => n.includes(g))) {
+    return "Magandang araw! 😊 Piliin ang iyong kailangan sa ibaba.";
+  }
+  if (THANKS.some((t) => n.includes(t))) {
+    return "Walang anuman! May iba pa ba akong maitutulong? 😊";
+  }
+  return null;
+}
+
+// ── Feedback / complaint submission ───────────────────────────────────────
+
+export async function submitFeedback(
+  payload: ComplaintPayload
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error?.message ?? "Hindi natanggap ang mensahe." };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error. Subukan ulit." };
+  }
+}
+
+// ── CMS fetcher ───────────────────────────────────────────────────────────
+
+export async function fetchCMSContent(): Promise<
+  Pick<CMSContent, "services" | "faqs">
+> {
+  const [svcRes, faqRes] = await Promise.allSettled([
+    fetch("/api/services").then((r) => r.json()),
+    fetch("/api/faqs").then((r) => r.json()),
+  ]);
+
+  const services: CMSContent["services"] = {};
+  const faqs: CMSContent["faqs"] = {};
+
+  if (svcRes.status === "fulfilled" && svcRes.value?.success) {
+    for (const svc of svcRes.value.data ?? []) {
+      services[svc.slug] = svc;
+    }
+  }
+
+  if (faqRes.status === "fulfilled" && faqRes.value?.success) {
+    for (const faq of faqRes.value.data ?? []) {
+      faqs[String(faq.faq_id)] = faq;
+    }
+  }
+
+  return { services, faqs };
 }

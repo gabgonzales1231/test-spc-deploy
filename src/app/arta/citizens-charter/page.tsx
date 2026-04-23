@@ -1,46 +1,140 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import CharterHeader from "@/components/arta/citizens-charter/charter-header";
 import OfficeSearch from "@/components/arta/citizens-charter/office-search";
 import OfficeList from "@/components/arta/citizens-charter/office-list";
 import { useCitizensCharterSearch } from "@/hooks/useCitizensCharterSearch";
 
+const fadeInUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12 } },
+};
+
 export default function CitizensCharterPage() {
   const { query, setQuery, results, clearQuery } = useCitizensCharterSearch();
+  const [showIntro, setShowIntro] = useState(true);
+
+  // Automatically transition the splash screen after 2.5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowIntro(false);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <section className="flex flex-col min-h-screen gap-4 p-4 max-w-4xl mx-auto pt-24">
-      <CharterHeader />
+    <>
+      {/* Full-Screen Splash Overlay */}
+      <AnimatePresence>
+        {showIntro && (
+          <motion.section
+            key="splash-overlay"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            className="fixed inset-0 z-50 bg-gradient-to-t from-[#009A68] to-emerald-500 text-white flex items-center justify-center px-4"
+          >
+            <div className="text-center flex flex-col items-center">
+              <div className="mb-6">
+                <h1 className="text-3xl md:text-4xl font-bold font-mono">
+                  KARTA NG MAMAMAYAN
+                </h1>
+                <p className="text-xl md:text-3xl font-semibold">
+                  CITIZEN’S CHARTER
+                </p>
+              </div>
 
-      {/* Prompt card */}
-      <div className="bg-gray-50 shadow-sm rounded-xl p-3 md:p-4 flex items-center gap-3">
-        <Image
-          src="/seal.webp"
-          alt="San Pablo City Seal"
-          width={56}
-          height={56}
-          className="drop-shadow-[0_0_0.1rem_#009A68] shrink-0"
-        />
-        <div>
-          <h2 className="text-sm sm:text-base font-bold">
-            Saang opisina mo gusto magtungo?
-          </h2>
-          <p className="text-xs md:text-sm text-gray-500">
-            (Which office do you want to transact?)
-          </p>
-        </div>
-      </div>
+              <Image
+                src="/seal.webp"
+                alt="City Seal"
+                width={150}
+                height={150}
+                className="drop-shadow-[0_0_0.4rem_rgba(255,255,255,0.5)] mb-6 md:w-[190px] md:h-[190px]"
+                priority
+              />
 
-      {/* Search + List */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <OfficeSearch query={query} onChange={setQuery} onClear={clearQuery} />
-        <div className="flex flex-col bg-white border border-gray-200 rounded-lg shadow flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4">
-            <OfficeList results={results} query={query} onClear={clearQuery} />
-          </div>
-        </div>
-      </div>
-    </section>
+              <p className="text-sm md:text-xl font-medium italic">
+                "TULOY PO KAYO SA BAGONG SAN PABLO"
+              </p>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Main Page Content */}
+      {/* We wait for !showIntro so the stagger animation fires perfectly as the splash leaves */}
+      {!showIntro && (
+        <motion.section
+          className="flex flex-col min-h-screen gap-4 p-4 max-w-4xl mx-auto pt-24"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
+  
+          {/* Charter header */}
+          <motion.div
+            variants={fadeInUp}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <CharterHeader />
+          </motion.div>
+
+          {/* Prompt card */}
+          <motion.div
+            variants={fadeInUp}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="bg-gray-50 shadow-sm rounded-xl p-3 md:p-4 flex items-center gap-3"
+          >
+            <Image
+              src="/seal.webp"
+              alt="San Pablo City Seal"
+              width={56}
+              height={56}
+              className="drop-shadow-[0_0_0.1rem_#009A68] shrink-0"
+            />
+            <div>
+              <h2 className="text-sm sm:text-base font-bold">
+                Saang opisina mo gusto magtungo?
+              </h2>
+              <p className="text-xs md:text-sm text-gray-500">
+                (Which office do you want to transact?)
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Search + List */}
+          <motion.div
+            variants={fadeInUp}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            <OfficeSearch
+              query={query}
+              onChange={setQuery}
+              onClear={clearQuery}
+            />
+            <div className="flex flex-col bg-white border border-gray-200 rounded-lg shadow flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4">
+                <OfficeList
+                  results={results}
+                  query={query}
+                  onClear={clearQuery}
+                />
+              </div>
+            </div>
+          </motion.div>
+        </motion.section>
+      )}
+    </>
   );
 }
