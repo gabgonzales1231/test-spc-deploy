@@ -66,6 +66,16 @@ export default function CitizensCharterPage() {
               <p className="text-sm md:text-xl font-medium italic">
                 "TULOY PO KAYO SA BAGONG SAN PABLO"
               </p>
+
+              {/* Loading Progress Bar */}
+              <div className="w-48 md:w-64 h-1.5 mt-8 bg-white/30 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 2.3, ease: "easeInOut" }}
+                />
+              </div>
             </div>
           </motion.section>
         )}
@@ -80,7 +90,7 @@ export default function CitizensCharterPage() {
           animate="visible"
           variants={staggerContainer}
         >
-  
+
           {/* Charter header */}
           <motion.div
             variants={fadeInUp}

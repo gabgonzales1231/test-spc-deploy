@@ -184,11 +184,7 @@ export default function NewsPage() {
             inspire — here's your hub for the latest updates that bring San
             Pableños together. Stay connected, stay informed!
           </p>
-          {pagination && (
-            <p className="mt-4 text-sm text-emerald-200">
-              {pagination.total} article{pagination.total !== 1 ? "s" : ""} · Page {currentPage} of {pagination.totalPages}
-            </p>
-          )}
+          
         </div>
       </section>
 

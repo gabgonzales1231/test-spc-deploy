@@ -17,7 +17,7 @@ export const officials: Officialnterface[] = [
     department: "Office of the Mayor",
     image: "/officials/mayor.webp",
     email: "mayor@sanpablocity.gov.ph",
-    phone: "(049) 562-1234",
+    phone: "--",
     description:
       "Leading San Pablo City towards sustainable development and progress for all citizens.",
   },
@@ -28,7 +28,7 @@ export const officials: Officialnterface[] = [
     department: "Office of the Vice Mayor",
     image: "/officials/vm.webp",
     email: "vicemayor@sanpablocity.gov.ph",
-    phone: "(049) 562-1235",
+    phone: "--",
     description:
       "Supporting legislative initiatives and community welfare programs.",
   },
@@ -39,7 +39,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_acebedo.webp",
     email: "caacebedo@sanpablocity.gov.ph",
-    phone: "(049) 562-1236",
+    phone: "--",
     description:
       "Championing infrastructure development and public safety initiatives.",
   },
@@ -50,7 +50,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_diaz.webp",
     email: "@sanpablocity.gov.ph",
-    phone: "(049) 562-1237",
+    phone: "--",
     description:
       "Advocating for education, health services, and women's rights.",
   },
@@ -61,7 +61,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_adriano.webp",
     email: "councilor3@sanpablocity.gov.ph",
-    phone: "(049) 562-1238",
+    phone: "--",
     description:
       "Promoting business development and economic growth in the city.",
   },
@@ -72,7 +72,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_adajar.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -83,7 +83,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_villanueva.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -94,7 +94,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_medina.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -105,7 +105,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_pavico.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -116,7 +116,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_lou_amante.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -127,7 +127,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_ticzon.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -138,7 +138,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_calatraba.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -149,7 +149,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_aris_amante.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },
@@ -160,7 +160,7 @@ export const officials: Officialnterface[] = [
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_eldrich_villanueva.webp",
     email: "councilor4@sanpablocity.gov.ph",
-    phone: "(049) 562-1239",
+    phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
   },

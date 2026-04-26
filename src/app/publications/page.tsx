@@ -215,7 +215,7 @@ export default function PublicationsPage() {
                   </span>
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Showing vacancies for the current year only.
+                  These are the job vacancies of the year.
                 </p>
               </div>
 
@@ -485,15 +485,7 @@ export default function PublicationsPage() {
                     </div>
                   </div>
                 </div>
-                <a
-                  href="https://csc.gov.ph/2017/10/02/cs-form-no-212/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors w-full justify-center"
-                >
-                  <FileText className="w-4 h-4" />
-                  Download Application Form (CS Form 212)
-                </a>
+                
               </div>
             </div>
           </CardContent>

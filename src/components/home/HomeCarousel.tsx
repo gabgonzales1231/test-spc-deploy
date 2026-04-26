@@ -97,7 +97,7 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
     () => Autoplay({
       delay: 5000,
       stopOnInteraction: false,
-      playOnInit: false,
+      playOnInit: true,
     }),
     []
   );
@@ -108,14 +108,6 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
     api.on("select", update);
     return () => { api.off("select", update); };
   }, [api]);
-
-  useEffect(() => {
-    if (!api || banners.length <= 1) return;
-    const startTimer = setTimeout(() => {
-      autoplay.play();
-    }, 2500);
-    return () => clearTimeout(startTimer);
-  }, [api, banners.length, autoplay]);
 
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {

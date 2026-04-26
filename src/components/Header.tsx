@@ -11,6 +11,7 @@ export default function Header() {
   const [openDesktopDropdown, setOpenDesktopDropdown] = useState<string | null>(null);
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
@@ -19,6 +20,18 @@ export default function Header() {
 
   const toggleMobileDropdown = (label: string) => {
     setOpenMobileDropdown((prev) => (prev === label ? null : label));
+  };
+
+  // Desktop Hover Handlers with "Intent Delay"
+  const handleMouseEnter = (label: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setOpenDesktopDropdown(label);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setOpenDesktopDropdown(null);
+    }, 200); // 200ms grace period
   };
 
   useEffect(() => {
@@ -90,8 +103,8 @@ export default function Header() {
               {item.hasDropdown ? (
                 <div
                   className="relative"
-                  onMouseEnter={() => setOpenDesktopDropdown(item.label)}
-                  onMouseLeave={() => setOpenDesktopDropdown(null)}
+                  onMouseEnter={() => handleMouseEnter(item.label)}
+                  onMouseLeave={handleMouseLeave}
                 >
                   <div className="flex items-center">
                     <Link
@@ -111,11 +124,6 @@ export default function Header() {
                       }
                       aria-expanded={openDesktopDropdown === item.label}
                       aria-haspopup="true"
-                      aria-label={
-                        openDesktopDropdown === item.label
-                          ? `Collapse ${item.label} menu`
-                          : `Expand ${item.label} menu`
-                      }
                     >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
@@ -125,19 +133,22 @@ export default function Header() {
                     </button>
                   </div>
 
+                  {/* Dropdown Menu Wrapper (pt-2 acts as the bridge) */}
                   {openDesktopDropdown === item.label && (
-                    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
-                      {item.subItems!.map((subItem) => (
-                        <Link
-                          key={subItem.href}
-                          href={subItem.href}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-emerald-700 transition-colors"
-                          prefetch={false}
-                          onClick={() => setOpenDesktopDropdown(null)}
-                        >
-                          {subItem.label}
-                        </Link>
-                      ))}
+                    <div className="absolute top-full left-0 pt-2 w-56 z-50">
+                      <div className="bg-white rounded-lg shadow-lg border border-gray-100 py-2">
+                        {item.subItems!.map((subItem) => (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-emerald-700 transition-colors"
+                            prefetch={false}
+                            onClick={() => setOpenDesktopDropdown(null)}
+                          >
+                            {subItem.label}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -173,7 +184,8 @@ export default function Header() {
         className={`rounded-lg lg:hidden absolute top-15 right-5 w-xs bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
           isMenuOpen ? "max-h-screen" : "max-h-0"
         }`}
-        inert={!isMenuOpen}
+        // FIXED: Using boolean true/undefined instead of an empty string
+        inert={!isMenuOpen ? true : undefined}
         aria-label="Mobile navigation"
       >
         <nav className="flex flex-col gap-2 p-6">
@@ -194,12 +206,6 @@ export default function Header() {
                       type="button"
                       className="p-2 text-gray-700 hover:text-emerald-700 transition-colors"
                       onClick={() => toggleMobileDropdown(item.label)}
-                      aria-label={
-                        openMobileDropdown === item.label
-                          ? `Collapse ${item.label} menu`
-                          : `Expand ${item.label} menu`
-                      }
-                      aria-expanded={openMobileDropdown === item.label}
                     >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${

@@ -19,7 +19,7 @@ interface TraysikelForm { plateNumber: string; complaint: string }
 export default function ChatWidget() {
 
   // ── Widget ────────────────────────────────────────────────────────────
-  const [isOpen, setIsOpen]          = useState(false);
+  const [isOpen, setIsOpen]           = useState(false);
   const [bubbleDismissed, setBubble] = useState(false);
   const [stage, setStage]            = useState<ChatStage>("form");
 
@@ -58,6 +58,16 @@ export default function ChatWidget() {
       if (saved) setUserInfo(JSON.parse(saved) as UserInfo);
     } catch {}
   }, []);
+
+  // Auto-dismiss the tooltip bubble after 6 seconds
+  useEffect(() => {
+    if (!isOpen && !bubbleDismissed) {
+      const timer = setTimeout(() => {
+        setBubble(true);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, bubbleDismissed]);
 
   // ── Message helpers ───────────────────────────────────────────────────
 
@@ -254,7 +264,7 @@ export default function ChatWidget() {
       <div
         aria-label="City virtual assistant chat"
         aria-hidden={!isOpen}
-        className={`fixed bottom-[88px] right-6 w-[340px] max-h-[560px] h-[calc(100vh-120px)] z-[9998] flex flex-col rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] border border-black/10 bg-background transition-all duration-200 ${
+        className={`fixed bottom-[88px] right-6 w-[340px] max-h-[420px] h-[calc(100vh-120px)] z-[9998] flex flex-col rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] border border-black/10 bg-background transition-all duration-200 ${
           isOpen
             ? "opacity-100 visible translate-y-0 scale-100 pointer-events-auto"
             : "opacity-0 invisible translate-y-3 scale-95 pointer-events-none"
@@ -319,7 +329,7 @@ export default function ChatWidget() {
             <path d="M18 6L6 18M6 6L18 18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         ) : (
-          <JPAvatar size={32} />
+          <JPAvatar size={40} />
         )}
       </button>
     </>
