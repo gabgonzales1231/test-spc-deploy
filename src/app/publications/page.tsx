@@ -20,6 +20,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,7 +48,13 @@ type SortDir   = "asc" | "desc";
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-const CMS_API_URL = "http://localhost:3001";
+
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 const ITEMS_PER_PAGE = 10;
 
 // ---------------------------------------------------------------------------
@@ -100,42 +107,42 @@ export default function PublicationsPage() {
 
   const currentYear = new Date().getFullYear();
 
-  // ── Fetch from CMS API ──────────────────────────────────────────────────
-  const fetchVacancies = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const qs = new URLSearchParams({
-        year:  String(currentYear),
-        limit: "200",
-      });
+ const fetchVacancies = useCallback(async () => {
+  setLoading(true);
+  setError(null);
 
-      const res = await fetch(`${CMS_API_URL}/api/publications?${qs.toString()}`);
+  try {
+    const { data, error } = await supabase
+      .from("publications")
+      .select("publication_id, title, file_path, created_at")
+      .gte("created_at", `${currentYear}-01-01T00:00:00.000Z`)
+      .lt( "created_at", `${currentYear + 1}-01-01T00:00:00.000Z`)
+      .order("created_at", { ascending: false })
+      .limit(200);
 
-      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+    if (error) throw error;
 
-      const json = await res.json();
+    const enriched: Publication[] = (data ?? []).map((pub) => ({
+      ...pub,
+      pdf_url: supabase.storage
+        .from("vacancies")
+        .getPublicUrl(pub.file_path).data.publicUrl,
+      uploaded_by: null,
+      updated_at:  pub.created_at, // not selected, fallback
+    }));
 
-      // Handle both { data: [...] } and { data: { data: [...] } } shapes
-      const raw: Publication[] =
-        Array.isArray(json.data)
-          ? json.data
-          : Array.isArray(json.data?.data)
-          ? json.data.data
-          : [];
+    setVacancies(enriched.map(toVacancy));
+  } catch (err) {
+    console.error("Failed to fetch publications:", err);
+    setError("Unable to load vacancies at this time. Please try again later.");
+  } finally {
+    setLoading(false);
+  }
+}, [currentYear]);
 
-      setVacancies(raw.map(toVacancy));
-    } catch (err) {
-      console.error("Failed to fetch publications:", err);
-      setError("Unable to load vacancies at this time. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentYear]);
-
-  useEffect(() => {
-    fetchVacancies();
-  }, [fetchVacancies]);
+useEffect(() => {
+  fetchVacancies();
+}, [fetchVacancies]);
 
   // ── Search filter ────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
