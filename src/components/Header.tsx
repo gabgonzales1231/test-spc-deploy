@@ -6,6 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
+// Navigation items definition - Moved outside to prevent re-creation on every render
+const navItems = [
+  { href: "/", label: "Home" },
+  { href: "/news", label: "News" },
+  {
+    label: "About Us",
+    href: "/about-us",
+    hasDropdown: true,
+    subItems: [
+      { label: "City Government", href: "/about-us/city-government" },
+      { label: "Local Officials", href: "/about-us/local-officials" },
+      { label: "The History of San Pablo", href: "/about-us/history" },
+      { label: "Visions and Mission", href: "/about-us/mission-vision" },
+    ],
+  },
+  { href: "/services", label: "Services" },
+  { href: "/disclosure-portal", label: "Disclosure Portal" },
+  { href: "/forms", label: "Forms" },
+  { href: "/publications", label: "Publications" },
+  {
+    label: "ARTA Corner",
+    // No href here makes it a pure trigger for the dropdown
+    hasDropdown: true,
+    subItems: [
+      { label: "Citizen's Charter", href: "/arta/citizens-charter" },
+    ],
+  },
+];
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDesktopDropdown, setOpenDesktopDropdown] = useState<string | null>(null);
@@ -48,34 +77,6 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/news", label: "News" },
-    {
-      label: "About Us",
-      href: "/about-us",
-      hasDropdown: true,
-      subItems: [
-        { label: "City Government", href: "/about-us/city-government" },
-        { label: "Local Officials", href: "/about-us/local-officials" },
-        { label: "The History of San Pablo", href: "/about-us/history" },
-        { label: "Visions and Mission", href: "/about-us/mission-vision" },
-      ],
-    },
-    { href: "/services", label: "Services" },
-    { href: "/disclosure-portal", label: "Disclosure Portal" },
-    { href: "/forms", label: "Forms" },
-    { href: "/publications", label: "Publications" },
-    {
-      label: "ARTA Corner",
-      href: "/arta",
-      hasDropdown: true,
-      subItems: [
-        { label: "Citizen's Charter", href: "/arta/citizens-charter" },
-      ],
-    },
-  ];
-
   return (
     <header
       ref={headerRef}
@@ -107,16 +108,30 @@ export default function Header() {
                   onMouseLeave={handleMouseLeave}
                 >
                   <div className="flex items-center">
-                    <Link
-                      href={item.href!}
-                      className="text-sm font-medium hover:text-emerald-700 transition-colors text-gray-700"
-                      prefetch={false}
-                    >
-                      {item.label}
-                    </Link>
+                    {item.href ? (
+                      <Link
+                        href={item.href}
+                        className={`text-sm font-medium transition-colors hover:text-emerald-700 ${
+                          openDesktopDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                        }`}
+                        prefetch={false}
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <span
+                        className={`text-sm font-medium transition-colors cursor-default select-none hover:text-emerald-700 ${
+                          openDesktopDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    )}
                     <button
                       type="button"
-                      className="ml-1 p-1 hover:text-emerald-700 transition-colors text-gray-700"
+                      className={`ml-1 p-1 transition-colors hover:text-emerald-700 ${
+                        openDesktopDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                      }`}
                       onClick={() =>
                         setOpenDesktopDropdown((prev) =>
                           prev === item.label ? null : item.label
@@ -133,7 +148,7 @@ export default function Header() {
                     </button>
                   </div>
 
-                  {/* Dropdown Menu Wrapper (pt-2 acts as the bridge) */}
+                  {/* Dropdown Menu Wrapper */}
                   {openDesktopDropdown === item.label && (
                     <div className="absolute top-full left-0 pt-2 w-56 z-50">
                       <div className="bg-white rounded-lg shadow-lg border border-gray-100 py-2">
@@ -184,7 +199,6 @@ export default function Header() {
         className={`rounded-lg lg:hidden absolute top-15 right-5 w-xs bg-white shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
           isMenuOpen ? "max-h-screen" : "max-h-0"
         }`}
-        // FIXED: Using boolean true/undefined instead of an empty string
         inert={!isMenuOpen ? true : undefined}
         aria-label="Mobile navigation"
       >
@@ -194,17 +208,31 @@ export default function Header() {
               {item.hasDropdown ? (
                 <div>
                   <div className="flex items-center justify-between">
-                    <Link
-                      href={item.href!}
-                      className="flex-1 text-sm font-medium text-gray-700 hover:text-emerald-700 transition-colors py-2"
-                      prefetch={false}
-                      onClick={toggleMenu}
-                    >
-                      {item.label}
-                    </Link>
+                    {item.href ? (
+                      <Link
+                        href={item.href}
+                        className={`flex-1 text-sm font-medium transition-colors py-2 hover:text-emerald-700 ${
+                          openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                        }`}
+                        prefetch={false}
+                        onClick={toggleMenu}
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <span
+                        className={`flex-1 text-sm font-medium transition-colors py-2 cursor-default select-none hover:text-emerald-700 ${
+                          openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    )}
                     <button
                       type="button"
-                      className="p-2 text-gray-700 hover:text-emerald-700 transition-colors"
+                      className={`p-2 transition-colors hover:text-emerald-700 ${
+                        openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                      }`}
                       onClick={() => toggleMobileDropdown(item.label)}
                     >
                       <ChevronDown
