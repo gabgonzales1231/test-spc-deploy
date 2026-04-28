@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ChatMessage, ChatStage, UserInfo, CMSContent, generateId } from "@/lib/chatTypes";
-import { getNode, getMainMenuNode, resolveNodeByKeyword, getSmallTalkResponse, injectContent, submitFeedback, fetchCMSContent } from "@/lib/chatEngine";
+import { buildDynamicNodes, getNode, getMainMenuNode, resolveNodeByKeyword, getSmallTalkResponse, injectContent, submitFeedback, fetchCMSContent } from "@/lib/chatEngine";
 import { FlowNode, MAIN_MENU_KEY } from "@/lib/flowData";
 
 import { ChatForm }      from "./chat/ChatForm";
@@ -12,6 +12,8 @@ import { ChatInputArea } from "./chat/ChatInputArea";
 import { ChatEnded }     from "./chat/ChatEnded";
 import { PreOpenBubble } from "./chat/ui/PreOpenBubble";
 import { JPAvatar }      from "./chat/ui/JPAvatar";
+
+
 
 interface NegosyoForm   { businessId: string; complaint: string }
 interface TraysikelForm { plateNumber: string; complaint: string }
@@ -46,11 +48,17 @@ export default function ChatWidget() {
 
   // ── Effects ───────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    fetchCMSContent()
-      .then(({ services, faqs }) => setCms({ services, faqs, loaded: true, error: null }))
-      .catch(() => setCms((p) => ({ ...p, loaded: true, error: "CMS unavailable." })));
-  }, []);
+useEffect(() => {
+  fetchCMSContent()
+    .then(({ services, faqs }) => {
+      const loaded = { services, faqs, loaded: true, error: null };
+      setCms(loaded);
+      buildDynamicNodes(loaded); // ← builds dynamic nodes into the engine
+    })
+    .catch(() => {
+      setCms((p) => ({ ...p, loaded: true, error: "CMS unavailable." }));
+    });
+}, []);
 
   useEffect(() => {
     try {

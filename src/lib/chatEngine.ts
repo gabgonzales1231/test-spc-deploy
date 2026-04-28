@@ -1,105 +1,143 @@
 // ─────────────────────────────────────────────
-// chatEngine.ts — Flow-based navigation engine
+// chatEngine.ts — Dynamic flow engine
 // ─────────────────────────────────────────────
 
 import {
-  FLOW_NODES,
+  STATIC_FLOW_NODES,
   KEYWORD_MAP,
   MAIN_MENU_KEY,
   FlowNode,
 } from "./flowData";
-import { CMSContent, ComplaintPayload } from "./chatTypes";
+import { CMSContent, CMSFaq, CMSService, ComplaintPayload } from "./chatTypes";
 
-// ── Placeholder injection ──────────────────────────────────────────────────
+// ── Dynamic node registry (built from CMS) ────────────────────────────────
+// Merged with STATIC_FLOW_NODES at runtime
 
-const STATIC_FALLBACKS: Record<string, string> = {
-  citizens_charter_link:
-    "https://files.sanpablocity.gov.ph/A7d9F3kH2mX0QwL5Z8vR1tY4nP6sB0.pdf",
-  fare_price_link:
-    "https://files.sanpablocity.gov.ph/A7d9F3kH2mX0QwL5Z8vR1tY4nP6sB0.pdf",
-  office_contacts: `Bureau of Fire Protection:\nLandline: 5627-654\n\nCDRRMO\nLandline: 8000-405\nSmart: 09089078124\nGlobe: 09955619456\n\nCHO\nLandline: 576-9119\nSmart: 09392022318\nGlobe: 09673625480\n\nPolice\nLandline: 5626-474\nLandline: 5210-610\n\nWelfare & Development Office\nLandline: (049) 3000-065`,
-  terminal_locations:
-    "Para sa kumpletong listahan ng mga terminal, mangyaring bisitahin ang City Hall o makipag-ugnayan sa LTFRB San Pablo.",
-};
+let DYNAMIC_NODES: Record<string, FlowNode> = {};
 
-export function injectContent(
-  template: string,
-  cms: CMSContent
-): string {
-  return template.replace(/{{(\w+)}}/g, (_, key) => {
-    // Try CMS services by slug-derived key first
-    if (key === "citizens_charter_link" || key === "fare_price_link") {
-      const slug =
-        key === "citizens_charter_link" ? "citizens-charter" : "fare-price";
-      const svc = cms.services[slug];
-      if (svc?.online_application_url) return svc.online_application_url;
-    }
+// ── Build dynamic nodes from CMS data ────────────────────────────────────
 
-    // Try CMS FAQs for contacts / terminal
-    if (key === "office_contacts") {
-      const faq = Object.values(cms.faqs).find(
-        (f) => f.category_id === 1 // convention: category 1 = contacts
-      );
-      if (faq?.answer) return faq.answer;
-    }
+export function buildDynamicNodes(cms: CMSContent): void {
+  const newNodes: Record<string, FlowNode> = {};
 
-    if (key === "terminal_locations") {
-      const faq = Object.values(cms.faqs).find(
-        (f) => f.category_id === 2 // convention: category 2 = transport
-      );
-      if (faq?.answer) return faq.answer;
-    }
+  // ── Service nodes — one node per service row ──────────────────────
+  const serviceOptions: FlowNode["options"] = [];
 
-    // Static fallback
-    return STATIC_FALLBACKS[key] ?? `[${key}]`;
-  });
+  for (const svc of Object.values(cms.services)) {
+    const nodeKey = `service-${svc.slug}`;
+
+    // Build the message for this service
+    const lines: string[] = [`📋 *${svc.name}*`];
+    if (svc.description)            lines.push(`\n${svc.description}`);
+    if (svc.requirements)           lines.push(`\n📌 Mga Kinakailangan:\n${svc.requirements}`);
+    if (svc.fees)                   lines.push(`\n💰 Bayad: ${svc.fees}`);
+    if (svc.processing_time)        lines.push(`\n⏱ Oras ng Proseso: ${svc.processing_time}`);
+    if (svc.online_application_url) lines.push(`\n🔗 Link:\n${svc.online_application_url}`);
+
+    newNodes[nodeKey] = {
+      key: nodeKey,
+      message: lines.join(""),
+      options: [],
+      inputMode: null,
+      isTerminal: true,
+    };
+
+    serviceOptions.push({ label: svc.name, value: nodeKey });
+  }
+
+  // Always add "Iba Pa" at the end of services
+  serviceOptions.push({ label: "Iba Pa", value: "serbisyo-iba" });
+
+  // Patch the static serbisyo node options
+  newNodes["serbisyo"] = {
+    ...STATIC_FLOW_NODES["serbisyo"],
+    options: serviceOptions,
+  };
+
+  // ── FAQ nodes — one node per faq row ─────────────────────────────
+  const faqOptions: FlowNode["options"] = [];
+
+  for (const faq of Object.values(cms.faqs)) {
+    const nodeKey = `faq-${faq.faq_id}`;
+
+    newNodes[nodeKey] = {
+      key: nodeKey,
+      message: `❓ *${faq.question}*\n\n${faq.answer}`,
+      options: [],
+      inputMode: null,
+      isTerminal: true,
+    };
+
+    faqOptions.push({ label: faq.question, value: nodeKey });
+  }
+
+  // Patch the static tanong node options
+  newNodes["tanong"] = {
+    ...STATIC_FLOW_NODES["tanong"],
+    options: faqOptions,
+  };
+
+  DYNAMIC_NODES = newNodes;
 }
 
-// ── Node resolution ────────────────────────────────────────────────────────
+// ── Unified node lookup ───────────────────────────────────────────────────
+
+function getAllNodes(): Record<string, FlowNode> {
+  return { ...STATIC_FLOW_NODES, ...DYNAMIC_NODES };
+}
+
+export function getNode(key: string): FlowNode {
+  const all = getAllNodes();
+  return all[key] ?? all[MAIN_MENU_KEY];
+}
+
+export function getMainMenuNode(): FlowNode {
+  return getAllNodes()[MAIN_MENU_KEY];
+}
+
+// ── Keyword resolution ────────────────────────────────────────────────────
 
 export function resolveNodeByKeyword(input: string): FlowNode | null {
   const normalized = input.toLowerCase().trim();
+  const all = getAllNodes();
 
-  // Exact match in keyword map
-  if (KEYWORD_MAP[normalized]) {
-    return FLOW_NODES[KEYWORD_MAP[normalized]] ?? null;
+  if (KEYWORD_MAP[normalized]) return all[KEYWORD_MAP[normalized]] ?? null;
+
+  for (const [kw, nodeKey] of Object.entries(KEYWORD_MAP)) {
+    if (normalized.includes(kw)) return all[nodeKey] ?? null;
   }
 
-  // Partial match
-  for (const [kw, nodeKey] of Object.entries(KEYWORD_MAP)) {
-    if (normalized.includes(kw)) {
-      return FLOW_NODES[nodeKey] ?? null;
+  // Also try matching against FAQ questions and service names dynamically
+  for (const node of Object.values(DYNAMIC_NODES)) {
+    if (node.key.startsWith("faq-") || node.key.startsWith("service-")) {
+      const label = node.message.split("\n")[0].replace(/[*❓📋]/g, "").trim().toLowerCase();
+      if (normalized.includes(label) || label.includes(normalized)) return node;
     }
   }
 
   return null;
 }
 
-export function getNode(key: string): FlowNode {
-  return FLOW_NODES[key] ?? FLOW_NODES[MAIN_MENU_KEY];
-}
-
-export function getMainMenuNode(): FlowNode {
-  return FLOW_NODES[MAIN_MENU_KEY];
-}
-
-// ── Greeting / small talk ──────────────────────────────────────────────────
+// ── Small talk ────────────────────────────────────────────────────────────
 
 const GREETINGS = ["hi", "hello", "hey", "kumusta", "musta", "good morning", "good afternoon", "good evening"];
 const THANKS    = ["thank", "thanks", "thank you", "salamat", "ok", "okay", "noted"];
 
 export function getSmallTalkResponse(input: string): string | null {
   const n = input.toLowerCase();
-  if (GREETINGS.some((g) => n.includes(g))) {
-    return "Magandang araw! 😊 Piliin ang iyong kailangan sa ibaba.";
-  }
-  if (THANKS.some((t) => n.includes(t))) {
-    return "Walang anuman! May iba pa ba akong maitutulong? 😊";
-  }
+  if (GREETINGS.some((g) => n.includes(g))) return "Magandang araw! 😊 Piliin ang iyong kailangan sa ibaba.";
+  if (THANKS.some((t) => n.includes(t)))    return "Walang anuman! May iba pa ba akong maitutulong? 😊";
   return null;
 }
 
-// ── Feedback / complaint submission ───────────────────────────────────────
+// ── injectContent — kept for backwards compat but no longer needed ────────
+// Dynamic nodes have their content baked in at build time.
+
+export function injectContent(template: string, _cms: CMSContent): string {
+  return template; // content is already resolved in buildDynamicNodes()
+}
+
+// ── Feedback ──────────────────────────────────────────────────────────────
 
 export async function submitFeedback(
   payload: ComplaintPayload
@@ -122,16 +160,14 @@ export async function submitFeedback(
 
 // ── CMS fetcher ───────────────────────────────────────────────────────────
 
-export async function fetchCMSContent(): Promise<
-  Pick<CMSContent, "services" | "faqs">
-> {
+export async function fetchCMSContent(): Promise<Pick<CMSContent, "services" | "faqs">> {
   const [svcRes, faqRes] = await Promise.allSettled([
     fetch("/api/services").then((r) => r.json()),
     fetch("/api/faqs").then((r) => r.json()),
   ]);
 
   const services: CMSContent["services"] = {};
-  const faqs: CMSContent["faqs"] = {};
+  const faqs: CMSContent["faqs"]         = {};
 
   if (svcRes.status === "fulfilled" && svcRes.value?.success) {
     for (const svc of svcRes.value.data ?? []) {
