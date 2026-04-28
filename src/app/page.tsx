@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import { supabase } from "@/backend/config/database";
 import HomePageClient from "@/components/client/HomePageClient";
 
+export const dynamic = 'force-dynamic'
+
 // ============= TYPES =============
 export interface Article {
   article_id: number;
