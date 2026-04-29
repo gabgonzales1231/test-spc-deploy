@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Briefcase,
   Building2,
-  Search,
   FileText,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +18,7 @@ import {
   Inbox,
   Loader2,
   AlertCircle,
+  Calendar,
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -27,29 +27,27 @@ import { createClient } from "@supabase/supabase-js";
 // ---------------------------------------------------------------------------
 interface Publication {
   publication_id: number;
-  title: string;
-  file_path: string;
-  pdf_url: string | null;
+  filename:    string;
+  file_path:   string;
+  pdf_url:     string | null;
   uploaded_by: number | null;
-  created_at: string;
-  updated_at: string;
+  created_at:  string;
+  updated_at:  string;
 }
 
 interface Vacancy {
-  id: number;
+  id:         number;
   datePosted: string;
-  positionTitle: string;
-  pdfUrl: string | null;
+  filename:   string;
+  pdfUrl:     string | null;
 }
 
-type SortField = "datePosted" | "positionTitle";
+type SortField = "datePosted" | "filename";
 type SortDir   = "asc" | "desc";
 
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -57,34 +55,33 @@ const supabase = createClient(
 
 const ITEMS_PER_PAGE = 10;
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
-    year:  "numeric",
-    month: "long",
-    day:   "numeric",
+    year: "numeric", month: "long", day: "numeric",
   });
 }
 
 function toVacancy(pub: Publication): Vacancy {
   return {
-    id:            pub.publication_id,
-    datePosted:    pub.created_at,
-    positionTitle: pub.title,
-    pdfUrl:        pub.pdf_url,
+    id:         pub.publication_id,
+    datePosted: pub.created_at,
+    filename:   pub.filename,
+    pdfUrl:     pub.pdf_url,
   };
 }
 
 function SortIcon({
-  field,
-  sortField,
-  sortDir,
+  field, sortField, sortDir,
 }: {
-  field: SortField;
-  sortField: SortField;
-  sortDir: SortDir;
+  field: SortField; sortField: SortField; sortDir: SortDir;
 }) {
   if (sortField !== field)
     return <ChevronsUpDown className="w-3.5 h-3.5 ml-1 text-gray-400" />;
@@ -97,69 +94,66 @@ function SortIcon({
 // Page Component
 // ---------------------------------------------------------------------------
 export default function PublicationsPage() {
-  const [vacancies,  setVacancies]  = useState<Vacancy[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState<string | null>(null);
-  const [search,     setSearch]     = useState("");
-  const [page,       setPage]       = useState(1);
-  const [sortField,  setSortField]  = useState<SortField>("datePosted");
-  const [sortDir,    setSortDir]    = useState<SortDir>("desc");
+  const [vacancies,     setVacancies]     = useState<Vacancy[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [page,          setPage]          = useState(1);
+  const [sortField,     setSortField]     = useState<SortField>("datePosted");
+  const [sortDir,       setSortDir]       = useState<SortDir>("desc");
 
   const currentYear = new Date().getFullYear();
 
- const fetchVacancies = useCallback(async () => {
-  setLoading(true);
-  setError(null);
+  const fetchVacancies = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-  try {
-    const { data, error } = await supabase
-      .from("publications")
-      .select("publication_id, title, file_path, created_at")
-      .gte("created_at", `${currentYear}-01-01T00:00:00.000Z`)
-      .lt( "created_at", `${currentYear + 1}-01-01T00:00:00.000Z`)
-      .order("created_at", { ascending: false })
-      .limit(200);
+    try {
+      const { data, error } = await supabase
+        .from("publications")
+        .select("publication_id, filename, file_path, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const enriched: Publication[] = (data ?? []).map((pub) => ({
-      ...pub,
-      pdf_url: supabase.storage
-        .from("vacancies")
-        .getPublicUrl(pub.file_path).data.publicUrl,
-      uploaded_by: null,
-      updated_at:  pub.created_at, // not selected, fallback
-    }));
+      const enriched: Publication[] = (data ?? []).map((pub) => ({
+        ...pub,
+        pdf_url: supabase.storage
+          .from("vacancies")
+          .getPublicUrl(pub.file_path).data.publicUrl,
+        uploaded_by: null,
+        updated_at:  pub.created_at,
+      }));
 
-    setVacancies(enriched.map(toVacancy));
-  } catch (err) {
-    console.error("Failed to fetch publications:", err);
-    setError("Unable to load vacancies at this time. Please try again later.");
-  } finally {
-    setLoading(false);
-  }
-}, [currentYear]);
+      setVacancies(enriched.map(toVacancy));
+    } catch (err) {
+      console.error("Failed to fetch publications:", err);
+      setError("Unable to load vacancies at this time. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-useEffect(() => {
-  fetchVacancies();
-}, [fetchVacancies]);
+  useEffect(() => {
+    fetchVacancies();
+  }, [fetchVacancies]);
 
-  // ── Search filter ────────────────────────────────────────────────────────
+  // ── Filters (Locked to Current Year) ──────────────────────────────────────
   const filtered = useMemo(() => {
-    const query = search.toLowerCase().trim();
-    if (!query) return vacancies;
-    return vacancies.filter(
-      (v) =>
-        formatDate(v.datePosted).toLowerCase().includes(query) ||
-        v.positionTitle.toLowerCase().includes(query)
-    );
-  }, [vacancies, search]);
+    return vacancies.filter((v) => {
+      const date = new Date(v.datePosted);
+      const isCurrentYear = date.getFullYear() === currentYear;
+      const matchMonth = selectedMonth === "all" || MONTHS[date.getMonth()] === selectedMonth;
+      return isCurrentYear && matchMonth;
+    });
+  }, [vacancies, selectedMonth, currentYear]);
 
-  // ── Sort ─────────────────────────────────────────────────────────────────
+  // ── Sort ──────────────────────────────────────────────────────────────────
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
-      const valA = sortField === "datePosted" ? a.datePosted    : a.positionTitle;
-      const valB = sortField === "datePosted" ? b.datePosted    : b.positionTitle;
+      const valA = sortField === "datePosted" ? a.datePosted : a.filename;
+      const valB = sortField === "datePosted" ? b.datePosted : b.filename;
       const cmp  = valA < valB ? -1 : valA > valB ? 1 : 0;
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -170,10 +164,7 @@ useEffect(() => {
   const startItem  = sorted.length === 0 ? 0 : (page - 1) * ITEMS_PER_PAGE + 1;
   const endItem    = Math.min(page * ITEMS_PER_PAGE, sorted.length);
 
-  function handleSearch(val: string) {
-    setSearch(val);
-    setPage(1);
-  }
+  function handleMonthChange(val: string) { setSelectedMonth(val); setPage(1); }
 
   function handleSort(field: SortField) {
     if (sortField === field) {
@@ -185,7 +176,6 @@ useEffect(() => {
     setPage(1);
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
 
@@ -200,7 +190,7 @@ useEffect(() => {
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">Publications</h1>
           <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
-            Official job vacancy announcements for the City Government of San Pablo.
+            Official job vacancy announcements for the City Government of San Pablo ({currentYear}).
             All postings are updated in real time from our records office.
           </p>
         </div>
@@ -217,33 +207,48 @@ useEffect(() => {
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <Briefcase className="w-6 h-6 text-emerald-600" />
                   Job Vacancies
-                  <span className="ml-2 px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full">
-                    {currentYear}
-                  </span>
+                  {selectedMonth !== "all" && (
+                    <span className="ml-2 px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full">
+                      {selectedMonth} {currentYear}
+                    </span>
+                  )}
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  These are the job vacancies of the year.
+                  Viewing vacancies for the year {currentYear}.
                 </p>
               </div>
 
-              {/* Search */}
-              <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by title or date…"
-                  value={search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white transition"
-                  aria-label="Search vacancies"
-                />
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div className="relative w-full sm:w-44">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => handleMonthChange(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white appearance-none cursor-pointer"
+                    aria-label="Filter by month"
+                  >
+                    <option value="all">All Months</option>
+                    {MONTHS.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+
+                {selectedMonth !== "all" && (
+                  <button
+                    onClick={() => handleMonthChange("all")}
+                    className="text-xs text-gray-400 hover:text-red-500 underline transition-colors whitespace-nowrap self-center"
+                  >
+                    Clear Filter
+                  </button>
+                )}
               </div>
             </div>
           </CardHeader>
 
           <CardContent className="px-6 py-6">
-
-            {/* Loading state */}
             {loading ? (
               <div className="flex flex-col items-center py-16 text-gray-400">
                 <Loader2 className="w-10 h-10 animate-spin text-emerald-500 mb-3" />
@@ -251,7 +256,6 @@ useEffect(() => {
               </div>
 
             ) : error ? (
-              /* Error state */
               <div className="flex flex-col items-center py-16 text-gray-400">
                 <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
                 <p className="font-medium text-gray-600">Failed to load vacancies</p>
@@ -266,7 +270,6 @@ useEffect(() => {
 
             ) : (
               <>
-                {/* Results count */}
                 {sorted.length > 0 && (
                   <p className="text-xs text-gray-500 mb-3">
                     Showing{" "}
@@ -284,34 +287,21 @@ useEffect(() => {
                       <tr className="bg-emerald-50 border-b border-emerald-100">
                         <th
                           scope="col"
-                          className="px-5 py-3 text-left font-semibold text-gray-700 cursor-pointer select-none w-44"
+                          className="px-5 py-3 text-center font-semibold text-gray-700 cursor-pointer select-none"
                           onClick={() => handleSort("datePosted")}
                         >
-                          <span className="inline-flex items-center">
-                            Date Posted
+                          <div className="flex items-center justify-center">
+                            Date Submitted
                             <SortIcon field="datePosted" sortField={sortField} sortDir={sortDir} />
-                          </span>
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-5 py-3 text-left font-semibold text-gray-700 cursor-pointer select-none"
-                          onClick={() => handleSort("positionTitle")}
-                        >
-                          <span className="inline-flex items-center">
-                            Position Title
-                            <SortIcon field="positionTitle" sortField={sortField} sortDir={sortDir} />
-                          </span>
-                        </th>
-                        <th scope="col" className="px-5 py-3 text-center font-semibold text-gray-700 w-28">
-                          Action
+                          </div>
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {paginated.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-5 py-16 text-center">
-                            <EmptyState search={search} />
+                          <td className="px-5 py-16 text-center">
+                            <EmptyState selectedMonth={selectedMonth} />
                           </td>
                         </tr>
                       ) : (
@@ -322,26 +312,19 @@ useEffect(() => {
                               i % 2 === 0 ? "bg-white" : "bg-gray-50/40"
                             }`}
                           >
-                            <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
-                              {formatDate(v.datePosted)}
-                            </td>
-                            <td className="px-5 py-4 font-medium text-gray-900">
-                              {v.positionTitle}
-                            </td>
                             <td className="px-5 py-4 text-center">
                               {v.pdfUrl ? (
-                                <a
-                                  href={v.pdfUrl}
+                                <a  href={v.pdfUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors"
-                                  aria-label={`View PDF for ${v.positionTitle}`}
+                                  className="inline-flex items-center justify-center gap-1.5 text-emerald-700 hover:text-emerald-900 font-medium underline underline-offset-2 transition-colors"
+                                  aria-label={`View PDF submitted on ${formatDate(v.datePosted)}`}
                                 >
-                                  <FileText className="w-3.5 h-3.5" />
-                                  View
+                                  <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                                  {formatDate(v.datePosted)}
                                 </a>
                               ) : (
-                                <span className="text-xs text-gray-400">Unavailable</span>
+                                <span className="text-gray-500 block text-center">{formatDate(v.datePosted)}</span>
                               )}
                             </td>
                           </tr>
@@ -355,38 +338,27 @@ useEffect(() => {
                 <div className="md:hidden space-y-3">
                   {paginated.length === 0 ? (
                     <div className="py-16 text-center">
-                      <EmptyState search={search} />
+                      <EmptyState selectedMonth={selectedMonth} />
                     </div>
                   ) : (
                     paginated.map((v) => (
                       <div
                         key={v.id}
-                        className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"
+                        className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex justify-center text-center"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 leading-snug">
-                              {v.positionTitle}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {formatDate(v.datePosted)}
-                            </p>
-                          </div>
-                          {v.pdfUrl ? (
-                            <a
-                              href={v.pdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors"
-                              aria-label={`View PDF for ${v.positionTitle}`}
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                              View PDF
-                            </a>
-                          ) : (
-                            <span className="text-xs text-gray-400 self-center">Unavailable</span>
-                          )}
-                        </div>
+                        {v.pdfUrl ? (
+                          <a  href={v.pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-emerald-700 hover:text-emerald-900 font-medium underline underline-offset-2 transition-colors text-sm"
+                            aria-label={`View PDF submitted on ${formatDate(v.datePosted)}`}
+                          >
+                            <FileText className="w-4 h-4 flex-shrink-0" />
+                            {formatDate(v.datePosted)}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-gray-500">{formatDate(v.datePosted)}</span>
+                        )}
                       </div>
                     ))
                   )}
@@ -440,7 +412,7 @@ useEffect(() => {
           </CardContent>
         </Card>
 
-        {/* How to Apply */}
+        
         <Card className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 shadow-xl">
           <CardContent className="p-8">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">
@@ -484,7 +456,7 @@ useEffect(() => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <span>hrmo@sanpablocity.gov.ph</span>
+                      <span>chrmo@sanpablocity.gov.ph</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
@@ -492,7 +464,6 @@ useEffect(() => {
                     </div>
                   </div>
                 </div>
-                
               </div>
             </div>
           </CardContent>
@@ -515,21 +486,19 @@ useEffect(() => {
 // ---------------------------------------------------------------------------
 // Empty State
 // ---------------------------------------------------------------------------
-function EmptyState({ search }: { search: string }) {
+function EmptyState({ selectedMonth }: { selectedMonth: string }) {
   return (
     <div className="flex flex-col items-center text-gray-400">
       <Inbox className="w-12 h-12 mb-3 text-gray-300" />
-      {search ? (
+      {selectedMonth !== "all" ? (
         <>
           <p className="font-medium text-gray-600">No results found</p>
-          <p className="text-sm mt-1">
-            No vacancies match &ldquo;{search}&rdquo;. Try a different keyword.
-          </p>
+          <p className="text-sm mt-1">No vacancies were posted in &ldquo;{selectedMonth}&rdquo; for {new Date().getFullYear()}.</p>
         </>
       ) : (
         <>
           <p className="font-medium text-gray-600">No vacancies posted yet</p>
-          <p className="text-sm mt-1">Check back soon for new job postings.</p>
+          <p className="text-sm mt-1">Check back soon for new job postings for the current year.</p>
         </>
       )}
     </div>

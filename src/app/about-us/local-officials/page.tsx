@@ -60,7 +60,7 @@ function OfficialCard({ official }: { official: Officialnterface }) {
           {official.description}
         </p>
 
-        {/* Contact Info */}
+               {/* Contact Info */}
         <div className="space-y-3">
           <div className="flex items-center group/item">
             <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3 group-hover/item:bg-emerald-200 transition-colors">
@@ -82,6 +82,9 @@ function OfficialCard({ official }: { official: Officialnterface }) {
             </div>
           </div>
         </div>
+
+        
+        
       </CardContent>
     </Card>
   );

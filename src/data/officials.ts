@@ -38,7 +38,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_acebedo.webp",
-    email: "caacebedo@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Championing infrastructure development and public safety initiatives.",
@@ -49,7 +49,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_diaz.webp",
-    email: "@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Advocating for education, health services, and women's rights.",
@@ -60,7 +60,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_adriano.webp",
-    email: "councilor3@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Promoting business development and economic growth in the city.",
@@ -71,7 +71,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_adajar.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -82,7 +82,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_villanueva.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -93,7 +93,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_medina.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -104,7 +104,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_pavico.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -115,7 +115,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_lou_amante.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -126,7 +126,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_ticzon.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -137,7 +137,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_calatraba.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -148,7 +148,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_aris_amante.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
@@ -159,7 +159,7 @@ export const officials: Officialnterface[] = [
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_eldrich_villanueva.webp",
-    email: "councilor4@sanpablocity.gov.ph",
+    email: "--",
     phone: "--",
     description:
       "Focusing on environmental protection and sustainable tourism.",
