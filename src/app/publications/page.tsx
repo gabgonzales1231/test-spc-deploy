@@ -225,7 +225,7 @@ export default function PublicationsPage() {
                   <select
                     value={selectedMonth}
                     onChange={(e) => handleMonthChange(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white appearance-none cursor-pointer"
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200  focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white appearance-none cursor-pointer"
                     aria-label="Filter by month"
                   >
                     <option value="all">All Months</option>
@@ -236,14 +236,8 @@ export default function PublicationsPage() {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
 
-                {selectedMonth !== "all" && (
-                  <button
-                    onClick={() => handleMonthChange("all")}
-                    className="text-xs text-gray-400 hover:text-red-500 underline transition-colors whitespace-nowrap self-center"
-                  >
-                    Clear Filter
-                  </button>
-                )}
+                
+                
               </div>
             </div>
           </CardHeader>
@@ -270,18 +264,9 @@ export default function PublicationsPage() {
 
             ) : (
               <>
-                {sorted.length > 0 && (
-                  <p className="text-xs text-gray-500 mb-3">
-                    Showing{" "}
-                    <span className="font-medium text-gray-700">{startItem}–{endItem}</span>{" "}
-                    of{" "}
-                    <span className="font-medium text-gray-700">{sorted.length}</span>{" "}
-                    result{sorted.length !== 1 ? "s" : ""}
-                  </p>
-                )}
-
+            
                 {/* Desktop Table */}
-                <div className="hidden md:block overflow-hidden rounded-xl border border-gray-100">
+                <div className="hidden md:block overflow-hidden  border border-gray-100">
                   <table className="w-full text-sm" aria-label="Job vacancies table">
                     <thead>
                       <tr className="bg-emerald-50 border-b border-emerald-100">
@@ -290,9 +275,8 @@ export default function PublicationsPage() {
                           className="px-5 py-3 text-center font-semibold text-gray-700 cursor-pointer select-none"
                           onClick={() => handleSort("datePosted")}
                         >
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center justify-start">
                             Date Submitted
-                            <SortIcon field="datePosted" sortField={sortField} sortDir={sortDir} />
                           </div>
                         </th>
                       </tr>
@@ -312,7 +296,7 @@ export default function PublicationsPage() {
                               i % 2 === 0 ? "bg-white" : "bg-gray-50/40"
                             }`}
                           >
-                            <td className="px-5 py-4 text-center">
+                            <td className="px-5 py-4 text-start">
                               {v.pdfUrl ? (
                                 <a  href={v.pdfUrl}
                                   target="_blank"
@@ -344,7 +328,7 @@ export default function PublicationsPage() {
                     paginated.map((v) => (
                       <div
                         key={v.id}
-                        className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex justify-center text-center"
+                        className="bg-white  p-4 flex justify-center text-center"
                       >
                         {v.pdfUrl ? (
                           <a  href={v.pdfUrl}

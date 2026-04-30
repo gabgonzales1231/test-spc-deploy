@@ -1,5 +1,5 @@
 "use client"
-
+//spc-website\src\app\disclosure-portal\page.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
@@ -34,7 +34,7 @@ function YearAccordion({
   categoryLabel: string
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-100 mb-4">
+    <div className="overflow-hidden border border-gray-100 mb-4">
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-3 text-left bg-emerald-50 border-b border-emerald-100 hover:bg-emerald-100/60 transition-colors"
@@ -174,7 +174,7 @@ export default function FullDisclosurePage() {
                 <button
                   key={id}
                   onClick={() => setActiveCategory(id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg text-base font-medium transition-all flex items-center gap-2
+                  className={`w-full text-left px-4 py-3  text-base font-medium transition-all flex items-center gap-2
                     ${active
                       ? 'bg-emerald-600 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
@@ -202,7 +202,7 @@ export default function FullDisclosurePage() {
                     placeholder="Search documents…"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white"
+                    className="pl-4 pr-10 py-2 border border-gray-200  text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white"
                   />
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>

@@ -10,6 +10,8 @@ import { faqsRouter } from '@/backend/routes/faqs'
 import { servicesRouter } from '@/backend/routes/services'
 import { errorHandler } from './utils/error'
 import { disclosureRoutes } from './routes/disclosure'
+// Added the forms routes import
+import { formsRoutes } from '@/backend/routes/forms'
 
 export const app = new Elysia()
   .use(cors({
@@ -77,11 +79,11 @@ export const app = new Elysia()
       .use(faqsRouter)
       .use(servicesRouter)
       .use(disclosureRoutes)
+      // Added forms to the API group
+      .use(formsRoutes)
   })
   // Static assets
   .use(staticPlugin({
     assets: 'public',
     prefix: '/'
   }))
-
-
