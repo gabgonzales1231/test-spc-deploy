@@ -425,16 +425,18 @@ export default function SanPabloServicesPage() {
             <div className="flex flex-wrap gap-4 justify-center">
               <a
                 href="#"
-                className="px-8 py-4 bg-white text-emerald-700 rounded-full font-semibold hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                Contact Us
-              </a>
-              <a
-                href="#"
-                className="px-8 py-4 bg-emerald-500/20 text-white rounded-full font-semibold hover:bg-emerald-500/30 transition-all duration-300 border border-white/30"
-              >
-                View FAQs
-              </a>
+  onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("open-chat")); }}
+  className="px-8 py-4 bg-white text-emerald-700 rounded-full font-semibold hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+>
+  Contact Us
+</a>
+
+ <a href="#"
+  onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("open-chat")); }}
+  className="px-8 py-4 bg-emerald-500/20 text-white rounded-full font-semibold hover:bg-emerald-500/30 transition-all duration-300 border border-white/30"
+>
+  View FAQs
+</a>
             </div>
           </div>
         </div>

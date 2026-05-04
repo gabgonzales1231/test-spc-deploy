@@ -77,6 +77,15 @@ useEffect(() => {
     }
   }, [isOpen, bubbleDismissed]);
 
+  useEffect(() => {
+  const handler = () => {
+    setIsOpen(true);
+    setBubble(true);
+  };
+  window.addEventListener("open-chat", handler);
+  return () => window.removeEventListener("open-chat", handler);
+}, []);
+
   // ── Message helpers ───────────────────────────────────────────────────
 
   const pushBotMessage = useCallback((text: string, node?: FlowNode) => {
