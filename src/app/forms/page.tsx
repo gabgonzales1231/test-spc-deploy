@@ -345,8 +345,8 @@ export default function FormsPage() {
         {/* Content */}
         <main className="flex-1 min-w-0">
           <Card className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 shadow-xl">
-            <CardHeader className="px-6 pt-6 pb-0">
-              <div className="pb-4">
+            <CardHeader className="px-6 pt-0 pb-0">
+              <div className="pb-0">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <FileText className="w-6 h-6 text-emerald-600" />
                   {searchActive ? 'Search Results' : activeLabel}
@@ -354,7 +354,7 @@ export default function FormsPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="px-6 py-6">
+            <CardContent className="px-6 py-0">
               {searchActive ? (
                 <GlobalSearchResults
                   results={globalResults}
@@ -413,9 +413,7 @@ export default function FormsPage() {
               <p className="text-gray-700 mb-4">
                 Can't find the form you need? Contact the relevant department directly or visit City Hall for assistance.
               </p>
-              <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
-                Contact Us
-              </button>
+
             </CardContent>
           </Card>
 

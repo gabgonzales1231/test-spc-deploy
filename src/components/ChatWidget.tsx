@@ -1,3 +1,5 @@
+//spc-website\src\components\ChatWidget.tsx
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -12,6 +14,8 @@ import { ChatInputArea } from "./chat/ChatInputArea";
 import { ChatEnded }     from "./chat/ChatEnded";
 import { PreOpenBubble } from "./chat/ui/PreOpenBubble";
 import { JPAvatar }      from "./chat/ui/JPAvatar";
+
+import { useInputGuard } from "@/hooks/useChatApi";
 
 
 
@@ -35,12 +39,11 @@ export default function ChatWidget() {
   const [currentNodeKey, setNodeKey] = useState<string>(MAIN_MENU_KEY);
   const [history, setHistory]        = useState<string[]>([]);
   const [menuOpen, setMenuOpen]      = useState(false);
+  const { validate, error: inputError, clearError } = useInputGuard();
+
 
   // ── Forms ─────────────────────────────────────────────────────────────
-  const [negosyoForm, setNegosyoForm]   = useState<NegosyoForm>({ businessId: "", complaint: "" });
-  const [traysikelForm, setTraysikel]   = useState<TraysikelForm>({ plateNumber: "", complaint: "" });
-  const [helpdeskText, setHelpdesk]     = useState("");
-  const [papuriText, setPapuri]         = useState("");
+  const [helpdeskText, setHelpdesk] = useState("");
   const [formSubmitting, setSubmitting] = useState(false);
 
   // ── CMS ───────────────────────────────────────────────────────────────
@@ -113,18 +116,30 @@ useEffect(() => {
   }, [cms, currentNodeKey, pushBotMessage]);
 
   // ── Registration ──────────────────────────────────────────────────────
+// replace the existing validateForm function
 
-  function validateForm(): boolean {
-    const errors: Partial<UserInfo> = {};
-    if (!userInfo.fullName.trim())
-      errors.fullName = "Kinakailangan ang buong pangalan.";
-    if (!userInfo.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInfo.email))
-      errors.email = "Magbigay ng valid na email.";
-    if (!userInfo.phone.trim() || userInfo.phone.trim().length < 7)
-      errors.phone = "Magbigay ng valid na numero.";
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  }
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^(09|\+639)\d{9}$/;
+
+function validateForm(): boolean {
+  const errors: Partial<UserInfo> = {};
+
+  if (!userInfo.fullName.trim())
+    errors.fullName = "Kinakailangan ang buong pangalan.";
+
+  if (!userInfo.email.trim())
+    errors.email = "Kinakailangan ang email.";
+  else if (!EMAIL_RE.test(userInfo.email.trim()))
+    errors.email = "Magbigay ng valid na email.";
+
+  if (!userInfo.phone.trim())
+    errors.phone = "Kinakailangan ang numero.";
+  else if (!PHONE_RE.test(userInfo.phone.trim().replace(/[-\s]/g, "")))
+    errors.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
+
+  setFormErrors(errors);
+  return Object.keys(errors).length === 0;
+}
 
   function handleStartChat() {
     if (!validateForm()) return;
@@ -148,7 +163,7 @@ useEffect(() => {
   }, [currentNodeKey, navigateTo, pushUserMessage]);
 
   const handleTextSend = useCallback((text: string) => {
-    if (!text.trim()) return;
+    if (!validate(text)) return; 
     pushUserMessage(text.trim());
     const smallTalk = getSmallTalkResponse(text);
     if (smallTalk) {
@@ -177,59 +192,40 @@ useEffect(() => {
 
   // ── Feedback shared helper ────────────────────────────────────────────
 
-  async function submitAndReturn(subject: string, message: string, successMsg: string) {
-    const result = await submitFeedback({
-      name: userInfo.fullName, email: userInfo.email || null, subject, message,
-    });
-    setSubmitting(false);
-    setIsTyping(true);
-    setTimeout(() => {
-      const main = getMainMenuNode();
-      pushBotMessage(
-        (result.success ? successMsg : `May error: ${result.error}`) +
-        "\n\n" + injectContent(main.message, cms),
-        main
-      );
-      setNodeKey(MAIN_MENU_KEY);
-      setIsTyping(false);
-    }, 600);
-  }
+async function submitAndReturn(subject: string, message: string) {
+  const result = await submitFeedback({
+    name:        userInfo.fullName,
+    email:       userInfo.email || null,
+    phone:       userInfo.phone || null,
+    subject,
+    message,
+    source_node: currentNodeKey,
+  });
+  setSubmitting(false);
+  setIsTyping(true);
+  setTimeout(() => {
+    const main = getMainMenuNode();
+    pushBotMessage(
+      (result.success
+        ? "✅ Message sent successfully, we will respond as soon as possible."
+        : `May error: ${result.error}`) +
+      "\n\n" + injectContent(main.message, cms),
+      main
+    );
+    setNodeKey(MAIN_MENU_KEY);
+    setIsTyping(false);
+  }, 600);
+}
 
-  async function handleNegosyoSubmit() {
-    if (!negosyoForm.businessId.trim() || !negosyoForm.complaint.trim()) return;
-    setSubmitting(true);
-    pushUserMessage(`Business No./Pangalan: ${negosyoForm.businessId}\nReklamo: ${negosyoForm.complaint}`);
-    const msg = `Business No./Pangalan: ${negosyoForm.businessId}\n\n${negosyoForm.complaint}`;
-    setNegosyoForm({ businessId: "", complaint: "" });
-    await submitAndReturn("Sumbong sa Negosyo", msg, "Natanggap ang iyong reklamo. Ipapasa namin ito sa tamang departamento. Salamat! 🙏");
-  }
+async function handleHelpdeskSubmit() {
+if (!validate(helpdeskText)) return;  
+  setSubmitting(true);
+  pushUserMessage(helpdeskText.trim());
+  const msg = helpdeskText.trim();
+  setHelpdesk("");
+  await submitAndReturn("Iba Pa", msg);
+}
 
-  async function handleTraysikelSubmit() {
-    if (!traysikelForm.plateNumber.trim() || !traysikelForm.complaint.trim()) return;
-    setSubmitting(true);
-    pushUserMessage(`Plate/No. ng Traysikel: ${traysikelForm.plateNumber}\nReklamo: ${traysikelForm.complaint}`);
-    const msg = `Plate/No. ng Traysikel: ${traysikelForm.plateNumber}\n\n${traysikelForm.complaint}`;
-    setTraysikel({ plateNumber: "", complaint: "" });
-    await submitAndReturn("Sumbong sa Traysikel", msg, "Natanggap ang iyong reklamo. Ipapasa namin ito sa tamang departamento. Salamat! 🙏");
-  }
-
-  async function handleHelpdeskSubmit() {
-    if (!helpdeskText.trim()) return;
-    setSubmitting(true);
-    pushUserMessage(helpdeskText.trim());
-    const msg = helpdeskText.trim();
-    setHelpdesk("");
-    await submitAndReturn("Tanong o Suhestiyon", msg, "Natanggap ang iyong mensahe. Sasagutin ito ng aming help desk. Salamat! 🙏");
-  }
-
-  async function handlePapuriSubmit() {
-    if (!papuriText.trim()) return;
-    setSubmitting(true);
-    pushUserMessage(papuriText.trim());
-    const msg = papuriText.trim();
-    setPapuri("");
-    await submitAndReturn("Papuri", msg, "Salamat sa iyong papuri! Ipapasa namin ito sa tamang departamento. 🙏");
-  }
 
   // ── Hamburger ─────────────────────────────────────────────────────────
 
@@ -258,10 +254,9 @@ useEffect(() => {
     setMessages([]);
     setHistory([]);
     setNodeKey(MAIN_MENU_KEY);
-    setNegosyoForm({ businessId: "", complaint: "" });
-    setTraysikel({ plateNumber: "", complaint: "" });
+
     setHelpdesk("");
-    setPapuri("");
+
     setStage("form");
   }
 
@@ -288,12 +283,29 @@ useEffect(() => {
         }`}
       >
         {stage === "form" && (
-          <ChatForm
-            userInfo={userInfo}
-            formErrors={formErrors}
-            onChange={(field, value) => setUserInfo((u) => ({ ...u, [field]: value }))}
-            onSubmit={handleStartChat}
-          />
+<ChatForm
+  userInfo={userInfo}
+  formErrors={formErrors}
+  onChange={(field, value) => setUserInfo((u) => ({ ...u, [field]: value }))}
+  onBlur={(field, value) => {
+    // validate only the blurred field
+    const single = { ...userInfo, [field]: value };
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const PHONE_RE = /^(09|\+639)\d{9}$/;
+    const err: Partial<UserInfo> = {};
+    if (field === "fullName" && !value.trim()) err.fullName = "Kinakailangan ang buong pangalan.";
+    if (field === "email") {
+      if (!value.trim()) err.email = "Kinakailangan ang email.";
+      else if (!EMAIL_RE.test(value.trim())) err.email = "Magbigay ng valid na email.";
+    }
+    if (field === "phone") {
+      if (!value.trim()) err.phone = "Kinakailangan ang numero.";
+      else if (!PHONE_RE.test(value.trim().replace(/[-\s]/g, ""))) err.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
+    }
+    setFormErrors((prev) => ({ ...prev, ...err, ...(Object.keys(err).length === 0 ? { [field]: undefined } : {}) }));
+  }}
+  onSubmit={handleStartChat}
+/>
         )}
 
         {stage === "chat" && (
@@ -312,22 +324,16 @@ useEffect(() => {
               isTyping={isTyping}
               onQuickReply={handleQuickReply}
             />
-            <ChatInputArea
-              mode={currentNode.inputMode}
-              submitting={formSubmitting}
-              negosyoForm={negosyoForm}
-              traysikelForm={traysikelForm}
-              helpdeskText={helpdeskText}
-              papuriText={papuriText}
-              onNegosyoChange={(f, v) => setNegosyoForm((p) => ({ ...p, [f]: v }))}
-              onTraysikelChange={(f, v) => setTraysikel((p) => ({ ...p, [f]: v }))}
-              onHelpdeskChange={setHelpdesk}
-              onPapuriChange={setPapuri}
-              onNegosyoSubmit={handleNegosyoSubmit}
-              onTraysikelSubmit={handleTraysikelSubmit}
-              onHelpdeskSubmit={handleHelpdeskSubmit}
-              onPapuriSubmit={handlePapuriSubmit}
-            />
+<ChatInputArea
+  mode={currentNode.inputMode}
+  submitting={formSubmitting}
+  helpdeskText={helpdeskText}
+  inputError={inputError}
+  onHelpdeskChange={(v) => { setHelpdesk(v); clearError(); }}
+  onHelpdeskSubmit={handleHelpdeskSubmit}
+  onTextSend={handleTextSend}
+  onClearError={clearError}
+/>
           </>
         )}
 

@@ -59,10 +59,12 @@ export interface CMSFaq {
 
 // Sumbong / Feedback form payload
 export interface ComplaintPayload {
-  name: string;
-  email: string | null;
-  subject: string;
-  message: string;
+  name:         string;
+  email:        string | null;
+  phone?:       string | null;
+  subject:      string;
+  message:      string;
+  source_node?: string | null;
 }
 
 export function generateId(): string {

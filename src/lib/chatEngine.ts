@@ -2,6 +2,8 @@
 // chatEngine.ts — Dynamic flow engine
 // ─────────────────────────────────────────────
 
+
+//spc-website\src\lib\chatEngine.ts
 import {
   STATIC_FLOW_NODES,
   KEYWORD_MAP,
@@ -20,13 +22,10 @@ let DYNAMIC_NODES: Record<string, FlowNode> = {};
 export function buildDynamicNodes(cms: CMSContent): void {
   const newNodes: Record<string, FlowNode> = {};
 
-  // ── Service nodes — one node per service row ──────────────────────
   const serviceOptions: FlowNode["options"] = [];
 
   for (const svc of Object.values(cms.services)) {
     const nodeKey = `service-${svc.slug}`;
-
-    // Build the message for this service
     const lines: string[] = [`📋 *${svc.name}*`];
     if (svc.description)            lines.push(`\n${svc.description}`);
     if (svc.requirements)           lines.push(`\n📌 Mga Kinakailangan:\n${svc.requirements}`);
@@ -43,23 +42,18 @@ export function buildDynamicNodes(cms: CMSContent): void {
     };
 
     serviceOptions.push({ label: svc.name, value: nodeKey });
+    // ← no "Iba Pa" appended here anymore
   }
 
-  // Always add "Iba Pa" at the end of services
-  serviceOptions.push({ label: "Iba Pa", value: "serbisyo-iba" });
-
-  // Patch the static serbisyo node options
   newNodes["serbisyo"] = {
     ...STATIC_FLOW_NODES["serbisyo"],
     options: serviceOptions,
   };
 
-  // ── FAQ nodes — one node per faq row ─────────────────────────────
   const faqOptions: FlowNode["options"] = [];
 
   for (const faq of Object.values(cms.faqs)) {
     const nodeKey = `faq-${faq.faq_id}`;
-
     newNodes[nodeKey] = {
       key: nodeKey,
       message: `❓ *${faq.question}*\n\n${faq.answer}`,
@@ -67,11 +61,9 @@ export function buildDynamicNodes(cms: CMSContent): void {
       inputMode: null,
       isTerminal: true,
     };
-
     faqOptions.push({ label: faq.question, value: nodeKey });
   }
 
-  // Patch the static tanong node options
   newNodes["tanong"] = {
     ...STATIC_FLOW_NODES["tanong"],
     options: faqOptions,
@@ -140,17 +132,24 @@ export function injectContent(template: string, _cms: CMSContent): string {
 // ── Feedback ──────────────────────────────────────────────────────────────
 
 export async function submitFeedback(
-  payload: ComplaintPayload
+  payload: ComplaintPayload & { source_node?: string }
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const res = await fetch("/api/feedback", {
+    const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        full_name:   payload.name,
+        email:       payload.email,
+        phone:       payload.phone ?? null,
+        subject:     payload.subject,
+        message:     payload.message,
+        source_node: payload.source_node ?? null,
+      }),
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
-      return { success: false, error: data?.error?.message ?? "Hindi natanggap ang mensahe." };
+      return { success: false, error: data?.error ?? "Hindi natanggap ang mensahe." };
     }
     return { success: true };
   } catch {

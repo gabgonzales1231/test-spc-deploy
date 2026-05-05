@@ -72,7 +72,7 @@ export function ChatHeader({
               onClick={onGoToMenu}
               className="block w-full py-2.5 px-3.5 bg-transparent border-none text-left text-[13px] cursor-pointer text-gray-900 hover:bg-gray-50"
             >
-              ☰ Menu
+              ☰ Refresh Menu
             </button>
             <div className="h-px bg-gray-200 my-0.5" />
             <button

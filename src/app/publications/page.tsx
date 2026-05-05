@@ -192,7 +192,7 @@ export default function PublicationsPage() {
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">Publications</h1>
           <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
-            Official job vacancy announcements for the City Government of San Pablo ({currentYear}).
+            Official job vacancy announcements for the City Government of San Pablo.
             All postings are updated in real time from our records office.
           </p>
         </div>
@@ -430,7 +430,7 @@ export default function PublicationsPage() {
               </div>
               <div className="space-y-4">
                 <div className="bg-emerald-50 rounded-xl p-5 space-y-3">
-                  <h3 className="font-semibold text-gray-900 text-sm">Contact the HRMO</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Contact the CHRMO</h3>
                   <div className="space-y-2 text-sm text-gray-700">
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />

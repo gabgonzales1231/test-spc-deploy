@@ -12,6 +12,7 @@ import { errorHandler } from './utils/error'
 import { disclosureRoutes } from './routes/disclosure'
 // Added the forms routes import
 import { formsRoutes } from '@/backend/routes/forms'
+import { chatRoutes } from './routes/chat'
 
 export const app = new Elysia()
   .use(cors({
@@ -79,7 +80,7 @@ export const app = new Elysia()
       .use(faqsRouter)
       .use(servicesRouter)
       .use(disclosureRoutes)
-      // Added forms to the API group
+      .use(chatRoutes)
       .use(formsRoutes)
   })
   // Static assets

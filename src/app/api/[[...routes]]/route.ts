@@ -1,3 +1,5 @@
+//C:\computer engineering\work experience\city government of san pablo - miso\spc-website\src\app\api\[[...routes]]\route.ts
+
 import { cookies } from 'next/headers';
 import { app } from '@/backend/elysia'; // Bun runtime can handle this cleanly
 

@@ -8,10 +8,17 @@ interface ChatFormProps {
   userInfo: UserInfo;
   formErrors: Partial<UserInfo>;
   onChange: (field: keyof UserInfo, value: string) => void;
+  onBlur?: (field: keyof UserInfo, value: string) => void;
   onSubmit: () => void;
 }
 
-export function ChatForm({ userInfo, formErrors, onChange, onSubmit }: ChatFormProps) {
+const baseInput =
+  "w-full border rounded-lg py-2 px-3 text-[13px] bg-background text-foreground outline-none focus:border-[#08A872] transition-colors";
+
+export function ChatForm({ userInfo, formErrors, onChange, onBlur, onSubmit }: ChatFormProps) {
+  const inputClass = (field: keyof UserInfo) =>
+    `${baseInput} ${formErrors[field] ? "border-red-500" : "border-border"}`;
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -38,8 +45,9 @@ export function ChatForm({ userInfo, formErrors, onChange, onSubmit }: ChatFormP
         <input
           value={userInfo.fullName}
           onChange={(e) => onChange("fullName", e.target.value)}
+          onBlur={(e) => onBlur?.("fullName", e.target.value)}
           placeholder="Juan dela Cruz"
-          className="w-full border border-border rounded-lg py-2 px-3 text-[13px] bg-background text-foreground outline-none focus:border-[#08A872]"
+          className={inputClass("fullName")}
         />
         {formErrors.fullName && (
           <p className="text-red-600 text-[11px] mt-1">{formErrors.fullName}</p>
@@ -53,8 +61,9 @@ export function ChatForm({ userInfo, formErrors, onChange, onSubmit }: ChatFormP
           type="email"
           value={userInfo.email}
           onChange={(e) => onChange("email", e.target.value)}
+          onBlur={(e) => onBlur?.("email", e.target.value)}
           placeholder="juan@email.com"
-          className="w-full border border-border rounded-lg py-2 px-3 text-[13px] bg-background text-foreground outline-none focus:border-[#08A872]"
+          className={inputClass("email")}
         />
         {formErrors.email && (
           <p className="text-red-600 text-[11px] mt-1">{formErrors.email}</p>
@@ -64,13 +73,17 @@ export function ChatForm({ userInfo, formErrors, onChange, onSubmit }: ChatFormP
         <label className="block text-xs font-medium text-foreground mb-1 mt-3">
           Phone No. <span className="text-red-600">*</span>
         </label>
-        <input
-          type="tel"
-          value={userInfo.phone}
-          onChange={(e) => onChange("phone", e.target.value)}
-          placeholder="09XX-XXX-XXXX"
-          className="w-full border border-border rounded-lg py-2 px-3 text-[13px] bg-background text-foreground outline-none focus:border-[#08A872]"
-        />
+<input
+  type="tel"
+  value={userInfo.phone}
+  onChange={(e) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+    onChange("phone", digits);
+  }}
+  onBlur={(e) => onBlur?.("phone", e.target.value)}
+  placeholder="09XX-XXX-XXXX"
+  className={inputClass("phone")}
+/>
         {formErrors.phone && (
           <p className="text-red-600 text-[11px] mt-1">{formErrors.phone}</p>
         )}
