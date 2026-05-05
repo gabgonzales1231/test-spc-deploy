@@ -111,7 +111,7 @@ export function DisabledInput() {
 // ── ChatInputArea orchestrator ────────────────────────────────────────────
 
 interface ChatInputAreaProps {
-  mode: InputMode;
+  mode: InputMode | null;
   submitting: boolean;
   helpdeskText: string;
   inputError?: string | null;

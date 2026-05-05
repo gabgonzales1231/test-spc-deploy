@@ -1,5 +1,15 @@
 //spc-website\src\lib\flowData.ts
 
+export type InputMode = "buttons" | "helpdesk-text" | "free-text";
+
+export interface FlowNode {
+  key:         string;
+  message:     string;
+  options:     { label: string; value: string }[];
+  inputMode:   InputMode | null;
+  isTerminal?: boolean;
+}
+
 export const MAIN_MENU_KEY = "main";
 
 export const STATIC_FLOW_NODES: Record<string, FlowNode> = {
