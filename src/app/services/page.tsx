@@ -188,132 +188,132 @@ export default function SanPabloServicesPage() {
       category: "Utilities",
       available: true,
     },
-    {
-      icon: VenusAndMars,
-      title: "Gender and Development",
-      description:
-        "Access to credit, savings, insurance, and other financial products and services among unserved and underserved low-income and marginalized women",
-      link: "https://www.sanpablocitygad.com",
-      category: "Health & Welfare",
-      available: false,
-    },
-    {
-      icon: Users,
-      title: "Civil Registry Services",
-      description:
-        "Birth certificates, marriage licenses, death certificates, and other civil registry documents.",
-      link: "#",
-      category: "Government",
-      available: false,
-    },
-    {
-      icon: Briefcase,
-      title: "Employment Services",
-      description:
-        "Job placement assistance, livelihood programs, and skills training opportunities for residents.",
-      link: "#",
-      category: "Business",
-      available: false,
-    },
-    {
-      icon: Heart,
-      title: "Health Services",
-      description:
-        "Access to city health centers, medical assistance programs, and health insurance enrollment.",
-      link: "#",
-      category: "Health & Welfare",
-      available: false,
-    },
-    {
-      icon: GraduationCap,
-      title: "Education Programs",
-      description:
-        "Scholarship programs, educational assistance, and public school enrollment information.",
-      link: "#",
-      category: "Education",
-      available: false,
-    },
-    {
-      icon: Landmark,
-      title: "Tax Services",
-      description:
-        "Real property tax payments, tax clearances, and assessment services for property owners.",
-      link: "#",
-      category: "Government",
-      available: false,
-    },
-    {
-      icon: Shield,
-      title: "Police & Security",
-      description:
-        "Police assistance, crime reporting, community safety programs, and emergency response.",
-      link: "#",
-      category: "Public Safety",
-      available: false,
-    },
-    {
-      icon: Home,
-      title: "Housing & Urban Development",
-      description:
-        "Housing programs, building permits, zoning clearances, and urban development plans.",
-      link: "#",
-      category: "Government",
-      available: false,
-    },
-    {
-      icon: TreePine,
-      title: "Environmental Services",
-      description:
-        "Waste management, tree planting programs, and environmental protection initiatives.",
-      link: "#",
-      category: "Government",
-      available: false,
-    },
-    {
-      icon: Zap,
-      title: "Electrical Services",
-      description:
-        "Electric service applications, billing inquiries, and power outage reporting.",
-      link: "#",
-      category: "Utilities",
-      available: false,
-    },
-    {
-      icon: Car,
-      title: "Transportation Services",
-      description:
-        "Public transportation information, traffic management, and vehicle registration assistance.",
-      link: "#",
-      category: "Transportation",
-      available: false,
-    },
-    {
-      icon: Heart,
-      title: "Social Welfare Programs",
-      description:
-        "Senior citizen benefits, persons with disability assistance, and social amelioration programs.",
-      link: "#",
-      category: "Health & Welfare",
-      available: false,
-    },
-    {
-      icon: Phone,
-      title: "Emergency Hotlines",
-      description:
-        "24/7 emergency response hotlines, disaster management, and rescue operations.",
-      link: "#",
-      category: "Public Safety",
-      available: false,
-    },
-    {
-      icon: Building2,
-      title: "City Planning & Development",
-      description:
-        "Comprehensive land use plans, infrastructure projects, and community development programs.",
-      link: "#",
-      category: "Government",
-      available: false,
-    },
+    // {
+    //   icon: VenusAndMars,
+    //   title: "Gender and Development",
+    //   description:
+    //     "Access to credit, savings, insurance, and other financial products and services among unserved and underserved low-income and marginalized women",
+    //   link: "https://www.sanpablocitygad.com",
+    //   category: "Health & Welfare",
+    //   available: false,
+    // },
+    // {
+    //   icon: Users,
+    //   title: "Civil Registry Services",
+    //   description:
+    //     "Birth certificates, marriage licenses, death certificates, and other civil registry documents.",
+    //   link: "#",
+    //   category: "Government",
+    //   available: false,
+    // },
+    // {
+    //   icon: Briefcase,
+    //   title: "Employment Services",
+    //   description:
+    //     "Job placement assistance, livelihood programs, and skills training opportunities for residents.",
+    //   link: "#",
+    //   category: "Business",
+    //   available: false,
+    // },
+    // {
+    //   icon: Heart,
+    //   title: "Health Services",
+    //   description:
+    //     "Access to city health centers, medical assistance programs, and health insurance enrollment.",
+    //   link: "#",
+    //   category: "Health & Welfare",
+    //   available: false,
+    // },
+    // {
+    //   icon: GraduationCap,
+    //   title: "Education Programs",
+    //   description:
+    //     "Scholarship programs, educational assistance, and public school enrollment information.",
+    //   link: "#",
+    //   category: "Education",
+    //   available: false,
+    // },
+    // {
+    //   icon: Landmark,
+    //   title: "Tax Services",
+    //   description:
+    //     "Real property tax payments, tax clearances, and assessment services for property owners.",
+    //   link: "#",
+    //   category: "Government",
+    //   available: false,
+    // },
+    // {
+    //   icon: Shield,
+    //   title: "Police & Security",
+    //   description:
+    //     "Police assistance, crime reporting, community safety programs, and emergency response.",
+    //   link: "#",
+    //   category: "Public Safety",
+    //   available: false,
+    // },
+    // {
+    //   icon: Home,
+    //   title: "Housing & Urban Development",
+    //   description:
+    //     "Housing programs, building permits, zoning clearances, and urban development plans.",
+    //   link: "#",
+    //   category: "Government",
+    //   available: false,
+    // },
+    // {
+    //   icon: TreePine,
+    //   title: "Environmental Services",
+    //   description:
+    //     "Waste management, tree planting programs, and environmental protection initiatives.",
+    //   link: "#",
+    //   category: "Government",
+    //   available: false,
+    // },
+    // {
+    //   icon: Zap,
+    //   title: "Electrical Services",
+    //   description:
+    //     "Electric service applications, billing inquiries, and power outage reporting.",
+    //   link: "#",
+    //   category: "Utilities",
+    //   available: false,
+    // },
+    // {
+    //   icon: Car,
+    //   title: "Transportation Services",
+    //   description:
+    //     "Public transportation information, traffic management, and vehicle registration assistance.",
+    //   link: "#",
+    //   category: "Transportation",
+    //   available: false,
+    // },
+    // {
+    //   icon: Heart,
+    //   title: "Social Welfare Programs",
+    //   description:
+    //     "Senior citizen benefits, persons with disability assistance, and social amelioration programs.",
+    //   link: "#",
+    //   category: "Health & Welfare",
+    //   available: false,
+    // },
+    // {
+    //   icon: Phone,
+    //   title: "Emergency Hotlines",
+    //   description:
+    //     "24/7 emergency response hotlines, disaster management, and rescue operations.",
+    //   link: "#",
+    //   category: "Public Safety",
+    //   available: false,
+    // },
+    // {
+    //   icon: Building2,
+    //   title: "City Planning & Development",
+    //   description:
+    //     "Comprehensive land use plans, infrastructure projects, and community development programs.",
+    //   link: "#",
+    //   category: "Government",
+    //   available: false,
+    // },
   ];
 
   const filteredServices =
@@ -351,7 +351,7 @@ export default function SanPabloServicesPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 text-center">
               <div className="text-4xl font-bold text-emerald-700 mb-2">
-                15+
+                4
               </div>
               <div className="text-gray-600">Available Services</div>
             </div>
