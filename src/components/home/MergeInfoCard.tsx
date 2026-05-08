@@ -32,35 +32,35 @@ export default function MergedInfoCard() {
   return (
     <section className="py-3 sm:py-6 px-4" aria-label="Quick Information">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 overflow-hidden">
-          <div className="flex flex-row items-center justify-center sm:justify-between gap-6 sm:gap-0">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-lg sm:rounded-xl shadow-lg px-8 py-5 sm:p-6 overflow-hidden">
+          <div className="flex flex-row items-center justify-center sm:justify-between gap-4 sm:gap-0">
             {/* DateTime Section - Left */}
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-end sm:justify-start sm:flex-none">
-              <Clock className="w-6 sm:w-6 h-6 sm:h-6 text-white opacity-80 flex-shrink-0" />
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-center sm:justify-start sm:flex-none">
+              <Clock className="w-5 sm:w-6 h-5 sm:h-6 text-white opacity-80 flex-shrink-0" />
               <div className="text-white">
-                <div className="text-xs sm:text-xs opacity-90 whitespace-nowrap">
+                <div className="text-[10px] sm:text-xs opacity-90 whitespace-nowrap">
                   {formatDate(currentTime)}
                 </div>
-                <div className="text-base sm:text-lg font-mono font-bold whitespace-nowrap">
+                <div className="text-sm sm:text-lg font-mono font-bold whitespace-nowrap leading-tight">
                   {formatTime(currentTime)}
                 </div>
               </div>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-14 sm:h-14 bg-white/30 flex-shrink-0" />
+            <div className="w-px h-10 sm:h-14 bg-white/30 flex-shrink-0 mx-2 sm:mx-0" />
 
             {/* Location Section - Right */}
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 sm:flex-none sm:justify-end">
-              <div className="text-white text-left">
-                <div className="text-base sm:text-lg font-bold whitespace-nowrap">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-center sm:justify-end sm:flex-none">
+              <div className="text-white text-right">
+                <div className="text-sm sm:text-lg font-bold whitespace-nowrap leading-tight">
                   City of San Pablo
                 </div>
-                <div className="text-xs opacity-80 whitespace-nowrap">
+                <div className="text-[10px] sm:text-xs opacity-80 whitespace-nowrap">
                   Laguna, Philippines
                 </div>
               </div>
-              <MapPin className="w-6 sm:w-6 h-6 sm:h-6 text-white opacity-80 flex-shrink-0" />
+              <MapPin className="w-5 sm:w-6 h-5 sm:h-6 text-white opacity-80 flex-shrink-0" />
             </div>
           </div>
         </div>
