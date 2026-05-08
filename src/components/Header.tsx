@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-// Navigation items definition - Moved outside to prevent re-creation on every render
+// Navigation items definition
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/news", label: "News" },
@@ -27,7 +28,6 @@ const navItems = [
   { href: "/publications", label: "Publications" },
   {
     label: "ARTA Corner",
-    // No href here makes it a pure trigger for the dropdown
     hasDropdown: true,
     subItems: [
       { label: "Citizen's Charter", href: "/arta/citizens-charter" },
@@ -36,11 +36,15 @@ const navItems = [
 ];
 
 export default function Header() {
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDesktopDropdown, setOpenDesktopDropdown] = useState<string | null>(null);
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if the current route should hide the header
+  const isHiddenRoute = pathname === "/arta/citizens-charter/view";
 
   const toggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
@@ -51,7 +55,6 @@ export default function Header() {
     setOpenMobileDropdown((prev) => (prev === label ? null : label));
   };
 
-  // Desktop Hover Handlers with "Intent Delay"
   const handleMouseEnter = (label: string) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setOpenDesktopDropdown(label);
@@ -60,7 +63,7 @@ export default function Header() {
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => {
       setOpenDesktopDropdown(null);
-    }, 200); // 200ms grace period
+    }, 200);
   };
 
   useEffect(() => {
@@ -80,7 +83,11 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl px-4"
+      className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl px-4 transition-all duration-500 ease-in-out ${
+        isHiddenRoute 
+          ? "opacity-0 -translate-y-10 pointer-events-none" 
+          : "opacity-100 translate-y-0"
+      }`}
     >
       <div className="bg-white rounded-full shadow-xl border border-gray-100 px-6 py-3 flex items-center justify-between">
         {/* Logo */}
@@ -103,12 +110,12 @@ export default function Header() {
             <div key={item.label} className="relative">
               {item.hasDropdown ? (
                 <div
-                  className="relative"
+                  className="relative flex items-center"
                   onMouseEnter={() => handleMouseEnter(item.label)}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <div className="flex items-center">
-                    {item.href ? (
+                  {item.href ? (
+                    <div className="flex items-center">
                       <Link
                         href={item.href}
                         className={`text-sm font-medium transition-colors hover:text-emerald-700 ${
@@ -118,18 +125,30 @@ export default function Header() {
                       >
                         {item.label}
                       </Link>
-                    ) : (
-                      <span
-                        className={`text-sm font-medium transition-colors cursor-default select-none hover:text-emerald-700 ${
+                      <button
+                        type="button"
+                        className={`ml-1 p-1 transition-colors hover:text-emerald-700 ${
                           openDesktopDropdown === item.label ? "text-emerald-700" : "text-gray-700"
                         }`}
+                        onClick={() =>
+                          setOpenDesktopDropdown((prev) =>
+                            prev === item.label ? null : item.label
+                          )
+                        }
+                        aria-expanded={openDesktopDropdown === item.label}
+                        aria-haspopup="true"
                       >
-                        {item.label}
-                      </span>
-                    )}
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${
+                            openDesktopDropdown === item.label ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  ) : (
                     <button
                       type="button"
-                      className={`ml-1 p-1 transition-colors hover:text-emerald-700 ${
+                      className={`flex items-center text-sm font-medium transition-colors hover:text-emerald-700 ${
                         openDesktopDropdown === item.label ? "text-emerald-700" : "text-gray-700"
                       }`}
                       onClick={() =>
@@ -140,15 +159,15 @@ export default function Header() {
                       aria-expanded={openDesktopDropdown === item.label}
                       aria-haspopup="true"
                     >
+                      {item.label}
                       <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
+                        className={`ml-1 h-4 w-4 transition-transform ${
                           openDesktopDropdown === item.label ? "rotate-180" : ""
                         }`}
                       />
                     </button>
-                  </div>
+                  )}
 
-                  {/* Dropdown Menu Wrapper */}
                   {openDesktopDropdown === item.label && (
                     <div className="absolute top-full left-0 pt-2 w-56 z-50">
                       <div className="bg-white rounded-lg shadow-lg border border-gray-100 py-2">
@@ -209,38 +228,47 @@ export default function Header() {
                 <div>
                   <div className="flex items-center justify-between">
                     {item.href ? (
-                      <Link
-                        href={item.href}
-                        className={`flex-1 text-sm font-medium transition-colors py-2 hover:text-emerald-700 ${
-                          openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
-                        }`}
-                        prefetch={false}
-                        onClick={toggleMenu}
-                      >
-                        {item.label}
-                      </Link>
+                      <>
+                        <Link
+                          href={item.href}
+                          className={`flex-1 text-sm font-medium transition-colors py-2 hover:text-emerald-700 ${
+                            openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                          }`}
+                          prefetch={false}
+                          onClick={toggleMenu}
+                        >
+                          {item.label}
+                        </Link>
+                        <button
+                          type="button"
+                          className={`p-2 transition-colors hover:text-emerald-700 ${
+                            openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
+                          }`}
+                          onClick={() => toggleMobileDropdown(item.label)}
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${
+                              openMobileDropdown === item.label ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                      </>
                     ) : (
-                      <span
-                        className={`flex-1 text-sm font-medium transition-colors py-2 cursor-default select-none hover:text-emerald-700 ${
+                      <button
+                        type="button"
+                        className={`flex-1 flex items-center justify-between text-sm font-medium transition-colors py-2 hover:text-emerald-700 ${
                           openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
                         }`}
+                        onClick={() => toggleMobileDropdown(item.label)}
                       >
                         {item.label}
-                      </span>
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${
+                            openMobileDropdown === item.label ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
                     )}
-                    <button
-                      type="button"
-                      className={`p-2 transition-colors hover:text-emerald-700 ${
-                        openMobileDropdown === item.label ? "text-emerald-700" : "text-gray-700"
-                      }`}
-                      onClick={() => toggleMobileDropdown(item.label)}
-                    >
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
-                          openMobileDropdown === item.label ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
                   </div>
 
                   {openMobileDropdown === item.label && (
