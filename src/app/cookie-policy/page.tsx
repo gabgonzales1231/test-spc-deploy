@@ -101,7 +101,7 @@ export default function CookiePolicy() {
 
             {/* Navigation Tabs */}
             <div className="border-b border-gray-200 mb-8">
-              <nav className="-mb-px flex space-x-8">
+              <nav className="-mb-px flex flex-wrap justify-center gap-2">
                 {[
                   { id: "overview", label: "Overview", icon: Cookie },
                   { id: "types", label: "Cookie Types", icon: BarChart3 },
@@ -219,8 +219,8 @@ export default function CookiePolicy() {
                         cookie.color
                       )}`}
                     >
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl font-semibold">
+                      <div className="flex flex-wrap justify-between items-start mb-4">
+                        <h3 className="text-xl font-semibold min-w-0">
                           {cookie.category}
                         </h3>
                         <span
@@ -389,7 +389,7 @@ export default function CookiePolicy() {
                 </div>
 
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-6">
-                  <div className="flex items-start">
+                  <div className="flex flex-wrap items-start gap-3">
                     <Trash2 className="h-5 w-5 text-red-600 mr-2 mt-0.5" />
                     <div>
                       <h4 className="font-semibold text-red-800 mb-2">

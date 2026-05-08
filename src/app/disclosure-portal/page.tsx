@@ -288,7 +288,7 @@ export default function FullDisclosurePage() {
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
             <Building2 className="w-4 h-4 mr-2" />
-            Transparency &amp; Accountability
+            Transparency
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">Full Disclosure Portal</h1>
           <p className="text-xl text-emerald-100 max-w-3xl mx-auto">

@@ -83,7 +83,7 @@ export default function HomePageClient({ articles, banners }: HomePageClientProp
                 
                 <Link 
                   href="/services" 
-                  className="group flex flex-col p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all duration-200"
+                  className="group flex flex-col p-6 bg-emerald-50 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md hover:border-emerald-200 transition-all duration-200"
                   aria-label="Explore all available city services"
                 >
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-emerald-700 transition-colors">More Services</h4>
