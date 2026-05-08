@@ -5,8 +5,11 @@ import { supabase } from "@/backend/config/database"; // adjust to your actual s
 
 export const chatRoutes = new Elysia({ prefix: "/chat" }).post(
   "/",
-  async ({ body, set }) => {
+  async ({ body, request, set }) => {
     const { full_name, email, phone, subject, message, source_node } = body;
+    const forwardedFor =
+      request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip");
+    const ip_address = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
 
     const { error } = await supabase.from("chat").insert({
       full_name:   full_name.trim(),
@@ -15,6 +18,7 @@ export const chatRoutes = new Elysia({ prefix: "/chat" }).post(
       subject:     subject.trim(),
       message:     message.trim(),
       source_node: source_node?.trim() || null,
+      ip_address,
     });
 
     if (error) {
@@ -32,6 +36,7 @@ export const chatRoutes = new Elysia({ prefix: "/chat" }).post(
       subject:     t.String({ minLength: 1 }),
       message:     t.String({ minLength: 1 }),
       source_node: t.Optional(t.String()),
+      ip_address:  t.Optional(t.Nullable(t.String())),
     }),
   }
 );

@@ -145,6 +145,7 @@ export async function submitFeedback(
         subject:     payload.subject,
         message:     payload.message,
         source_node: payload.source_node ?? null,
+        ip_address:  payload.ip_address ?? null,
       }),
     });
     const data = await res.json();

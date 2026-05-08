@@ -45,6 +45,8 @@ export default function Footer() {
     { href: "/about-us", label: "About Us" },
     { href: "/disclosure-portal", label: "Discloure Portal" },
     { href: "/forms", label: "Forms" },
+    { href: "/publications", label: "Publications" },
+    { href: "/arta/citizens-charter", label: "Citizen's Charter" },
   ];
 
   const govLinks: FooterLink[] = [

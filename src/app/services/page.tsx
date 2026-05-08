@@ -403,10 +403,10 @@ export default function SanPabloServicesPage() {
                 <FileText className="w-10 h-10 text-gray-400" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                No services found
+                Coming Soon!
               </h3>
               <p className="text-gray-600">
-                Try selecting a different category
+                Thank you for your patience.
               </p>
             </div>
           )}

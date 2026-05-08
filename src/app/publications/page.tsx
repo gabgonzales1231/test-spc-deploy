@@ -1,5 +1,3 @@
-//spc-website\src\app\publications\page.tsx
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
@@ -38,10 +36,10 @@ interface Publication {
 }
 
 interface Vacancy {
-  id:         number;
+  id:          number;
   datePosted: string;
-  filename:   string;
-  pdfUrl:     string | null;
+  filename:    string;
+  pdfUrl:      string | null;
 }
 
 type SortField = "datePosted" | "filename";
@@ -73,10 +71,10 @@ function formatDate(iso: string): string {
 
 function toVacancy(pub: Publication): Vacancy {
   return {
-    id:         pub.publication_id,
+    id:          pub.publication_id,
     datePosted: pub.created_at,
-    filename:   pub.filename,
-    pdfUrl:     pub.pdf_url,
+    filename:    pub.filename,
+    pdfUrl:      pub.pdf_url,
   };
 }
 
@@ -100,7 +98,7 @@ export default function PublicationsPage() {
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
-  const [page,          setPage]          = useState(1);
+  const [page,           setPage]          = useState(1);
   const [sortField,     setSortField]     = useState<SortField>("datePosted");
   const [sortDir,       setSortDir]       = useState<SortDir>("desc");
 
@@ -237,9 +235,6 @@ export default function PublicationsPage() {
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
-
-                
-                
               </div>
             </div>
           </CardHeader>
@@ -250,7 +245,6 @@ export default function PublicationsPage() {
                 <Loader2 className="w-10 h-10 animate-spin text-emerald-500 mb-3" />
                 <p className="text-sm">Loading vacancies...</p>
               </div>
-
             ) : error ? (
               <div className="flex flex-col items-center py-16 text-gray-400">
                 <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
@@ -263,10 +257,8 @@ export default function PublicationsPage() {
                   Try Again
                 </button>
               </div>
-
             ) : (
               <>
-            
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-hidden  border border-gray-100">
                   <table className="w-full text-sm" aria-label="Job vacancies table">
@@ -321,32 +313,41 @@ export default function PublicationsPage() {
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="md:hidden space-y-3">
+                <div className="md:hidden space-y-2">
                   {paginated.length === 0 ? (
                     <div className="py-16 text-center">
                       <EmptyState selectedMonth={selectedMonth} />
                     </div>
                   ) : (
-                    paginated.map((v) => (
-                      <div
-                        key={v.id}
-                        className="bg-white  p-4 flex justify-center text-center"
-                      >
-                        {v.pdfUrl ? (
-                          <a  href={v.pdfUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-emerald-700 hover:text-emerald-900 font-medium underline underline-offset-2 transition-colors text-sm"
-                            aria-label={`View PDF submitted on ${formatDate(v.datePosted)}`}
-                          >
-                            <FileText className="w-4 h-4 flex-shrink-0" />
-                            {formatDate(v.datePosted)}
-                          </a>
-                        ) : (
-                          <span className="text-sm text-gray-500">{formatDate(v.datePosted)}</span>
-                        )}
+                    <>
+                      {/* Mobile Header Row */}
+                      <div className="bg-emerald-50/80 border border-emerald-100 p-3 flex justify-center text-center row-gap-0">
+                        <span className="text-xs text-emerald-800 uppercase tracking-wider">
+                          Date Submitted
+                        </span>
                       </div>
-                    ))
+                      
+                      {paginated.map((v) => (
+                        <div
+                          key={v.id}
+                          className="bg-white/60 border-emerald-100/50 p-3.5 flex justify-center text-center shadow-sm row-gap-0"
+                        >
+                          {v.pdfUrl ? (
+                            <a  href={v.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-emerald-700 hover:text-emerald-900 font-medium underline underline-offset-2 transition-colors text-sm"
+                              aria-label={`View PDF submitted on ${formatDate(v.datePosted)}`}
+                            >
+                              <FileText className="w-4 h-4 flex-shrink-0" />
+                              {formatDate(v.datePosted)}
+                            </a>
+                          ) : (
+                            <span className="text-sm text-gray-500">{formatDate(v.datePosted)}</span>
+                          )}
+                        </div>
+                      ))}
+                    </>
                   )}
                 </div>
 
@@ -398,7 +399,6 @@ export default function PublicationsPage() {
           </CardContent>
         </Card>
 
-        
         <Card className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 shadow-xl">
           <CardContent className="p-8">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">

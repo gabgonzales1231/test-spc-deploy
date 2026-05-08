@@ -65,6 +65,7 @@ export interface ComplaintPayload {
   subject:      string;
   message:      string;
   source_node?: string | null;
+  ip_address?:  string | null;
 }
 
 export function generateId(): string {
