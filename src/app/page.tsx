@@ -1,3 +1,5 @@
+// src/app/page.tsx
+
 import { Metadata } from "next";
 import { supabase } from "@/backend/config/database";
 import HomePageClient from "@/components/client/HomePageClient";
@@ -19,12 +21,14 @@ export interface Banner {
   banner_id: number;
   title: string | null;
   description: string | null;
+  blurDataURL?: string;
   media?: {
     media_id: number;
     file_path: string;
     caption: string | null;
   };
 }
+
 
 // ============= SERVER-SIDE DATA FETCHING =============
 async function getLatestArticles(): Promise<Article[]> {
@@ -54,6 +58,7 @@ async function getLatestArticles(): Promise<Article[]> {
   return (data as unknown as Article[]) || [];
 }
 
+// Replace getLatestBanners with:
 async function getLatestBanners(): Promise<Banner[]> {
   const { data, error } = await supabase
     .from("banners")
@@ -75,7 +80,27 @@ async function getLatestBanners(): Promise<Banner[]> {
     console.error("Failed to fetch banners for homepage:", error);
     return [];
   }
-  return (data as unknown as Banner[]) || [];
+
+  const banners = (data as unknown as Banner[]) || [];
+
+  const { getPlaiceholder } = await import("plaiceholder");
+
+  const bannersWithBlur = await Promise.all(
+    banners.map(async (banner) => {
+      const filePath = banner.media?.file_path;
+      if (!filePath) return banner;
+      try {
+        const res = await fetch(filePath);
+        const buffer = Buffer.from(await res.arrayBuffer());
+        const { base64 } = await getPlaiceholder(buffer, { size: 10 });
+        return { ...banner, blurDataURL: base64 };
+      } catch {
+        return banner;
+      }
+    })
+  );
+
+  return bannersWithBlur;
 }
 
 // ============= SEO METADATA =============
