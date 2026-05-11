@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import CharterHeader from "@/components/arta/citizens-charter/charter-header";
@@ -21,22 +21,28 @@ export default function PdfViewer() {
 
   const [numPages, setNumPages] = useState<number>(0);
   const [pageWidth, setPageWidth] = useState<number>(800);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [showTop, setShowTop] = useState(false);
   const [showBottom, setShowBottom] = useState(true);
 
   const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setShowTop(el.scrollTop >= 100);
-    setShowBottom(el.scrollHeight - el.scrollTop - el.clientHeight >= 100);
+    const scrollTop = window.scrollY;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = window.innerHeight;
+    setShowTop(scrollTop >= 100);
+    setShowBottom(scrollHeight - scrollTop - clientHeight >= 100);
   }, []);
 
-  const scrollToTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  const scrollToBottom = () =>
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
-  const containerRef = useCallback((node: HTMLDivElement | null) => {
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToBottom = () =>
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+
+  const resizeRef = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
     const observer = new ResizeObserver(([entry]) => {
       const w = entry.contentRect.width;
@@ -60,11 +66,7 @@ export default function PdfViewer() {
   }
 
   return (
-    <div
-      ref={scrollRef}
-      onScroll={handleScroll}
-      className="h-screen overflow-y-auto bg-gray-100 p-4"
-    >
+    <div className="min-h-screen bg-gray-100 p-4">
       <div className="relative mb-3">
         <CharterHeader />
       </div>
@@ -92,7 +94,7 @@ export default function PdfViewer() {
         )}
       </div>
 
-      <div ref={containerRef}>
+      <div ref={resizeRef}>
         <Document
           file={file}
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}
