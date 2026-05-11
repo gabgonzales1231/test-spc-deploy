@@ -3,12 +3,9 @@ import { supabase } from '@/backend/config/database'
 import { errorHandler } from '@/backend/utils/error'
 import { formatPaginationResponse } from '@/backend/utils/helpers'
 
-function getPublicUrl(filePath: string): string | null {
+function getProxyUrl(filePath: string): string | null {
   if (!filePath) return null
-  const { data } = supabase.storage
-    .from('disclosure')
-    .getPublicUrl(filePath)
-  return data?.publicUrl ?? null
+  return `/api/download/disclosure/${filePath}`
 }
 
 function enrichDocument(doc: Record<string, unknown>) {
@@ -18,7 +15,7 @@ function enrichDocument(doc: Record<string, unknown>) {
       ? new Date(doc.date_passed as string).getFullYear()
       : null,
     pdf_url: doc.document_path
-      ? getPublicUrl(doc.document_path as string)
+      ? getProxyUrl(doc.document_path as string)
       : null,
   }
 }

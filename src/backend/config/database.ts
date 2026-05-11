@@ -1,3 +1,5 @@
+// src/backend/config/database.ts
+
 import { createClient } from '@supabase/supabase-js'
 
 // for authenticated user

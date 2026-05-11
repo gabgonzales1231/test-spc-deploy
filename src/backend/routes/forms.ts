@@ -1,16 +1,11 @@
-//spc-website\src\backend\routes\forms.ts
-
 import { Elysia } from 'elysia'
 import { supabase } from '@/backend/config/database'
 import { errorHandler } from '@/backend/utils/error'
 import { formatPaginationResponse } from '@/backend/utils/helpers'
 
-function getPublicUrl(filePath: string): string | null {
+function getProxyUrl(filePath: string): string | null {
   if (!filePath) return null
-  const { data } = supabase.storage
-    .from('forms')
-    .getPublicUrl(filePath)
-  return data?.publicUrl ?? null
+  return `/api/download/forms/${filePath}`
 }
 
 function enrichDocument(doc: Record<string, unknown>) {
@@ -19,9 +14,8 @@ function enrichDocument(doc: Record<string, unknown>) {
     year: doc.date_issued
       ? new Date(doc.date_issued as string).getFullYear()
       : null,
-    // Fix: Match the database column name 'file_url'
     pdf_url: doc.file_url
-      ? getPublicUrl(doc.file_url as string)
+      ? getProxyUrl(doc.file_url as string)
       : null,
   }
 }
@@ -55,7 +49,6 @@ export const formsRoutes = new Elysia({ prefix: '/forms' })
 
     let dataQuery = supabase
       .from('forms')
-      // Fix: Selecting 'id' and 'file_url' to match schema
       .select('id, category, title, date_issued, file_url, status, created_at')
       .eq('status', 'active')
       .order('date_issued', { ascending: false })

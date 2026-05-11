@@ -20,7 +20,7 @@ import {
   AlertCircle,
   Calendar,
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
+
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,10 +48,6 @@ type SortDir   = "asc" | "desc";
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const ITEMS_PER_PAGE = 10;
 
@@ -104,36 +100,35 @@ export default function PublicationsPage() {
 
   const currentYear = new Date().getFullYear();
 
-  const fetchVacancies = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+const fetchVacancies = useCallback(async () => {
+  setLoading(true);
+  setError(null);
 
-    try {
-      const { data, error } = await supabase
-        .from("publications")
-        .select("publication_id, filename, file_path, created_at")
-        .order("created_at", { ascending: false })
-        .limit(500);
+  try {
+    const res = await fetch("/api/publications/vacancies");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data: {
+      publication_id: number;
+      filename: string;
+      file_path: string;
+      created_at: string;
+    }[] = await res.json();
 
-      if (error) throw error;
-
-      const enriched: Publication[] = (data ?? []).map((pub) => ({
-        ...pub,
-        pdf_url: supabase.storage
-          .from("vacancies")
-          .getPublicUrl(pub.file_path).data.publicUrl,
-        uploaded_by: null,
-        updated_at:  pub.created_at,
-      }));
-
-      setVacancies(enriched.map(toVacancy));
-    } catch (err) {
-      console.error("Failed to fetch publications:", err);
-      setError("Unable to load vacancies at this time. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    setVacancies(
+      data.map((pub) => ({
+        id:         pub.publication_id,
+        datePosted: pub.created_at,
+        filename:   pub.filename,
+        pdfUrl:     `/api/download/vacancies/${pub.file_path}`,
+      }))
+    );
+  } catch (err) {
+    console.error("Failed to fetch publications:", err);
+    setError("Unable to load vacancies at this time. Please try again later.");
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     fetchVacancies();
