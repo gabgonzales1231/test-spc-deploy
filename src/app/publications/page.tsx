@@ -207,11 +207,7 @@ export default function PublicationsPage() {
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <Briefcase className="w-6 h-6 text-emerald-600" />
                   Job Vacancies
-                  {selectedMonth !== "all" && (
-                    <span className="ml-2 px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full">
-                      {selectedMonth} {currentYear}
-                    </span>
-                  )}
+
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
                   Viewing vacancies for the year {currentYear}.

@@ -73,7 +73,7 @@ export function useInputGuard() {
     // 1 message per 3-hour window
     const win = getWindow();
     if (win !== null) {
-      setError("Inquiry already sent, please come back later.");
+      setError("Already sent an inquiry. Please wait before sending another.");
       return false;
     }
 
