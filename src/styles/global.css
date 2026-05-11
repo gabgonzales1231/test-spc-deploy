@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 :root {
   /* Base */
   --background: oklch(1 0 0);
@@ -142,3 +143,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+/* Scrollbar – thin green theme */
+:root {
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #16a34a;;
+  --scrollbar-thumb-hover: #16a34a;
+  --scrollbar-width: 6px;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
