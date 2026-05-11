@@ -28,7 +28,9 @@ export async function GET(
   const referer = req.headers.get("referer") ?? "";
   const origin = req.headers.get("origin") ?? "";
   const host = req.headers.get("host") ?? "";
-  const allowedHost = process.env.NEXT_PUBLIC_SITE_URL ?? `https://${host}`;
+const allowedHost = process.env.NEXT_PUBLIC_SITE_URL ?? 
+  process.env.NEXT_PUBLIC_FRONTEND_URL ?? 
+  `http://${host}`;
 
   const isInternal =
     referer.startsWith(allowedHost) ||
