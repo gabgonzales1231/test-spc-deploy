@@ -317,7 +317,7 @@ export default function PublicationsPage() {
                   ) : (
                     <>
                       {/* Mobile Header Row */}
-                      <div className="bg-emerald-50/80 border border-emerald-100 p-3 flex justify-center text-center row-gap-0">
+                      <div className="bg-emerald-50/80  p-3 flex justify-center text-center row-gap-0">
                         <span className="text-xs text-emerald-800 uppercase tracking-wider">
                           Date Submitted
                         </span>
@@ -326,7 +326,7 @@ export default function PublicationsPage() {
                       {paginated.map((v) => (
                         <div
                           key={v.id}
-                          className="bg-white/60 border-emerald-100/50 p-3.5 flex justify-center text-center shadow-sm row-gap-0"
+                          className="bg-white/60 p-3.5 flex justify-center text-center  row-gap-0"
                         >
                           {v.pdfUrl ? (
                             <a  href={v.pdfUrl}
@@ -454,7 +454,7 @@ export default function PublicationsPage() {
         {/* Footer note */}
         <div className="text-center">
           <div className="inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-emerald-200/30">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full mr-3 animate-pulse" />
+            
             <p className="text-sm text-gray-600">
               Vacancy listings are updated regularly. Check back often for new postings.
             </p>

@@ -67,14 +67,6 @@ export default function PdfViewer() {
     >
       <div className="relative mb-3">
         <CharterHeader />
-        <div className="absolute top-1/2 -translate-y-1/2 right-3">
-          <button
-            onClick={() => router.back()}
-            className="bg-[#005840] text-white text-xs md:text-sm px-3 py-1.5 rounded-full shadow hover:shadow-md active:scale-95 transition"
-          >
-            Back
-          </button>
-        </div>
       </div>
 
       <h2 className="text-center font-bold mb-4 text-gray-700">PDF Viewer</h2>
