@@ -1,3 +1,5 @@
+// src/app/api/download/[...path]/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -28,16 +30,21 @@ export async function GET(
   const referer = req.headers.get("referer") ?? "";
   const origin = req.headers.get("origin") ?? "";
   const host = req.headers.get("host") ?? "";
-const allowedHost = process.env.NEXT_PUBLIC_SITE_URL ?? 
-  process.env.NEXT_PUBLIC_FRONTEND_URL ?? 
-  `http://${host}`;
+
+  const allowedHost =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_FRONTEND_URL ??
+    `https://${host}`;
 
   const isInternal =
     referer.startsWith(allowedHost) ||
     origin.startsWith(allowedHost) ||
-    (process.env.NODE_ENV === "development" && referer === "");
+    // Allow empty referer on same-host requests (Vercel/production navigation)
+    (referer === "" && host === new URL(allowedHost).host) ||
+    process.env.NODE_ENV === "development";
 
   if (!isInternal) {
+    console.log("403 debug:", { referer, origin, host, allowedHost });
     return new NextResponse("Forbidden", { status: 403 });
   }
 
@@ -71,8 +78,8 @@ const allowedHost = process.env.NEXT_PUBLIC_SITE_URL ??
     return new NextResponse("Invalid path", { status: 400 });
   }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     return new NextResponse("Server misconfiguration", { status: 500 });
