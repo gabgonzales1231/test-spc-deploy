@@ -8,6 +8,7 @@ import HotlinesSidebar from "@/components/home/HotlinesSidebar";
 import ChatWidgetLoader from "@/components/ChatWidgetLoader";
 import DataPrivacyPolicyPopup from "@/components/home/DataPrivacyPolicy";
 import AnimationCSS from "@/components/AnimationCSS";
+import DisableRightClick from "@/components/DisableRightClick";
 
 import "../styles/global.css";
 
@@ -55,6 +56,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>
+        <DisableRightClick />
       </body>
     </html>
   );
