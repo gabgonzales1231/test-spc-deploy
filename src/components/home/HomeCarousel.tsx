@@ -19,11 +19,9 @@ function ImageCarouselItem({
   isActive = false,
   isPriority = false,
   isVisible = false,
-  blurDataURL,
 }: {
   src: string; alt: string; title: string; subtitle: string;
   isActive?: boolean; isPriority?: boolean; isVisible?: boolean;
-  blurDataURL?: string;
 }) {
   if (!isVisible && !isPriority) {
     return (
@@ -38,15 +36,18 @@ function ImageCarouselItem({
       <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
         <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
 
-          {/* Blurred background using blurDataURL as CSS — no extra network request */}
-          {blurDataURL && (
-            <div
-              className="absolute inset-0 scale-110 blur-2xl opacity-60"
-              style={{
-                backgroundImage: `url(${blurDataURL})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
+          {/* ✅ FIX: Removed the custom 'quality' prop to prevent Next.js config errors.
+              Using sizes="10vw" alone is enough to force Next.js to serve a tiny, 
+              lightweight thumbnail for this blurred background. */}
+          {isActive && (
+            <Image
+              src={src}
+              alt=""
+              fill
+              className="object-cover scale-110 blur-2xl opacity-60"
+              sizes="10vw"
+              priority={isPriority}
+              {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
               aria-hidden="true"
             />
           )}
@@ -55,9 +56,10 @@ function ImageCarouselItem({
             src={src}
             alt={alt}
             fill
-            placeholder={blurDataURL ? "blur" : "empty"}
-            blurDataURL={blurDataURL}
-            className={`object-contain transition-all duration-700 ease-out
+            className={`object-contain
+              ${isPriority
+                ? "transition-transform transition-opacity duration-700 ease-out"
+                : "transition-all duration-700 ease-out"}
               ${isActive ? "scale-[1.02]" : "scale-100"}
               group-hover:scale-105`}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
@@ -88,6 +90,7 @@ function ImageCarouselItem({
 export default function HomeCarousel({ banners }: { banners: Banner[] }) {
   const [api, setApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
+
   const [autoplayReady, setAutoplayReady] = useState(false);
 
   const autoplay = useMemo(
@@ -141,7 +144,6 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
                   isActive={index === currentSlide}
                   isPriority={index === 0}
                   isVisible={isVisible}
-                  blurDataURL={banner.blurDataURL}
                 />
               );
             })}

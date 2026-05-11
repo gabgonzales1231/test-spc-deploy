@@ -1,3 +1,5 @@
+//src/components/client/HomePageClient.tsx
+
 "use client";
 
 import { ArrowRight, Newspaper } from "lucide-react";

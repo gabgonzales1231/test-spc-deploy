@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 type FooterLink = {
@@ -39,6 +42,8 @@ const SocialIcon = ({ children }: { children: React.ReactNode }) => (
 );
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isHidden = pathname.startsWith("/arta/citizens-charter/view");
   const cityLinks: FooterLink[] = [
     { href: "/", label: "Home" },
     { href: "/news", label: "News" },
