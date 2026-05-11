@@ -78,7 +78,7 @@ export default function RootLayout({
 
     window.addEventListener('wheel', function(e) {
       e.preventDefault();
-      target += e.deltaY * 1.0;
+      target += e.deltaY * 1.5;
       target = Math.max(0, Math.min(target, document.body.scrollHeight - window.innerHeight));
       current = window.scrollY;
       if (!running) {
