@@ -207,7 +207,7 @@ async function submitAndReturn(subject: string, message: string) {
     const main = getMainMenuNode();
     pushBotMessage(
       (result.success
-        ? "✅ Message sent successfully, we will respond as soon as possible."
+        ? "✅ Natanggap namin ang iyong mensahe at sasagutin namin ito sa lalong madaling panahon. Maraming salamat!"
         : `May error: ${result.error}`) +
       "\n\n" + injectContent(main.message, cms),
       main
