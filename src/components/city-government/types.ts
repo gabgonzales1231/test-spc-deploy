@@ -19,6 +19,10 @@ export type Department = {
   icon: React.ElementType;
   description: string;
   color: string;
+    head?: {
+    name: string;
+    contact: string;
+  };
 };
 
 export type Contact = {

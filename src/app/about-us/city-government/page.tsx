@@ -19,14 +19,16 @@ import {
 import Section from "@/components/city-government/Section";
 import SectionHeader from "@/components/city-government/SectionHeader";
 import IconBadge from "@/components/city-government/IconBadge";
-import InfoCard from "@/components/city-government/InfoCard";
+
 import BranchCard from "@/components/city-government/BranchCard";
 import ContactCard from "@/components/city-government/ContactCard";
+import DepartmentsSection from "@/components/city-government/DepartmentsSection";
+
 
 import {
   Stat,
   Branch,
-  Department,
+
   Contact,
 } from "@/components/city-government/types";
 
@@ -77,44 +79,6 @@ const governmentBranches: Branch[] = [
   },
 ];
 
-const keyDepartments: Department[] = [
-  {
-    name: "City Planning & Development Office",
-    icon: Building2,
-    description: "Urban planning, zoning, and development coordination",
-    color: "emerald",
-  },
-  {
-    name: "City Health Office",
-    icon: Heart,
-    description: "Public health services and healthcare programs",
-    color: "red",
-  },
-  {
-    name: "City Social Welfare Office",
-    icon: Users,
-    description: "Social services and community welfare programs",
-    color: "blue",
-  },
-  {
-    name: "City Education Office",
-    icon: GraduationCap,
-    description: "Educational programs and school administration",
-    color: "purple",
-  },
-  {
-    name: "City Engineer's Office",
-    icon: Building2,
-    description: "Infrastructure development and maintenance",
-    color: "orange",
-  },
-  {
-    name: "City Treasurer's Office",
-    icon: Briefcase,
-    description: "Financial management and revenue collection",
-    color: "green",
-  },
-];
 
 const achievements: string[] = [
   "Seal of Good Local Governance (SGLG) Recipient",
@@ -203,18 +167,14 @@ export default function CityGovernmentPage() {
       </Section>
 
       {/* Key Departments */}
-      <Section>
-        <SectionHeader
-          title="Key Departments"
-          subtitle="Essential services delivered through various city departments"
-          icon={undefined}
-        />
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {keyDepartments.map((dept, index) => (
-            <InfoCard key={index} dept={dept} />
-          ))}
-        </div>
-      </Section>
+<Section>
+  <SectionHeader
+    title="Key Departments"
+    subtitle="Essential services delivered through various city departments"
+    icon={undefined}
+  />
+  <DepartmentsSection />
+</Section>
 
       {/* Achievements */}
       <Section className="bg-gradient-to-r from-emerald-600 to-emerald-800 text-gray-100">
