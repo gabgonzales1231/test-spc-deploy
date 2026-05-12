@@ -73,27 +73,6 @@ export default function PdfViewer() {
 
       <h2 className="text-center font-bold mb-4 text-gray-700">PDF Viewer</h2>
 
-      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-50">
-        {showTop && (
-          <button
-            onClick={scrollToTop}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
-            aria-label="Scroll to top"
-          >
-            <ChevronUp className="size-5" />
-          </button>
-        )}
-        {showBottom && (
-          <button
-            onClick={scrollToBottom}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
-            aria-label="Scroll to bottom"
-          >
-            <ChevronDown className="size-5" />
-          </button>
-        )}
-      </div>
-
       <div ref={resizeRef}>
         <Document
           file={file}

@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import { JPAvatar } from "./ui/JPAvatar";
 import { OnlineDot } from "./ui/OnlineDot";
 
-const BOT_NAME = "Juan Pablo ChatBot";
+const BOT_NAME = "Juan Pablo";
 
 interface ChatHeaderProps {
   menuOpen: boolean;

@@ -148,8 +148,8 @@
 /* Scrollbar – thin green theme */
 :root {
   --scrollbar-track: transparent;
-  --scrollbar-thumb: #16a34a;;
-  --scrollbar-thumb-hover: #16a34a;
+  --scrollbar-thumb: #0e5c2a;
+  --scrollbar-thumb-hover: #0e5c2a;
   --scrollbar-width: 6px;
 }
 

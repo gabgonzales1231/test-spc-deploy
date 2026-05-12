@@ -1,4 +1,4 @@
-const BOT_NAME = "Juan Pablo ChatBot";
+const BOT_NAME = "Juan Pablo";
 
 interface PreOpenBubbleProps {
   onDismiss: () => void;
@@ -14,10 +14,10 @@ export function PreOpenBubble({ onDismiss }: PreOpenBubbleProps) {
       >
         ×
       </button>
-      <p className="m-0 text-[13px] font-medium text-gray-900">Hi there 👋</p>
-      <p className="m-0 mt-0.5 text-xs text-gray-700">
-        Welcome to {BOT_NAME}.<br />
-        <span className="text-gray-500">We typically reply in a few minutes.</span>
+      <p className="m-0 text-[14px] font-medium text-gray-900">Magandang araw! 👋</p>
+      <p className="m-0 mt-0.5 text-s text-gray-700">
+        May katanungan ka?<br />
+        <span className="text-gray-500 text-xs">Ipahayag mo dito.</span>
       </p>
     </div>
   );
