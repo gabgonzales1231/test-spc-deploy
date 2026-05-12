@@ -1,8 +1,6 @@
-//src/app/about-us/history/page.tsx
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Building2, MapPin, Eye, Mountain, BookOpen, X, ImageOff } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -12,6 +10,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import {
   Dialog,
@@ -127,7 +126,7 @@ const ImageGallery = () => {
 };
 
 // ---------------------------------------------------------------------------
-// SevenLakesCarousel — unchanged (images already from Supabase assets bucket)
+// SevenLakesCarousel — auto-scrolling with pause on hover/interaction
 // ---------------------------------------------------------------------------
 
 interface Lake {
@@ -136,10 +135,14 @@ interface Lake {
   image: string;
 }
 
+const SCROLL_INTERVAL = 2000;
+
 const SevenLakesCarousel = () => {
   const [selectedLake, setSelectedLake] = useState<Lake | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [api, setApi] = useState<CarouselApi>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const lakes: Lake[] = [
     {
@@ -179,6 +182,33 @@ const SevenLakesCarousel = () => {
     },
   ];
 
+  const startAutoScroll = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      if (!api) return;
+      if (api.canScrollNext()) {
+        api.scrollNext();
+      } else {
+        api.scrollTo(0);
+      }
+    }, SCROLL_INTERVAL);
+  }, [api]);
+
+  const stopAutoScroll = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  // Start auto-scroll once the Embla API is ready
+  useEffect(() => {
+    if (!api) return;
+    startAutoScroll();
+    return () => stopAutoScroll();
+  }, [api, startAutoScroll, stopAutoScroll]);
+
+  // Device orientation tilt for the lake detail dialog
   useEffect(() => {
     const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null && event.gamma !== null) {
@@ -208,15 +238,26 @@ const SevenLakesCarousel = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 overflow-hidden">
-      <Carousel className="w-full">
+    <div
+      className="w-full max-w-6xl mx-auto px-4 overflow-hidden"
+      onMouseEnter={stopAutoScroll}
+      onMouseLeave={startAutoScroll}
+    >
+      <Carousel
+        className="w-full"
+        setApi={setApi}
+        opts={{ loop: true, duration: 40 }}
+      >
         <CarouselContent className="-ml-2 md:-ml-4">
           {lakes.map((lake, index) => (
             <CarouselItem key={index} className="pl-2 md:pl-4 basis-[85%] md:basis-1/2 lg:basis-1/3">
               <div className="p-1">
                 <div
                   className="cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden rounded-xl group"
-                  onClick={() => setSelectedLake(lake)}
+                  onClick={() => {
+                    stopAutoScroll();
+                    setSelectedLake(lake);
+                  }}
                 >
                   <div className="relative w-full h-64 overflow-hidden rounded-xl">
                     <Image
@@ -238,11 +279,25 @@ const SevenLakesCarousel = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex bg-white/90 hover:bg-emerald-500 hover:text-white" />
-        <CarouselNext className="hidden md:flex bg-white/90 hover:bg-emerald-500 hover:text-white" />
+        <CarouselPrevious
+          className="hidden md:flex bg-white/90 hover:bg-emerald-500 hover:text-white"
+          onClick={() => { stopAutoScroll(); startAutoScroll(); }}
+        />
+        <CarouselNext
+          className="hidden md:flex bg-white/90 hover:bg-emerald-500 hover:text-white"
+          onClick={() => { stopAutoScroll(); startAutoScroll(); }}
+        />
       </Carousel>
 
-      <Dialog open={selectedLake !== null} onOpenChange={() => setSelectedLake(null)}>
+      <Dialog
+        open={selectedLake !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedLake(null);
+            startAutoScroll();
+          }
+        }}
+      >
         <DialogContent
           className="max-w-7xl w-[95vw] h-[90vh] md:h-[85vh] p-0 overflow-hidden border-none"
           onMouseMove={handleMouseMove}
@@ -291,7 +346,7 @@ const SevenLakesCarousel = () => {
 };
 
 // ---------------------------------------------------------------------------
-// NeighboringMunicipalities — unchanged
+// NeighboringMunicipalities
 // ---------------------------------------------------------------------------
 
 const NeighboringMunicipalities = () => {
