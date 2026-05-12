@@ -32,9 +32,9 @@ export default function InfoCard({ dept }: { dept: Department }) {
 
   return (
     <div
-      className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 cursor-default"
+      className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 cursor-default w-full"
       style={{
-        height: hovered ? "210px" : "130px",
+        height: hovered ? "250px" : "170px",
         boxShadow: hovered
           ? "0 12px 32px rgba(0,0,0,0.10)"
           : "0 1px 6px rgba(0,0,0,0.06)",
@@ -44,48 +44,45 @@ export default function InfoCard({ dept }: { dept: Department }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Icon — fixed, no animation */}
-      <div
-        className={`absolute z-10 flex items-center justify-center rounded-xl ${bgLight}`}
-        style={{ width: 40, height: 40, top: 20, left: 20 }}
-      >
-        <Icon className={`w-5 h-5 ${textColor}`} />
+      {/* Static content — icon, name, description centered */}
+      <div className="absolute inset-x-0 top-0 flex flex-col items-center text-center px-6 pt-6 gap-2">
+        {/* Icon */}
+        <div
+          className={`flex items-center justify-center rounded-xl ${bgLight}`}
+          style={{ width: 44, height: 44, flexShrink: 0 }}
+        >
+          <Icon className={`w-5 h-5 ${textColor}`} />
+        </div>
+
+        {/* Department name */}
+        <h3 className="font-semibold text-gray-800 text-lg leading-snug">
+          {dept.name}
+        </h3>
+
+        {/* Description */}
+        <p className="text-sm text-gray-400 leading-relaxed">
+          {dept.description}
+        </p>
       </div>
-
-      {/* Department name — fixed */}
-      <h3
-        className="absolute z-10 font-semibold text-gray-800 text-lg leading-snug"
-        style={{ top: 68, left: 20, right: 20 }}
-      >
-        {dept.name}
-      </h3>
-
-      {/* Description — always visible, fixed */}
-      <p
-        className="absolute left-5 right-5 z-10 text-sm text-gray-400 leading-relaxed"
-        style={{ top: 92 }}
-      >
-        {dept.description}
-      </p>
 
       {/* Divider + head info — slides up on hover */}
       <div
-        className="absolute left-5 right-5 z-10 flex flex-col gap-1.5"
+        className="absolute left-6 right-6 z-10 flex flex-col items-center gap-2"
         style={{
-          top: hovered ? "152px" : "230px",
+          top: hovered ? "188px" : "270px",
           opacity: hovered ? 1 : 0,
           transition: "all .35s cubic-bezier(.3, 0, 0, 1.3)",
         }}
       >
-        <div className="w-full h-px bg-gray-100 mb-0.5" />
+        <div className="w-full h-px bg-gray-100" />
         <div className="flex items-center gap-2">
-          <User className={`w-3 h-3 shrink-0 ${textColor}`} />
+          <User className={`w-3.5 h-3.5 shrink-0 ${textColor}`} />
           <span className="text-xs text-gray-500 truncate">
             {dept.head?.name ?? "To be announced"}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Phone className={`w-3 h-3 shrink-0 ${textColor}`} />
+          <Phone className={`w-3.5 h-3.5 shrink-0 ${textColor}`} />
           <span className={`text-xs font-medium truncate ${textColor}`}>
             {dept.head?.contact ?? "—"}
           </span>
