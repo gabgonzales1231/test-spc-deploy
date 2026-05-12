@@ -1,7 +1,9 @@
+//src/app/about-us/history/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, MapPin, Eye, Mountain, BookOpen, X } from "lucide-react";
+import { Building2, MapPin, Eye, Mountain, BookOpen, X, ImageOff } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,76 +21,85 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { useAboutUs, type AboutUsPhoto } from "@/hooks/useAboutUs";
+
+// ---------------------------------------------------------------------------
+// ImageGallery — CMS-driven, fetches from the "about-us" Supabase folder
+// ---------------------------------------------------------------------------
 
 const ImageGallery = () => {
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const { photos, loading, error } = useAboutUs();
 
-  const images = [
-    {
-      url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-      title: "San Pablo Landscape",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800",
-      title: "City View",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800",
-      title: "Mountain Scenery",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800",
-      title: "Natural Beauty",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800",
-      title: "Greenery",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800",
-      title: "Waterscape",
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 animate-pulse">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-emerald-100/60 rounded-xl"
+            style={{
+              gridRow: i === 0 ? "span 2" : "span 1",
+              aspectRatio: i === 0 ? "1/1" : "16/9",
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (error || photos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
+        <ImageOff className="w-10 h-10" />
+        <p className="text-sm">
+          {error ? "Failed to load photos." : "No photos available yet."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {images.map((image, index) => (
+        {photos.map((photo: AboutUsPhoto, index: number) => (
           <div
-            key={index}
+            key={photo.photo_id}
             className="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 hover:scale-[1.02] active:scale-95"
             style={{
               gridRow: index === 0 ? "span 2" : "span 1",
               aspectRatio: index === 0 ? "1/1" : "16/9",
             }}
-            onClick={() => setSelectedImage(index)}
+            onClick={() => setSelectedIndex(index)}
           >
             <Image
-              src={image.url}
-              alt={image.title}
+              src={photo.url}
+              alt={photo.caption ?? `San Pablo City photo ${index + 1}`}
               className="w-full h-full object-cover"
               width={600}
               height={400}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 text-white">
-                <p className="font-semibold text-xs md:text-base">{image.title}</p>
-              </div>
+              {photo.caption && (
+                <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 text-white">
+                  <p className="font-semibold text-xs md:text-base">{photo.caption}</p>
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      {selectedImage !== null && (
+      {selectedIndex !== null && (
         <div
           className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4"
-          onClick={() => setSelectedImage(null)}
+          onClick={() => setSelectedIndex(null)}
         >
           <Button
             variant="ghost"
             size="icon"
             className="absolute top-4 right-4 text-white hover:bg-white/10"
-            onClick={() => setSelectedImage(null)}
+            onClick={() => setSelectedIndex(null)}
           >
             <X className="w-8 h-8" />
           </Button>
@@ -97,21 +108,27 @@ const ImageGallery = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <Image
-              src={images[selectedImage].url}
-              alt={images[selectedImage].title}
+              src={photos[selectedIndex].url}
+              alt={photos[selectedIndex].caption ?? `San Pablo City photo ${selectedIndex + 1}`}
               className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
               width={1200}
               height={800}
             />
-            <p className="text-white text-center mt-6 text-xl font-semibold">
-              {images[selectedImage].title}
-            </p>
+            {photos[selectedIndex].caption && (
+              <p className="text-white text-center mt-6 text-xl font-semibold">
+                {photos[selectedIndex].caption}
+              </p>
+            )}
           </div>
         </div>
       )}
     </>
   );
 };
+
+// ---------------------------------------------------------------------------
+// SevenLakesCarousel — unchanged (images already from Supabase assets bucket)
+// ---------------------------------------------------------------------------
 
 interface Lake {
   name: string;
@@ -221,15 +238,11 @@ const SevenLakesCarousel = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        {/* Navigation hidden on mobile to prevent overflow, visible on md+ */}
         <CarouselPrevious className="hidden md:flex bg-white/90 hover:bg-emerald-500 hover:text-white" />
         <CarouselNext className="hidden md:flex bg-white/90 hover:bg-emerald-500 hover:text-white" />
       </Carousel>
 
-      <Dialog
-        open={selectedLake !== null}
-        onOpenChange={() => setSelectedLake(null)}
-      >
+      <Dialog open={selectedLake !== null} onOpenChange={() => setSelectedLake(null)}>
         <DialogContent
           className="max-w-7xl w-[95vw] h-[90vh] md:h-[85vh] p-0 overflow-hidden border-none"
           onMouseMove={handleMouseMove}
@@ -239,14 +252,12 @@ const SevenLakesCarousel = () => {
             <div className="h-full flex flex-col overflow-hidden">
               <div
                 className="relative w-full h-1/2 md:h-2/3 overflow-hidden bg-slate-900"
-                style={{
-                  perspective: "1000px",
-                }}
+                style={{ perspective: "1000px" }}
               >
                 <div
                   className="absolute inset-0 w-full h-full"
                   style={{
-                    transform: `rotateY(${(mousePosition.x || tilt.x)}deg) rotateX(${-(mousePosition.y || tilt.y)}deg) scale(1.1)`,
+                    transform: `rotateY(${mousePosition.x || tilt.x}deg) rotateX(${-(mousePosition.y || tilt.y)}deg) scale(1.1)`,
                     transition: "transform 0.1s ease-out",
                   }}
                 >
@@ -278,6 +289,10 @@ const SevenLakesCarousel = () => {
     </div>
   );
 };
+
+// ---------------------------------------------------------------------------
+// NeighboringMunicipalities — unchanged
+// ---------------------------------------------------------------------------
 
 const NeighboringMunicipalities = () => {
   const municipalities = [
@@ -324,6 +339,10 @@ const NeighboringMunicipalities = () => {
     </div>
   );
 };
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function SanPabloCityInfoPage() {
   return (
@@ -376,7 +395,7 @@ export default function SanPabloCityInfoPage() {
         </div>
       </section>
 
-      {/* Image Gallery */}
+      {/* Image Gallery — CMS-driven */}
       <section className="py-12 md:py-16 px-4 bg-emerald-50/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
@@ -525,8 +544,7 @@ export default function SanPabloCityInfoPage() {
           </div>
         </div>
       </section>
-      
-      {/* Footer-like info for small screens */}
+
       <footer className="py-8 px-4 border-t border-gray-100 bg-white">
         <div className="max-w-2xl mx-auto text-center space-y-4">
           <p className="text-xs text-gray-500">

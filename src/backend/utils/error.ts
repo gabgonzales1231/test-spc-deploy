@@ -1,3 +1,5 @@
+// src/backend/utils/error.ts
+
 import { Elysia } from 'elysia'
 
 export class AppError extends Error {

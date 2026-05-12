@@ -21,7 +21,7 @@ export const STATIC_FLOW_NODES: Record<string, FlowNode> = {
     options: [
       { label: "Serbisyo",            value: "serbisyo" },
       { label: "Tanong o Suhestiyon", value: "tanong" },
-      { label: "Iba Pa",              value: "iba-pa" },
+      { label: "Help Desk",              value: "iba-pa" },
     ],
     inputMode: "buttons",
   },

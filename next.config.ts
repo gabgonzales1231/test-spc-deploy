@@ -15,7 +15,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co https://www.sanpablocity.gov.ph https://sanpablocity.gov.ph https://webapi.sanpablocitygov.org https://images.unsplash.com https://placehold.co",
+      "img-src 'self' data: blob: https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co https://www.sanpablocity.gov.ph https://sanpablocity.gov.ph https://webapi.sanpablocitygov.org https://placehold.co",
       "font-src 'self'",
       "connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co http://localhost:3001",
       "frame-src 'self' https://yljsclzmrxuhejgcesiv.supabase.co",
@@ -67,10 +67,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
         hostname: "placehold.co",
       },
     ],
@@ -87,7 +83,5 @@ const nextConfig: NextConfig = {
 
   typescript: { ignoreBuildErrors: false },
 };
-
-
 
 export default nextConfig;

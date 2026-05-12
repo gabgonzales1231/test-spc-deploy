@@ -13,6 +13,7 @@ import { disclosureRoutes } from './routes/disclosure'
 // Added the forms routes import
 import { formsRoutes } from '@/backend/routes/forms'
 import { chatRoutes } from './routes/chat'
+import { aboutUsRoutes } from './routes/about-us'
 
 export const app = new Elysia()
   .use(cors({
@@ -82,6 +83,7 @@ export const app = new Elysia()
       .use(disclosureRoutes)
       .use(chatRoutes)
       .use(formsRoutes)
+      .use(aboutUsRoutes)
   })
   // Static assets
   .use(staticPlugin({
