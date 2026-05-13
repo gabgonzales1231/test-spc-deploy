@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import { supabase } from "@/backend/config/database";
 import HomePageClient from "@/components/client/HomePageClient";
+import { unstable_cache } from "next/cache";
 
-export const dynamic = 'force-dynamic'
 
 // ============= TYPES =============
 export interface Article {
@@ -27,56 +27,60 @@ export interface Banner {
 }
 
 // ============= SERVER-SIDE DATA FETCHING =============
-async function getLatestArticles(): Promise<Article[]> {
-  const { data, error } = await supabase
-    .from("articles")
-    .select(`
-      article_id,
-      slug,
-      title,
-      excerpt,
-      published_at,
-      featured_media:featured_media_id (
-        file_path
-      ),
-      category:category_id (
-        name
-      )
-    `)
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
-    .limit(3);
+const getLatestArticles = unstable_cache(
+  async (): Promise<Article[]> => {
+    const { data, error } = await supabase
+      .from("articles")
+      .select(`
+        article_id,
+        slug,
+        title,
+        excerpt,
+        published_at,
+        featured_media:featured_media_id (file_path),
+        category:category_id (name)
+      `)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(3);
 
-  if (error) {
-    console.error("Failed to fetch articles for homepage:", error);
-    return [];
-  }
-  return (data as unknown as Article[]) || [];
-}
+    if (error) {
+      console.error("Failed to fetch articles for homepage:", error);
+      return [];
+    }
+    return (data as unknown as Article[]) || [];
+  },
+  ["homepage-articles"],
+  { revalidate: 300 } // 5 minutes
+);
 
-async function getLatestBanners(): Promise<Banner[]> {
-  const { data, error } = await supabase
-    .from("banners")
-    .select(`
-      banner_id,
-      title,
-      description,
-      media:image_media_id (
-        media_id,
-        file_path,
-        caption
-      )
-    `)
-    .eq("active", true)
-    .order("order_index", { ascending: true })
-    .limit(10);
+const getLatestBanners = unstable_cache(
+  async (): Promise<Banner[]> => {
+    const { data, error } = await supabase
+      .from("banners")
+      .select(`
+        banner_id,
+        title,
+        description,
+        media:image_media_id (
+          media_id,
+          file_path,
+          caption
+        )
+      `)
+      .eq("active", true)
+      .order("order_index", { ascending: true })
+      .limit(10);
 
-  if (error) {
-    console.error("Failed to fetch banners for homepage:", error);
-    return [];
-  }
-  return (data as unknown as Banner[]) || [];
-}
+    if (error) {
+      console.error("Failed to fetch banners for homepage:", error);
+      return [];
+    }
+    return (data as unknown as Banner[]) || [];
+  },
+  ["homepage-banners"],
+  { revalidate: 60 } // 1 minute — banners may need faster updates
+);
 
 // ============= SEO METADATA =============
 export const metadata: Metadata = {
