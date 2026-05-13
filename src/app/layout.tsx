@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -33,15 +32,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-<html lang="en" suppressHydrationWarning>
-  <head>
-   
-    <link rel="preconnect" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
-    <link rel="dns-prefetch" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Primary Supabase project */}
+        <link rel="preconnect" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
+        <link rel="dns-prefetch" href="https://hvalkmxibjgrwipfuvhw.supabase.co" />
+        {/* Banner/media Supabase project */}
+        <link rel="preconnect" href="https://yljsclzmrxuhejgcesiv.supabase.co" />
+        <link rel="dns-prefetch" href="https://yljsclzmrxuhejgcesiv.supabase.co" />
+        <AnimationCSS />
+      </head>
 
-    <AnimationCSS />
-  </head>
- 
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -58,36 +59,42 @@ export default function RootLayout({
         </ThemeProvider>
         <DisableRightClick />
 
- <script dangerouslySetInnerHTML={{ __html: `
-  (function() {
-    var current = window.scrollY;
-    var target = window.scrollY;
-    var ease = 0.08;
-    var running = false;
+        {/* Deferred — yields to rendering before executing */}
+        <script
+          defer
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  var current = window.scrollY;
+  var target = window.scrollY;
+  var ease = 0.08;
+  var running = false;
 
-    function tick() {
-      current += (target - current) * ease;
-      if (Math.abs(target - current) < 0.5) {
-        current = target;
-        running = false;
-        return;
-      }
-      window.scrollTo(0, current);
+  function tick() {
+    current += (target - current) * ease;
+    if (Math.abs(target - current) < 0.5) {
+      current = target;
+      running = false;
+      return;
+    }
+    window.scrollTo(0, current);
+    requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    target += e.deltaY * 1.5;
+    target = Math.max(0, Math.min(target, document.body.scrollHeight - window.innerHeight));
+    current = window.scrollY;
+    if (!running) {
+      running = true;
       requestAnimationFrame(tick);
     }
-
-    window.addEventListener('wheel', function(e) {
-      e.preventDefault();
-      target += e.deltaY * 1.5;
-      target = Math.max(0, Math.min(target, document.body.scrollHeight - window.innerHeight));
-      current = window.scrollY;
-      if (!running) {
-        running = true;
-        requestAnimationFrame(tick);
-      }
-    }, { passive: false });
-  })();
-` }} />
+  }, { passive: false });
+})();
+            `,
+          }}
+        />
       </body>
     </html>
   );

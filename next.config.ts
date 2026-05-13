@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const securityHeaders = [
   {
     key: "X-Frame-Options",
@@ -17,7 +19,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co https://www.sanpablocity.gov.ph https://sanpablocity.gov.ph https://webapi.sanpablocitygov.org https://placehold.co",
       "font-src 'self'",
-      "connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co http://localhost:3001",
+      // localhost:3001 only in development
+      `connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co${isProd ? "" : " http://localhost:3001"}`,
       "frame-src 'self' https://yljsclzmrxuhejgcesiv.supabase.co",
       "frame-ancestors 'self'",
     ].join("; "),
@@ -29,7 +32,16 @@ const nextConfig: NextConfig = {
 
   experimental: {
     optimizeCss: true,
+    optimizePackageImports: [
+      "lucide-react",
+      "@tabler/icons-react",
+      "@radix-ui/react-accordion",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-slot",
+      "framer-motion",
+    ],
   },
+
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
