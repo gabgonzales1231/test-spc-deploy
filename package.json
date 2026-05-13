@@ -8,12 +8,14 @@
     "start": "next start",
     "clear-cache": "rimraf .next/cache/images",
     "clear-all": "rimraf .next",
-    "postinstall": "node -e \"require('fs').copyFileSync('node_modules/tw-animate-css/dist/tw-animate.css', 'public/tw-animate.css')\""
+    "postinstall": "node -e \"require('fs').copyFileSync('node_modules/tw-animate-css/dist/tw-animate.css', 'public/tw-animate.css')\"",
+    "analyze": "next build --experimental-analyze"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
     "@elysiajs/jwt": "^1.4.0",
     "@elysiajs/static": "^1.4.6",
+    "@next/bundle-analyzer": "^16.2.6",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
@@ -46,6 +48,8 @@
     "@types/node": "^20",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "baseline-browser-mapping": "^2.10.29",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "rimraf": "^6.1.3",

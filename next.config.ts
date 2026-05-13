@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -96,4 +101,4 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: false },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

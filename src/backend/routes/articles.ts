@@ -1,3 +1,5 @@
+// src/backend/routes/articles.ts
+
 import { Elysia, t } from "elysia";
 import { supabase } from "@/backend/config/database";
 import { successResponse } from "@/backend/utils/response";
@@ -15,7 +17,7 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
     const limit = parseInt(query.limit as string) || 10;
     const search = query.search as string;
     const categoryId = query.category_id as string;
-    const authorId = query.author_id as string;
+    const authorId = query.author as string;
     const fromDate = query.from_date as string;
     const toDate = query.to_date as string;
 
@@ -32,7 +34,7 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
     }
     if (categoryId)
       countQuery = countQuery.eq("category_id", parseInt(categoryId));
-    if (authorId) countQuery = countQuery.eq("author_id", parseInt(authorId));
+    if (authorId) countQuery = countQuery.eq("author", parseInt(authorId));
     if (fromDate) countQuery = countQuery.gte("published_at", fromDate);
     if (toDate) countQuery = countQuery.lte("published_at", toDate);
 
@@ -55,7 +57,7 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
         slug,
         excerpt,
         featured_media_id,
-        author_id,
+        author,
         category_id,
         published_at,
         created_at,
@@ -83,7 +85,7 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
     }
     if (categoryId)
       dataQuery = dataQuery.eq("category_id", parseInt(categoryId));
-    if (authorId) dataQuery = dataQuery.eq("author_id", parseInt(authorId));
+    if (authorId) dataQuery = dataQuery.eq("author", parseInt(authorId));
     if (fromDate) dataQuery = dataQuery.gte("published_at", fromDate);
     if (toDate) dataQuery = dataQuery.lte("published_at", toDate);
 
@@ -128,7 +130,7 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
           slug,
           description
         ),
-        author:author_id (
+        author:author (
           user_id,
           username
         )
@@ -185,7 +187,7 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
               slug,
               description
             ),
-            author:author_id (
+            author:author (
               user_id,
               username
             )
