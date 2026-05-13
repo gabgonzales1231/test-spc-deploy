@@ -1,8 +1,10 @@
 import { Metadata } from "next";
-import { supabase } from "@/backend/config/database";
-import HomePageClient from "@/components/client/HomePageClient";
 import { unstable_cache } from "next/cache";
-
+import { supabase } from "@/backend/config/database";
+import HomeCarousel from "@/components/home/HomeCarousel";
+import MergedInfoCard from "@/components/home/MergeInfoCard";
+import HomeBelowFold from "@/components/client/HomeBelowFold";
+import StructuredData from "@/components/StructuredData";
 
 // ============= TYPES =============
 export interface Article {
@@ -29,6 +31,7 @@ export interface Banner {
 // ============= SERVER-SIDE DATA FETCHING =============
 const getLatestArticles = unstable_cache(
   async (): Promise<Article[]> => {
+    console.log("Cache MISS — fetching articles from Supabase", new Date().toISOString());
     const { data, error } = await supabase
       .from("articles")
       .select(`
@@ -51,11 +54,12 @@ const getLatestArticles = unstable_cache(
     return (data as unknown as Article[]) || [];
   },
   ["homepage-articles"],
-  { revalidate: 300 } // 5 minutes
+  { revalidate: 300, tags: ["homepage-articles"] }
 );
 
 const getLatestBanners = unstable_cache(
   async (): Promise<Banner[]> => {
+    console.log("Cache MISS — fetching banners from Supabase", new Date().toISOString());
     const { data, error } = await supabase
       .from("banners")
       .select(`
@@ -79,7 +83,7 @@ const getLatestBanners = unstable_cache(
     return (data as unknown as Banner[]) || [];
   },
   ["homepage-banners"],
-  { revalidate: 60 } // 1 minute — banners may need faster updates
+  { revalidate: 60, tags: ["homepage-banners"] }
 );
 
 // ============= SEO METADATA =============
@@ -143,5 +147,23 @@ export default async function HomePage() {
     getLatestBanners(),
   ]);
 
-  return <HomePageClient articles={articles} banners={banners} />;
+  return (
+    <>
+      <StructuredData />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+        {/* HERO — rendered as server component, no client boundary, LCP image loads immediately */}
+        <section className="w-full mb-8" aria-label="San Pablo City Hero Banner">
+          <div className="text-center -mt-8">
+            <HomeCarousel banners={banners} />
+          </div>
+        </section>
+
+        {/* INFO BAR — client component for live clock, isolated below hero */}
+        <MergedInfoCard />
+
+        {/* BELOW FOLD — news, services, egov; client boundary starts here */}
+        <HomeBelowFold articles={articles} />
+      </div>
+    </>
+  );
 }
