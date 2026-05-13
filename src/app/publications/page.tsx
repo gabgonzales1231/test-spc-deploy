@@ -390,7 +390,7 @@ const fetchVacancies = useCallback(async () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 shadow-xl">
+        {/* <Card className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 shadow-xl">
           <CardContent className="p-8">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">
               <Briefcase className="w-5 h-5 text-emerald-600" />
@@ -444,7 +444,7 @@ const fetchVacancies = useCallback(async () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Footer note */}
         <div className="text-center">
