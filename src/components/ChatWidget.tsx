@@ -17,15 +17,13 @@ import { JPAvatar }      from "./chat/ui/JPAvatar";
 
 import { useInputGuard } from "@/hooks/useChatApi";
 
-
-
 interface NegosyoForm   { businessId: string; complaint: string }
 interface TraysikelForm { plateNumber: string; complaint: string }
 
 export default function ChatWidget() {
 
   // ── Widget ────────────────────────────────────────────────────────────
-  const [isOpen, setIsOpen]           = useState(false);
+  const [isOpen, setIsOpen]          = useState(false);
   const [bubbleDismissed, setBubble] = useState(false);
   const [stage, setStage]            = useState<ChatStage>("form");
 
@@ -41,9 +39,8 @@ export default function ChatWidget() {
   const [menuOpen, setMenuOpen]      = useState(false);
   const { validate, error: inputError, clearError } = useInputGuard();
 
-
   // ── Forms ─────────────────────────────────────────────────────────────
-  const [helpdeskText, setHelpdesk] = useState("");
+  const [helpdeskText, setHelpdesk]     = useState("");
   const [formSubmitting, setSubmitting] = useState(false);
 
   // ── CMS ───────────────────────────────────────────────────────────────
@@ -51,17 +48,17 @@ export default function ChatWidget() {
 
   // ── Effects ───────────────────────────────────────────────────────────
 
-useEffect(() => {
-  fetchCMSContent()
-    .then(({ services, faqs }) => {
-      const loaded = { services, faqs, loaded: true, error: null };
-      setCms(loaded);
-      buildDynamicNodes(loaded); // ← builds dynamic nodes into the engine
-    })
-    .catch(() => {
-      setCms((p) => ({ ...p, loaded: true, error: "CMS unavailable." }));
-    });
-}, []);
+  useEffect(() => {
+    fetchCMSContent()
+      .then(({ services, faqs }) => {
+        const loaded = { services, faqs, loaded: true, error: null };
+        setCms(loaded);
+        buildDynamicNodes(loaded);
+      })
+      .catch(() => {
+        setCms((p) => ({ ...p, loaded: true, error: "CMS unavailable." }));
+      });
+  }, []);
 
   useEffect(() => {
     try {
@@ -70,24 +67,18 @@ useEffect(() => {
     } catch {}
   }, []);
 
-  // Auto-dismiss the tooltip bubble after 6 seconds
   useEffect(() => {
     if (!isOpen && !bubbleDismissed) {
-      const timer = setTimeout(() => {
-        setBubble(true);
-      }, 6000);
+      const timer = setTimeout(() => setBubble(true), 6000);
       return () => clearTimeout(timer);
     }
   }, [isOpen, bubbleDismissed]);
 
   useEffect(() => {
-  const handler = () => {
-    setIsOpen(true);
-    setBubble(true);
-  };
-  window.addEventListener("open-chat", handler);
-  return () => window.removeEventListener("open-chat", handler);
-}, []);
+    const handler = () => { setIsOpen(true); setBubble(true); };
+    window.addEventListener("open-chat", handler);
+    return () => window.removeEventListener("open-chat", handler);
+  }, []);
 
   // ── Message helpers ───────────────────────────────────────────────────
 
@@ -116,30 +107,29 @@ useEffect(() => {
   }, [cms, currentNodeKey, pushBotMessage]);
 
   // ── Registration ──────────────────────────────────────────────────────
-// replace the existing validateForm function
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^(09|\+639)\d{9}$/;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PHONE_RE = /^(09|\+639)\d{9}$/;
 
-function validateForm(): boolean {
-  const errors: Partial<UserInfo> = {};
+  function validateForm(): boolean {
+    const errors: Partial<UserInfo> = {};
 
-  if (!userInfo.fullName.trim())
-    errors.fullName = "Kinakailangan ang buong pangalan.";
+    if (!userInfo.fullName.trim())
+      errors.fullName = "Kinakailangan ang buong pangalan.";
 
-  if (!userInfo.email.trim())
-    errors.email = "Kinakailangan ang email.";
-  else if (!EMAIL_RE.test(userInfo.email.trim()))
-    errors.email = "Magbigay ng valid na email.";
+    if (!userInfo.email.trim())
+      errors.email = "Kinakailangan ang email.";
+    else if (!EMAIL_RE.test(userInfo.email.trim()))
+      errors.email = "Magbigay ng valid na email.";
 
-  if (!userInfo.phone.trim())
-    errors.phone = "Kinakailangan ang numero.";
-  else if (!PHONE_RE.test(userInfo.phone.trim().replace(/[-\s]/g, "")))
-    errors.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
+    if (!userInfo.phone.trim())
+      errors.phone = "Kinakailangan ang numero.";
+    else if (!PHONE_RE.test(userInfo.phone.trim().replace(/[-\s]/g, "")))
+      errors.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
 
-  setFormErrors(errors);
-  return Object.keys(errors).length === 0;
-}
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
 
   function handleStartChat() {
     if (!validateForm()) return;
@@ -163,7 +153,7 @@ function validateForm(): boolean {
   }, [currentNodeKey, navigateTo, pushUserMessage]);
 
   const handleTextSend = useCallback((text: string) => {
-    if (!validate(text)) return; 
+    if (!validate(text)) return;
     pushUserMessage(text.trim());
     const smallTalk = getSmallTalkResponse(text);
     if (smallTalk) {
@@ -190,42 +180,42 @@ function validateForm(): boolean {
     }, 600);
   }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage]);
 
-  // ── Feedback shared helper ────────────────────────────────────────────
+  // ── Helpdesk submit ───────────────────────────────────────────────────
 
-async function submitAndReturn(subject: string, message: string) {
-  const result = await submitFeedback({
-    name:        userInfo.fullName,
-    email:       userInfo.email || null,
-    phone:       userInfo.phone || null,
-    subject,
-    message,
-    source_node: currentNodeKey,
-  });
-  setSubmitting(false);
-  setIsTyping(true);
-  setTimeout(() => {
-    const main = getMainMenuNode();
-    pushBotMessage(
-      (result.success
-        ? "✅ Natanggap namin ang iyong mensahe at sasagutin namin ito sa lalong madaling panahon. Maraming salamat!"
-        : `May error: ${result.error}`) +
-      "\n\n" + injectContent(main.message, cms),
-      main
-    );
-    setNodeKey(MAIN_MENU_KEY);
-    setIsTyping(false);
-  }, 600);
-}
+  async function handleHelpdeskSubmit() {
+    if (!validate(helpdeskText)) return;
+    setSubmitting(true);
 
-async function handleHelpdeskSubmit() {
-if (!validate(helpdeskText)) return;  
-  setSubmitting(true);
-  pushUserMessage(helpdeskText.trim());
-  const msg = helpdeskText.trim();
-  setHelpdesk("");
-  await submitAndReturn("Iba Pa", msg);
-}
+    const msg   = helpdeskText.trim();
+    const msgId = generateId();
+    setHelpdesk("");
 
+    setMessages((prev) => [...prev, { id: msgId, role: "user", text: msg, timestamp: new Date() }]);
+
+    const result = await submitFeedback({
+      name:        userInfo.fullName,
+      email:       userInfo.email || null,
+      phone:       userInfo.phone || null,
+      subject:     "Iba Pa",
+      message:     msg,
+      source_node: currentNodeKey,
+    });
+
+    setSubmitting(false);
+
+    if (result.success) {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === msgId ? { ...m, delivered: true } : m))
+      );
+      setNodeKey(MAIN_MENU_KEY);
+    } else {
+      setIsTyping(true);
+      setTimeout(() => {
+        pushBotMessage(`May error: ${result.error}`);
+        setIsTyping(false);
+      }, 600);
+    }
+  }
 
   // ── Hamburger ─────────────────────────────────────────────────────────
 
@@ -254,9 +244,7 @@ if (!validate(helpdeskText)) return;
     setMessages([]);
     setHistory([]);
     setNodeKey(MAIN_MENU_KEY);
-
     setHelpdesk("");
-
     setStage("form");
   }
 
@@ -272,7 +260,6 @@ if (!validate(helpdeskText)) return;
         <PreOpenBubble onDismiss={() => setBubble(true)} />
       )}
 
-      {/* Chat panel */}
       <div
         aria-label="City virtual assistant chat"
         aria-hidden={!isOpen}
@@ -283,29 +270,27 @@ if (!validate(helpdeskText)) return;
         }`}
       >
         {stage === "form" && (
-<ChatForm
-  userInfo={userInfo}
-  formErrors={formErrors}
-  onChange={(field, value) => setUserInfo((u) => ({ ...u, [field]: value }))}
-  onBlur={(field, value) => {
-    // validate only the blurred field
-    const single = { ...userInfo, [field]: value };
-    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const PHONE_RE = /^(09|\+639)\d{9}$/;
-    const err: Partial<UserInfo> = {};
-    if (field === "fullName" && !value.trim()) err.fullName = "Kinakailangan ang buong pangalan.";
-    if (field === "email") {
-      if (!value.trim()) err.email = "Kinakailangan ang email.";
-      else if (!EMAIL_RE.test(value.trim())) err.email = "Magbigay ng valid na email.";
-    }
-    if (field === "phone") {
-      if (!value.trim()) err.phone = "Kinakailangan ang numero.";
-      else if (!PHONE_RE.test(value.trim().replace(/[-\s]/g, ""))) err.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
-    }
-    setFormErrors((prev) => ({ ...prev, ...err, ...(Object.keys(err).length === 0 ? { [field]: undefined } : {}) }));
-  }}
-  onSubmit={handleStartChat}
-/>
+          <ChatForm
+            userInfo={userInfo}
+            formErrors={formErrors}
+            onChange={(field, value) => setUserInfo((u) => ({ ...u, [field]: value }))}
+            onBlur={(field, value) => {
+              const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              const PHONE_RE = /^(09|\+639)\d{9}$/;
+              const err: Partial<UserInfo> = {};
+              if (field === "fullName" && !value.trim()) err.fullName = "Kinakailangan ang buong pangalan.";
+              if (field === "email") {
+                if (!value.trim()) err.email = "Kinakailangan ang email.";
+                else if (!EMAIL_RE.test(value.trim())) err.email = "Magbigay ng valid na email.";
+              }
+              if (field === "phone") {
+                if (!value.trim()) err.phone = "Kinakailangan ang numero.";
+                else if (!PHONE_RE.test(value.trim().replace(/[-\s]/g, ""))) err.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
+              }
+              setFormErrors((prev) => ({ ...prev, ...err, ...(Object.keys(err).length === 0 ? { [field]: undefined } : {}) }));
+            }}
+            onSubmit={handleStartChat}
+          />
         )}
 
         {stage === "chat" && (
@@ -324,23 +309,22 @@ if (!validate(helpdeskText)) return;
               isTyping={isTyping}
               onQuickReply={handleQuickReply}
             />
-<ChatInputArea
-  mode={currentNode.inputMode}
-  submitting={formSubmitting}
-  helpdeskText={helpdeskText}
-  inputError={inputError}
-  onHelpdeskChange={(v) => { setHelpdesk(v); clearError(); }}
-  onHelpdeskSubmit={handleHelpdeskSubmit}
-  onTextSend={handleTextSend}
-  onClearError={clearError}
-/>
+            <ChatInputArea
+              mode={currentNode.inputMode}
+              submitting={formSubmitting}
+              helpdeskText={helpdeskText}
+              inputError={inputError}
+              onHelpdeskChange={(v) => { setHelpdesk(v); clearError(); }}
+              onHelpdeskSubmit={handleHelpdeskSubmit}
+              onTextSend={handleTextSend}
+              onClearError={clearError}
+            />
           </>
         )}
 
         {stage === "ended" && <ChatEnded onNewChat={handleNewChat} />}
       </div>
 
-      {/* FAB */}
       <button
         onClick={() => { setIsOpen((v) => !v); setBubble(true); }}
         aria-label={isOpen ? "Close chat" : "Open city virtual assistant"}

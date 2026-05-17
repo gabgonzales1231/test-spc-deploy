@@ -439,7 +439,7 @@ export default function FullDisclosurePage() {
                 For questions or clarifications about any disclosed information, contact our Records Office.
               </p>
               <div className="text-sm text-gray-600">
-                <p>Phone: (049) 562-1234 ext. 205</p>
+                <p>Phone: --</p>
                 <p>Email: records@sanpablocity.gov.ph</p>
               </div>
             </CardContent>

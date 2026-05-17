@@ -23,6 +23,7 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
   quickReplies?: QuickReply[]; // only on bot messages
+    delivered?: boolean; // ← add this
 }
 
 // Navigation history entry

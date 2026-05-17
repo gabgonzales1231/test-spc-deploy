@@ -1,3 +1,5 @@
+//src/components/chat/ChatMessages.tsx
+
 import { useRef, useEffect } from "react";
 import { ChatMessage, formatTime } from "@/lib/chatTypes";
 import { JPAvatar } from "./ui/JPAvatar";
@@ -9,7 +11,6 @@ interface ChatMessagesProps {
   onQuickReply: (value: string, label: string) => void;
 }
 
-// Renders text with URLs converted to clickable <a> tags
 function MessageText({ text }: { text: string }) {
   const URL_REGEX = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(URL_REGEX);
@@ -18,8 +19,8 @@ function MessageText({ text }: { text: string }) {
     <>
       {parts.map((part, i) =>
         URL_REGEX.test(part) ? (
-          <a
-            key={i}
+          
+           <a key={i}
             href={part}
             target="_blank"
             rel="noopener noreferrer"
@@ -65,6 +66,9 @@ export function ChatMessages({ messages, isTyping, onQuickReply }: ChatMessagesP
               <span className="text-[10px] text-muted-foreground px-1">
                 {formatTime(msg.timestamp)}
               </span>
+              {msg.role === "user" && msg.delivered && (
+                <span className="text-[10px] text-green-600 px-1">✓ Delivered</span>
+              )}
             </div>
           </div>
 
@@ -74,7 +78,6 @@ export function ChatMessages({ messages, isTyping, onQuickReply }: ChatMessagesP
         </div>
       ))}
 
-      {/* Typing indicator */}
       {isTyping && (
         <div className="flex items-end gap-1.5">
           <JPAvatar size={24} />

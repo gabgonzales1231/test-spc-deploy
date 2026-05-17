@@ -429,7 +429,7 @@ export default function FormsPage() {
                 For form submissions and inquiries, visit the City Hall during office hours, Monday to Friday, 8AM–5PM.
               </p>
               <div className="text-sm text-gray-600">
-                <p>Phone: (049) 562-1234</p>
+                <p>Phone: --</p>
                 <p>Email: info@sanpablocity.gov.ph</p>
               </div>
             </CardContent>
