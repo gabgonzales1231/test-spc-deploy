@@ -1,10 +1,13 @@
-//spc-website\src\components\ChatWidget.tsx
-
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { ChatMessage, ChatStage, UserInfo, CMSContent, generateId } from "@/lib/chatTypes";
-import { buildDynamicNodes, getNode, getMainMenuNode, resolveNodeByKeyword, getSmallTalkResponse, injectContent, submitFeedback, fetchCMSContent } from "@/lib/chatEngine";
+import {
+  buildDynamicNodes, getNode, getMainMenuNode,
+  resolveNodeByKeyword, getSmallTalkResponse,
+  injectContent, submitFeedback, sendFollowUp, fetchCMSContent,
+} from "@/lib/chatEngine";
 import { FlowNode, MAIN_MENU_KEY } from "@/lib/flowData";
 
 import { ChatForm }      from "./chat/ChatForm";
@@ -17,8 +20,14 @@ import { JPAvatar }      from "./chat/ui/JPAvatar";
 
 import { useInputGuard } from "@/hooks/useChatApi";
 
-interface NegosyoForm   { businessId: string; complaint: string }
-interface TraysikelForm { plateNumber: string; complaint: string }
+const supabaseRealtime = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+const SESSION_KEY  = "jp_conv_id";
+const USER_KEY     = "jp_user";
+const STAGE_KEY    = "jp_stage";
 
 export default function ChatWidget() {
 
@@ -39,14 +48,62 @@ export default function ChatWidget() {
   const [menuOpen, setMenuOpen]      = useState(false);
   const { validate, error: inputError, clearError } = useInputGuard();
 
-  // ── Forms ─────────────────────────────────────────────────────────────
+  // ── Helpdesk / live session ───────────────────────────────────────────
   const [helpdeskText, setHelpdesk]     = useState("");
   const [formSubmitting, setSubmitting] = useState(false);
+  const [conversationId, setConvId]     = useState<number | null>(null);
+  const [liveMode, setLiveMode]         = useState(false);
+  const channelRef                      = useRef<ReturnType<typeof supabaseRealtime.channel> | null>(null);
 
   // ── CMS ───────────────────────────────────────────────────────────────
   const [cms, setCms] = useState<CMSContent>({ services: {}, faqs: {}, loaded: false, error: null });
 
-  // ── Effects ───────────────────────────────────────────────────────────
+  // ── Restore session on mount ──────────────────────────────────────────
+
+  useEffect(() => {
+    try {
+      // Restore user info
+      const savedUser = localStorage.getItem(USER_KEY);
+      if (savedUser) setUserInfo(JSON.parse(savedUser) as UserInfo);
+
+      // Restore active conversation
+      const savedConvId = sessionStorage.getItem(SESSION_KEY);
+      const savedStage  = sessionStorage.getItem(STAGE_KEY) as ChatStage | null;
+
+      if (savedConvId && savedStage === "chat") {
+        const convId = parseInt(savedConvId);
+        setConvId(convId);
+        setStage("chat");
+        setLiveMode(true);
+
+        // Restore messages from DB so history isn't lost on refresh
+        fetch(`/api/chat/conversations/${convId}/messages`)
+          .then(r => r.json())
+          .then(json => {
+            const rows: { id: number; sender_type: string; content: string; created_at: string }[] =
+              json?.data ?? [];
+            const restored: ChatMessage[] = rows.map(row => ({
+              id:        String(row.id),
+              role:      row.sender_type === "agent" ? "bot" : "user",
+              text:      row.content,
+              timestamp: new Date(row.created_at),
+            }));
+            setMessages(restored);
+          })
+          .catch(() => {
+            // If fetch fails just show a holding message
+            setMessages([{
+              id:        generateId(),
+              role:      "bot",
+              text:      "Maligayang pagbabalik! Ang iyong pag-uusap ay nananatili. Abangan ang tugon ng aming staff.",
+              timestamp: new Date(),
+            }]);
+          });
+      }
+    } catch {}
+  }, []);
+
+  // ── CMS fetch ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetchCMSContent()
@@ -60,12 +117,7 @@ export default function ChatWidget() {
       });
   }, []);
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("jp_user");
-      if (saved) setUserInfo(JSON.parse(saved) as UserInfo);
-    } catch {}
-  }, []);
+  // ── Pre-open bubble ───────────────────────────────────────────────────
 
   useEffect(() => {
     if (!isOpen && !bubbleDismissed) {
@@ -80,6 +132,72 @@ export default function ChatWidget() {
     return () => window.removeEventListener("open-chat", handler);
   }, []);
 
+  // ── Persist stage to sessionStorage ──────────────────────────────────
+
+  useEffect(() => {
+    try { sessionStorage.setItem(STAGE_KEY, stage); } catch {}
+  }, [stage]);
+
+  // ── Realtime subscription ─────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    if (channelRef.current) supabaseRealtime.removeChannel(channelRef.current);
+
+const channel = supabaseRealtime
+  .channel(`conversation-${conversationId}`)
+  .on(
+    "postgres_changes",
+    {
+      event:  "INSERT",
+      schema: "public",
+      table:  "chat_messages",
+      // Remove the filter — Supabase sometimes drops filtered subscriptions silently
+    },
+    (payload) => {
+      const row = payload.new as {
+        id: number;
+        conversation_id: number;
+        sender_type: string;
+        content: string;
+        created_at: string;
+      };
+
+      // Filter client-side instead
+      if (row.conversation_id !== conversationId) return;
+      if (row.sender_type !== "agent") return;
+
+      setLiveMode(true);
+      setMessages((prev) => {
+        if (prev.find(m => m.id === String(row.id))) return prev;
+        return [...prev, {
+          id:        String(row.id),
+          role:      "bot" as const,
+          text:      row.content,
+          timestamp: new Date(row.created_at),
+        }];
+      });
+    }
+  )
+  .subscribe((status) => {
+    console.log('[Realtime] subscription status:', status);
+  });
+
+    channelRef.current = channel;
+
+    return () => {
+      supabaseRealtime.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [conversationId]);
+
+  useEffect(() => {
+    return () => {
+      if (channelRef.current) supabaseRealtime.removeChannel(channelRef.current);
+    };
+  }, []);
+
   // ── Message helpers ───────────────────────────────────────────────────
 
   const pushBotMessage = useCallback((text: string, node?: FlowNode) => {
@@ -92,7 +210,9 @@ export default function ChatWidget() {
   }, []);
 
   const pushUserMessage = useCallback((text: string) => {
-    setMessages((prev) => [...prev, { id: generateId(), role: "user", text, timestamp: new Date() }]);
+    setMessages((prev) => [...prev, {
+      id: generateId(), role: "user", text, timestamp: new Date(),
+    }]);
   }, []);
 
   const navigateTo = useCallback((nodeKey: string, pushToHistory = true, fromKey?: string) => {
@@ -113,27 +233,23 @@ export default function ChatWidget() {
 
   function validateForm(): boolean {
     const errors: Partial<UserInfo> = {};
-
     if (!userInfo.fullName.trim())
       errors.fullName = "Kinakailangan ang buong pangalan.";
-
     if (!userInfo.email.trim())
       errors.email = "Kinakailangan ang email.";
     else if (!EMAIL_RE.test(userInfo.email.trim()))
       errors.email = "Magbigay ng valid na email.";
-
     if (!userInfo.phone.trim())
       errors.phone = "Kinakailangan ang numero.";
     else if (!PHONE_RE.test(userInfo.phone.trim().replace(/[-\s]/g, "")))
       errors.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }
 
   function handleStartChat() {
     if (!validateForm()) return;
-    try { localStorage.setItem("jp_user", JSON.stringify(userInfo)); } catch {}
+    try { localStorage.setItem(USER_KEY, JSON.stringify(userInfo)); } catch {}
     setStage("chat");
     setTimeout(() => {
       const main = getMainMenuNode();
@@ -153,6 +269,24 @@ export default function ChatWidget() {
   }, [currentNodeKey, navigateTo, pushUserMessage]);
 
   const handleTextSend = useCallback((text: string) => {
+    // Live mode — send as follow-up to agent
+    if (liveMode && conversationId) {
+      if (!validate(text)) return;
+      pushUserMessage(text.trim());
+      sendFollowUp(conversationId, text.trim()).then((result) => {
+        if (!result.success) {
+          setIsTyping(true);
+          setTimeout(() => {
+            pushBotMessage(`May error: ${result.error}`);
+            setIsTyping(false);
+          }, 400);
+        }
+      });
+      clearError();
+      return;
+    }
+
+    // Flow mode
     if (!validate(text)) return;
     pushUserMessage(text.trim());
     const smallTalk = getSmallTalkResponse(text);
@@ -172,13 +306,14 @@ export default function ChatWidget() {
     setTimeout(() => {
       const main = getMainMenuNode();
       pushBotMessage(
-        "Hindi ko maintindihan ang iyong mensahe. Piliin ang isa sa mga pagpipilian:\n\n" + injectContent(main.message, cms),
+        "Hindi ko maintindihan ang iyong mensahe. Piliin ang isa sa mga pagpipilian:\n\n" +
+        injectContent(main.message, cms),
         main
       );
       setNodeKey(MAIN_MENU_KEY);
       setIsTyping(false);
     }, 600);
-  }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage]);
+  }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage, liveMode, conversationId, validate, clearError]);
 
   // ── Helpdesk submit ───────────────────────────────────────────────────
 
@@ -190,7 +325,9 @@ export default function ChatWidget() {
     const msgId = generateId();
     setHelpdesk("");
 
-    setMessages((prev) => [...prev, { id: msgId, role: "user", text: msg, timestamp: new Date() }]);
+    setMessages((prev) => [...prev, {
+      id: msgId, role: "user", text: msg, timestamp: new Date(),
+    }]);
 
     const result = await submitFeedback({
       name:        userInfo.fullName,
@@ -203,12 +340,25 @@ export default function ChatWidget() {
 
     setSubmitting(false);
 
-    if (result.success) {
+    if (result.success && result.conversation_id) {
+      setConvId(result.conversation_id);
+      try {
+        sessionStorage.setItem(SESSION_KEY, String(result.conversation_id));
+        sessionStorage.setItem(STAGE_KEY, "chat");
+      } catch {}
+
       setMessages((prev) =>
         prev.map((m) => (m.id === msgId ? { ...m, delivered: true } : m))
       );
+
+      setTimeout(() => {
+        pushBotMessage(
+          "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff."
+        );
+      }, 600);
+
       setNodeKey(MAIN_MENU_KEY);
-    } else {
+    } else if (!result.success) {
       setIsTyping(true);
       setTimeout(() => {
         pushBotMessage(`May error: ${result.error}`);
@@ -236,6 +386,11 @@ export default function ChatWidget() {
   function handleEndSession() {
     setMenuOpen(false);
     setStage("ended");
+    // Clear session so next visit starts fresh
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(STAGE_KEY);
+    } catch {}
   }
 
   // ── Reset ─────────────────────────────────────────────────────────────
@@ -245,6 +400,12 @@ export default function ChatWidget() {
     setHistory([]);
     setNodeKey(MAIN_MENU_KEY);
     setHelpdesk("");
+    setConvId(null);
+    setLiveMode(false);
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(STAGE_KEY);
+    } catch {}
     setStage("form");
   }
 
@@ -275,19 +436,22 @@ export default function ChatWidget() {
             formErrors={formErrors}
             onChange={(field, value) => setUserInfo((u) => ({ ...u, [field]: value }))}
             onBlur={(field, value) => {
-              const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              const PHONE_RE = /^(09|\+639)\d{9}$/;
               const err: Partial<UserInfo> = {};
-              if (field === "fullName" && !value.trim()) err.fullName = "Kinakailangan ang buong pangalan.";
+              if (field === "fullName" && !value.trim())
+                err.fullName = "Kinakailangan ang buong pangalan.";
               if (field === "email") {
                 if (!value.trim()) err.email = "Kinakailangan ang email.";
                 else if (!EMAIL_RE.test(value.trim())) err.email = "Magbigay ng valid na email.";
               }
               if (field === "phone") {
                 if (!value.trim()) err.phone = "Kinakailangan ang numero.";
-                else if (!PHONE_RE.test(value.trim().replace(/[-\s]/g, ""))) err.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
+                else if (!PHONE_RE.test(value.trim().replace(/[-\s]/g, "")))
+                  err.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
               }
-              setFormErrors((prev) => ({ ...prev, ...err, ...(Object.keys(err).length === 0 ? { [field]: undefined } : {}) }));
+              setFormErrors((prev) => ({
+                ...prev, ...err,
+                ...(Object.keys(err).length === 0 ? { [field]: undefined } : {}),
+              }));
             }}
             onSubmit={handleStartChat}
           />

@@ -1,3 +1,5 @@
+// next.config.ts (spc-website)
+
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
@@ -24,8 +26,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co https://www.sanpablocity.gov.ph https://sanpablocity.gov.ph https://webapi.sanpablocitygov.org https://placehold.co",
       "font-src 'self'",
-      // localhost:3001 only in development
-      `connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co${isProd ? "" : " http://localhost:3001"}`,
+      // wss:// required for Supabase Realtime WebSocket connections
+      `connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co wss://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co wss://yljsclzmrxuhejgcesiv.supabase.co${isProd ? "" : " http://localhost:3001"}`,
       "frame-src 'self' https://yljsclzmrxuhejgcesiv.supabase.co",
       "frame-ancestors 'self'",
     ].join("; "),

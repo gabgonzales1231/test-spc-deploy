@@ -133,20 +133,41 @@ export function injectContent(template: string, _cms: CMSContent): string {
 
 export async function submitFeedback(
   payload: ComplaintPayload & { source_node?: string }
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; conversation_id?: number; error?: string }> {
   try {
-    const res = await fetch("/api/chat", {
+    const res = await fetch("/api/chat/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         full_name:   payload.name,
-        email:       payload.email,
-        phone:       payload.phone ?? null,
+        email:       payload.email       ?? null,
+        phone:       payload.phone       ?? null,
         subject:     payload.subject,
         message:     payload.message,
         source_node: payload.source_node ?? null,
-        ip_address:  payload.ip_address ?? null,
       }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, error: data?.error ?? "Hindi natanggap ang mensahe." };
+    }
+    return { success: true, conversation_id: data.conversation_id };
+  } catch {
+    return { success: false, error: "Network error. Subukan ulit." };
+  }
+}
+
+// Add this alongside submitFeedback
+
+export async function sendFollowUp(
+  conversationId: number,
+  content: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(`/api/chat/conversations/${conversationId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
