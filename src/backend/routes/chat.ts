@@ -2,10 +2,10 @@
 
 import { Elysia, t } from "elysia";
 import { supabase } from "@/backend/config/database";
+import { randomBytes } from "crypto";
 
 export const chatRoutes = new Elysia({ prefix: "/chat" })
 
-  // ── Start a new conversation ──────────────────────────────────────────
   .post("/conversations", async ({ body, request, set }) => {
     const { full_name, email, phone, subject, message, source_node } = body;
 
@@ -14,17 +14,21 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       request.headers.get("x-real-ip");
     const ip_address = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
 
+    // Generate a secure ownership token
+    const visitor_token = randomBytes(32).toString("hex");
+
     const { data: conversation, error: convError } = await supabase
       .from("conversations")
       .insert({
-        full_name:   full_name.trim(),
-        email:       email?.trim()      || null,
-        phone:       phone?.trim()      || null,
-        subject:     subject.trim(),
-        message:     message.trim(),
-        source_node: source_node?.trim() || null,
+        full_name:     full_name.trim(),
+        email:         email?.trim()       || null,
+        phone:         phone?.trim()       || null,
+        subject:       subject.trim(),
+        message:       message.trim(),
+        source_node:   source_node?.trim() || null,
         ip_address,
-        status:      "open",
+        status:        "open",
+        visitor_token,
       })
       .select("id")
       .single();
@@ -49,7 +53,8 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: msgError.message };
     }
 
-    return { success: true, conversation_id: conversation.id };
+    // Return token to client — stored in sessionStorage
+    return { success: true, conversation_id: conversation.id, visitor_token };
   }, {
     body: t.Object({
       full_name:   t.String({ minLength: 1 }),
@@ -61,20 +66,25 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
     }),
   })
 
-  // ── Visitor follow-up message ─────────────────────────────────────────
-  // Must be declared before GET /conversations/:id to avoid param swallowing
+  // Visitor follow-up — requires visitor_token
   .post("/conversations/:id/messages", async ({ params, body, set }) => {
     const conversationId = parseInt(params.id);
 
     const { data: conversation, error: fetchError } = await supabase
       .from("conversations")
-      .select("id, status")
+      .select("id, status, visitor_token")
       .eq("id", conversationId)
       .single();
 
     if (fetchError || !conversation) {
       set.status = 404;
       return { success: false, error: "Conversation not found" };
+    }
+
+    // Verify ownership
+    if (conversation.visitor_token !== body.visitor_token) {
+      set.status = 403;
+      return { success: false, error: "Unauthorized" };
     }
 
     if (conversation.status === "closed") {
@@ -100,12 +110,38 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
     return { success: true };
   }, {
     params: t.Object({ id: t.String() }),
-    body:   t.Object({ content: t.String({ minLength: 1 }) }),
+    body:   t.Object({
+      content:       t.String({ minLength: 1 }),
+      visitor_token: t.String(),
+    }),
   })
 
-  // ── Public message history (session restore on page refresh) ──────────
-  .get("/conversations/:id/messages", async ({ params, set }) => {
+  // Message history — requires visitor_token
+  .get("/conversations/:id/messages", async ({ params, query, set }) => {
     const convId = parseInt(params.id);
+    const token  = query.token as string | undefined;
+
+    if (!token) {
+      set.status = 403;
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // UPDATE: Now selecting 'status' as well
+    const { data: conversation, error: fetchError } = await supabase
+      .from("conversations")
+      .select("id, status, visitor_token")
+      .eq("id", convId)
+      .single();
+
+    if (fetchError || !conversation) {
+      set.status = 404;
+      return { success: false, error: "Conversation not found" };
+    }
+
+    if (conversation.visitor_token !== token) {
+      set.status = 403;
+      return { success: false, error: "Unauthorized" };
+    }
 
     const { data, error } = await supabase
       .from("chat_messages")
@@ -118,7 +154,9 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: error.message };
     }
 
-    return { success: true, data: data ?? [] };
+    // UPDATE: Returning the status to the frontend
+    return { success: true, status: conversation.status, data: data ?? [] };
   }, {
     params: t.Object({ id: t.String() }),
+    query:  t.Object({ token: t.Optional(t.String()) }),
   });

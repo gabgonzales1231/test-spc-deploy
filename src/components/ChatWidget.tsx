@@ -25,77 +25,83 @@ const supabaseRealtime = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const SESSION_KEY  = "jp_conv_id";
-const USER_KEY     = "jp_user";
-const STAGE_KEY    = "jp_stage";
+const SESSION_CONV_KEY   = "jp_conv_id";
+const SESSION_TOKEN_KEY  = "jp_visitor_token";
+const STAGE_KEY          = "jp_stage";
+const USER_KEY           = "jp_user";
+const UNREAD_KEY         = "jp_has_unread";
 
 export default function ChatWidget() {
 
-  // ── Widget ────────────────────────────────────────────────────────────
   const [isOpen, setIsOpen]          = useState(false);
   const [bubbleDismissed, setBubble] = useState(false);
   const [stage, setStage]            = useState<ChatStage>("form");
 
-  // ── User ──────────────────────────────────────────────────────────────
   const [userInfo, setUserInfo]     = useState<UserInfo>({ fullName: "", email: "", phone: "" });
   const [formErrors, setFormErrors] = useState<Partial<UserInfo>>({});
 
-  // ── Chat ──────────────────────────────────────────────────────────────
   const [messages, setMessages]      = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping]      = useState(false);
   const [currentNodeKey, setNodeKey] = useState<string>(MAIN_MENU_KEY);
   const [history, setHistory]        = useState<string[]>([]);
   const [menuOpen, setMenuOpen]      = useState(false);
-  const { validate, error: inputError, clearError } = useInputGuard();
 
-  // ── Helpdesk / live session ───────────────────────────────────────────
+  const { validate, error: inputError, clearError, getRemainingCount } = useInputGuard();
+
   const [helpdeskText, setHelpdesk]     = useState("");
   const [formSubmitting, setSubmitting] = useState(false);
   const [conversationId, setConvId]     = useState<number | null>(null);
+  const [visitorToken, setVisitorToken] = useState<string | null>(null);
   const [liveMode, setLiveMode]         = useState(false);
-  const channelRef                      = useRef<ReturnType<typeof supabaseRealtime.channel> | null>(null);
+  const [hasUnread, setHasUnread]       = useState(false); // red dot on bubble
+  const [convStatus, setConvStatus]     = useState<string | null>(null); // ← Added status state
 
-  // ── CMS ───────────────────────────────────────────────────────────────
+  const channelRef = useRef<ReturnType<typeof supabaseRealtime.channel> | null>(null);
+
   const [cms, setCms] = useState<CMSContent>({ services: {}, faqs: {}, loaded: false, error: null });
 
-  // ── Restore session on mount ──────────────────────────────────────────
+  // ── Session restore ───────────────────────────────────────────────────
 
   useEffect(() => {
     try {
-      // Restore user info
-      const savedUser = localStorage.getItem(USER_KEY);
+      const savedUser  = localStorage.getItem(USER_KEY);
       if (savedUser) setUserInfo(JSON.parse(savedUser) as UserInfo);
 
-      // Restore active conversation
-      const savedConvId = sessionStorage.getItem(SESSION_KEY);
-      const savedStage  = sessionStorage.getItem(STAGE_KEY) as ChatStage | null;
+      const savedConvId = localStorage.getItem(SESSION_CONV_KEY);
+      const savedToken  = localStorage.getItem(SESSION_TOKEN_KEY);
+      const savedStage  = localStorage.getItem(STAGE_KEY) as ChatStage | null;
+      const savedUnread = localStorage.getItem(UNREAD_KEY);
 
-      if (savedConvId && savedStage === "chat") {
+      if (savedUnread === "true") setHasUnread(true);
+
+      if (savedConvId && savedToken && savedStage === "chat") {
         const convId = parseInt(savedConvId);
         setConvId(convId);
+        setVisitorToken(savedToken);
         setStage("chat");
         setLiveMode(true);
 
-        // Restore messages from DB so history isn't lost on refresh
-        fetch(`/api/chat/conversations/${convId}/messages`)
+        fetch(`/api/chat/conversations/${convId}/messages?token=${savedToken}`)
           .then(r => r.json())
           .then(json => {
+            // Restore status state here
+            if (json.status) {
+              setConvStatus(json.status);
+            }
             const rows: { id: number; sender_type: string; content: string; created_at: string }[] =
               json?.data ?? [];
-            const restored: ChatMessage[] = rows.map(row => ({
+            setMessages(rows.map(row => ({
               id:        String(row.id),
               role:      row.sender_type === "agent" ? "bot" : "user",
               text:      row.content,
               timestamp: new Date(row.created_at),
-            }));
-            setMessages(restored);
+            })));
           })
           .catch(() => {
-            // If fetch fails just show a holding message
             setMessages([{
               id:        generateId(),
               role:      "bot",
-              text:      "Maligayang pagbabalik! Ang iyong pag-uusap ay nananatili. Abangan ang tugon ng aming staff.",
+              text:      "Maligayang pagbabalik! Abangan ang tugon ng aming staff.",
               timestamp: new Date(),
             }]);
           });
@@ -103,7 +109,7 @@ export default function ChatWidget() {
     } catch {}
   }, []);
 
-  // ── CMS fetch ─────────────────────────────────────────────────────────
+  // ── CMS ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetchCMSContent()
@@ -112,17 +118,15 @@ export default function ChatWidget() {
         setCms(loaded);
         buildDynamicNodes(loaded);
       })
-      .catch(() => {
-        setCms((p) => ({ ...p, loaded: true, error: "CMS unavailable." }));
-      });
+      .catch(() => setCms(p => ({ ...p, loaded: true, error: "CMS unavailable." })));
   }, []);
 
-  // ── Pre-open bubble ───────────────────────────────────────────────────
+  // ── Bubble / open-chat event ──────────────────────────────────────────
 
   useEffect(() => {
     if (!isOpen && !bubbleDismissed) {
-      const timer = setTimeout(() => setBubble(true), 6000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setBubble(true), 6000);
+      return () => clearTimeout(t);
     }
   }, [isOpen, bubbleDismissed]);
 
@@ -132,92 +136,100 @@ export default function ChatWidget() {
     return () => window.removeEventListener("open-chat", handler);
   }, []);
 
-  // ── Persist stage to sessionStorage ──────────────────────────────────
+  // Clear unread dot when chat is opened
+  useEffect(() => {
+    if (isOpen && hasUnread) {
+      setHasUnread(false);
+      try { localStorage.removeItem(UNREAD_KEY); } catch {}
+    }
+  }, [isOpen, hasUnread]);
+
+  // ── Persist stage ─────────────────────────────────────────────────────
 
   useEffect(() => {
-    try { sessionStorage.setItem(STAGE_KEY, stage); } catch {}
+    try { localStorage.setItem(STAGE_KEY, stage); } catch {}
   }, [stage]);
 
-  // ── Realtime subscription ─────────────────────────────────────────────
+  // ── Realtime ──────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!conversationId) return;
-
     if (channelRef.current) supabaseRealtime.removeChannel(channelRef.current);
 
-const channel = supabaseRealtime
-  .channel(`conversation-${conversationId}`)
-  .on(
-    "postgres_changes",
-    {
-      event:  "INSERT",
-      schema: "public",
-      table:  "chat_messages",
-      // Remove the filter — Supabase sometimes drops filtered subscriptions silently
-    },
-    (payload) => {
-      const row = payload.new as {
-        id: number;
-        conversation_id: number;
-        sender_type: string;
-        content: string;
-        created_at: string;
-      };
+    const channel = supabaseRealtime
+      .channel(`conversation-${conversationId}`)
+      // Listener 1: Incoming Messages
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages" },
+        (payload) => {
+          const row = payload.new as {
+            id: number;
+            conversation_id: number;
+            sender_type: string;
+            content: string;
+            created_at: string;
+          };
 
-      // Filter client-side instead
-      if (row.conversation_id !== conversationId) return;
-      if (row.sender_type !== "agent") return;
+          if (row.conversation_id !== conversationId) return;
+          if (row.sender_type !== "agent") return;
 
-      setLiveMode(true);
-      setMessages((prev) => {
-        if (prev.find(m => m.id === String(row.id))) return prev;
-        return [...prev, {
-          id:        String(row.id),
-          role:      "bot" as const,
-          text:      row.content,
-          timestamp: new Date(row.created_at),
-        }];
-      });
-    }
-  )
-  .subscribe((status) => {
-    console.log('[Realtime] subscription status:', status);
-  });
+          setLiveMode(true);
+          setMessages(prev => {
+            if (prev.find(m => m.id === String(row.id))) return prev;
+            return [...prev, {
+              id:        String(row.id),
+              role:      "bot" as const,
+              text:      row.content,
+              timestamp: new Date(row.created_at),
+            }];
+          });
+
+          if (!isOpen) {
+            setHasUnread(true);
+            try { localStorage.setItem(UNREAD_KEY, "true"); } catch {}
+          }
+        }
+      )
+      // Listener 2: Status Updates (Open/Assigned/Closed)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "conversations" },
+        (payload) => {
+          const row = payload.new as { id: number; status: string };
+          if (row.id === conversationId && row.status) {
+            setConvStatus(row.status);
+          }
+        }
+      )
+      .subscribe();
 
     channelRef.current = channel;
-
-    return () => {
-      supabaseRealtime.removeChannel(channel);
-      channelRef.current = null;
-    };
-  }, [conversationId]);
+    return () => { supabaseRealtime.removeChannel(channel); channelRef.current = null; };
+  }, [conversationId, isOpen]);
 
   useEffect(() => {
-    return () => {
-      if (channelRef.current) supabaseRealtime.removeChannel(channelRef.current);
-    };
+    return () => { if (channelRef.current) supabaseRealtime.removeChannel(channelRef.current); };
   }, []);
 
   // ── Message helpers ───────────────────────────────────────────────────
 
   const pushBotMessage = useCallback((text: string, node?: FlowNode) => {
-    setMessages((prev) => [...prev, {
+    setMessages(prev => [...prev, {
       id: generateId(), role: "bot", text, timestamp: new Date(),
       quickReplies: node?.options?.length
-        ? node.options.map((o) => ({ label: o.label, value: o.value }))
+        ? node.options.map(o => ({ label: o.label, value: o.value }))
         : undefined,
     }]);
   }, []);
 
   const pushUserMessage = useCallback((text: string) => {
-    setMessages((prev) => [...prev, {
-      id: generateId(), role: "user", text, timestamp: new Date(),
-    }]);
+    setMessages(prev => [...prev, { id: generateId(), role: "user", text, timestamp: new Date() }]);
   }, []);
 
   const navigateTo = useCallback((nodeKey: string, pushToHistory = true, fromKey?: string) => {
     const node = getNode(nodeKey);
-    if (pushToHistory) setHistory((h) => [...h, fromKey ?? currentNodeKey]);
+    if (pushToHistory) setHistory(h => [...h, fromKey ?? currentNodeKey]);
     setNodeKey(nodeKey);
     setIsTyping(true);
     setTimeout(() => {
@@ -266,27 +278,32 @@ const channel = supabaseRealtime
   const handleQuickReply = useCallback((value: string, label: string) => {
     pushUserMessage(label);
     navigateTo(value, true, currentNodeKey);
-  }, [currentNodeKey, navigateTo, pushUserMessage]);
+
+    if (value === "iba-pa") { 
+      const remaining = getRemainingCount();
+      setTimeout(() => {
+        pushBotMessage(
+          `📝 Tandaan: Maaari kang magpadala ng hanggang **5 mensahe** bawat araw. ` +
+          `Mayroon kang **${remaining} mensahe** na natitira ngayon.`
+        );
+      }, 800);
+    }
+  }, [currentNodeKey, navigateTo, pushUserMessage, pushBotMessage, getRemainingCount]);
 
   const handleTextSend = useCallback((text: string) => {
-    // Live mode — send as follow-up to agent
-    if (liveMode && conversationId) {
+    if (liveMode && conversationId && visitorToken) {
       if (!validate(text)) return;
       pushUserMessage(text.trim());
-      sendFollowUp(conversationId, text.trim()).then((result) => {
+      sendFollowUp(conversationId, text.trim(), visitorToken).then(result => {
         if (!result.success) {
           setIsTyping(true);
-          setTimeout(() => {
-            pushBotMessage(`May error: ${result.error}`);
-            setIsTyping(false);
-          }, 400);
+          setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 400);
         }
       });
       clearError();
       return;
     }
 
-    // Flow mode
     if (!validate(text)) return;
     pushUserMessage(text.trim());
     const smallTalk = getSmallTalkResponse(text);
@@ -313,7 +330,7 @@ const channel = supabaseRealtime
       setNodeKey(MAIN_MENU_KEY);
       setIsTyping(false);
     }, 600);
-  }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage, liveMode, conversationId, validate, clearError]);
+  }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage, liveMode, conversationId, visitorToken, validate, clearError]);
 
   // ── Helpdesk submit ───────────────────────────────────────────────────
 
@@ -325,9 +342,7 @@ const channel = supabaseRealtime
     const msgId = generateId();
     setHelpdesk("");
 
-    setMessages((prev) => [...prev, {
-      id: msgId, role: "user", text: msg, timestamp: new Date(),
-    }]);
+    setMessages(prev => [...prev, { id: msgId, role: "user", text: msg, timestamp: new Date() }]);
 
     const result = await submitFeedback({
       name:        userInfo.fullName,
@@ -340,30 +355,30 @@ const channel = supabaseRealtime
 
     setSubmitting(false);
 
-    if (result.success && result.conversation_id) {
+    if (result.success && result.conversation_id && result.visitor_token) {
       setConvId(result.conversation_id);
+      setVisitorToken(result.visitor_token);
+      setLiveMode(true);
+      setConvStatus("open"); // Assign an initial open status
+
       try {
-        sessionStorage.setItem(SESSION_KEY, String(result.conversation_id));
-        sessionStorage.setItem(STAGE_KEY, "chat");
+        localStorage.setItem(SESSION_CONV_KEY,  String(result.conversation_id));
+        localStorage.setItem(SESSION_TOKEN_KEY, result.visitor_token);
+        localStorage.setItem(STAGE_KEY,         "chat");
       } catch {}
 
-      setMessages((prev) =>
-        prev.map((m) => (m.id === msgId ? { ...m, delivered: true } : m))
-      );
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, delivered: true } : m));
 
       setTimeout(() => {
         pushBotMessage(
-          "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff."
+          "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff. Maaari kang mag-type ng karagdagang tanong habang naghihintay."
         );
       }, 600);
 
       setNodeKey(MAIN_MENU_KEY);
     } else if (!result.success) {
       setIsTyping(true);
-      setTimeout(() => {
-        pushBotMessage(`May error: ${result.error}`);
-        setIsTyping(false);
-      }, 600);
+      setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 600);
     }
   }
 
@@ -373,7 +388,7 @@ const channel = supabaseRealtime
     setMenuOpen(false);
     if (!history.length) return;
     const prev = history[history.length - 1];
-    setHistory((h) => h.slice(0, -1));
+    setHistory(h => h.slice(0, -1));
     navigateTo(prev, false);
   }
 
@@ -386,10 +401,11 @@ const channel = supabaseRealtime
   function handleEndSession() {
     setMenuOpen(false);
     setStage("ended");
-    // Clear session so next visit starts fresh
     try {
-      sessionStorage.removeItem(SESSION_KEY);
-      sessionStorage.removeItem(STAGE_KEY);
+      localStorage.removeItem(SESSION_CONV_KEY);
+      localStorage.removeItem(SESSION_TOKEN_KEY);
+      localStorage.removeItem(STAGE_KEY);
+      localStorage.removeItem(UNREAD_KEY);
     } catch {}
   }
 
@@ -401,17 +417,23 @@ const channel = supabaseRealtime
     setNodeKey(MAIN_MENU_KEY);
     setHelpdesk("");
     setConvId(null);
+    setVisitorToken(null);
     setLiveMode(false);
+    setHasUnread(false);
+    setConvStatus(null);
     try {
-      sessionStorage.removeItem(SESSION_KEY);
-      sessionStorage.removeItem(STAGE_KEY);
+      localStorage.removeItem(SESSION_CONV_KEY);
+      localStorage.removeItem(SESSION_TOKEN_KEY);
+      localStorage.removeItem(STAGE_KEY);
+      localStorage.removeItem(UNREAD_KEY);
     } catch {}
     setStage("form");
   }
 
   // ── Derived ───────────────────────────────────────────────────────────
 
-  const currentNode = getNode(currentNodeKey);
+  const currentNode      = getNode(currentNodeKey);
+  const remainingMessages = getRemainingCount();
 
   // ── Render ────────────────────────────────────────────────────────────
 
@@ -434,7 +456,7 @@ const channel = supabaseRealtime
           <ChatForm
             userInfo={userInfo}
             formErrors={formErrors}
-            onChange={(field, value) => setUserInfo((u) => ({ ...u, [field]: value }))}
+            onChange={(field, value) => setUserInfo(u => ({ ...u, [field]: value }))}
             onBlur={(field, value) => {
               const err: Partial<UserInfo> = {};
               if (field === "fullName" && !value.trim())
@@ -448,7 +470,7 @@ const channel = supabaseRealtime
                 else if (!PHONE_RE.test(value.trim().replace(/[-\s]/g, "")))
                   err.phone = "Magbigay ng valid na numero (hal. 09XX-XXX-XXXX).";
               }
-              setFormErrors((prev) => ({
+              setFormErrors(prev => ({
                 ...prev, ...err,
                 ...(Object.keys(err).length === 0 ? { [field]: undefined } : {}),
               }));
@@ -462,7 +484,7 @@ const channel = supabaseRealtime
             <ChatHeader
               menuOpen={menuOpen}
               hasHistory={history.length > 0}
-              onToggleMenu={() => setMenuOpen((v) => !v)}
+              onToggleMenu={() => setMenuOpen(v => !v)}
               onBack={handleBack}
               onGoToMenu={handleGoToMenu}
               onEndSession={handleEndSession}
@@ -473,12 +495,25 @@ const channel = supabaseRealtime
               isTyping={isTyping}
               onQuickReply={handleQuickReply}
             />
+
+            {liveMode && (
+              <div className={`px-4 py-1 text-[11px] text-right border-t border-black/5 ${
+                remainingMessages <= 1 ? "text-red-500" : "text-gray-400"
+              }`}>
+                {remainingMessages === 0
+                  ? "Naabot na ang limitasyon ng mensahe ngayon."
+                  : `${remainingMessages} mensahe na natitira ngayon`
+                }
+              </div>
+            )}
+
             <ChatInputArea
-              mode={currentNode.inputMode}
+              mode={liveMode ? "free-text" : currentNode.inputMode}
               submitting={formSubmitting}
               helpdeskText={helpdeskText}
               inputError={inputError}
-              onHelpdeskChange={(v) => { setHelpdesk(v); clearError(); }}
+              isClosed={convStatus === "closed"} // Pass the state to the UI
+              onHelpdeskChange={v => { setHelpdesk(v); clearError(); }}
               onHelpdeskSubmit={handleHelpdeskSubmit}
               onTextSend={handleTextSend}
               onClearError={clearError}
@@ -490,7 +525,7 @@ const channel = supabaseRealtime
       </div>
 
       <button
-        onClick={() => { setIsOpen((v) => !v); setBubble(true); }}
+        onClick={() => { setIsOpen(v => !v); setBubble(true); }}
         aria-label={isOpen ? "Close chat" : "Open city virtual assistant"}
         aria-expanded={isOpen}
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#08A872] border-none cursor-pointer z-[9999] flex items-center justify-center shadow-[0_4px_16px_rgba(8,168,114,0.35),0_2px_4px_rgba(0,0,0,0.1)] transition-transform duration-200 hover:scale-[1.08]"
@@ -501,6 +536,9 @@ const channel = supabaseRealtime
           </svg>
         ) : (
           <JPAvatar size={40} />
+        )}
+        {!isOpen && hasUnread && (
+          <span className="absolute top-0.5 right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
         )}
       </button>
     </>

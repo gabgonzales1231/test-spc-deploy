@@ -74,13 +74,7 @@ export function ChatHeader({
             >
               ☰ Refresh Menu
             </button>
-            <div className="h-px bg-gray-200 my-0.5" />
-            <button
-              onClick={onEndSession}
-              className="block w-full py-2.5 px-3.5 bg-transparent border-none text-left text-[13px] cursor-pointer text-red-600 hover:bg-red-50"
-            >
-              ✕ End this chat session
-            </button>
+
           </div>
         )}
       </div>

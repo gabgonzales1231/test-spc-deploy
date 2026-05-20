@@ -131,12 +131,14 @@ export function injectContent(template: string, _cms: CMSContent): string {
 
 // ── Feedback ──────────────────────────────────────────────────────────────
 
+// Only the two functions change — everything else stays the same
+
 export async function submitFeedback(
   payload: ComplaintPayload & { source_node?: string }
-): Promise<{ success: boolean; conversation_id?: number; error?: string }> {
+): Promise<{ success: boolean; conversation_id?: number; visitor_token?: string; error?: string }> {
   try {
     const res = await fetch("/api/chat/conversations", {
-      method: "POST",
+      method:  "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         full_name:   payload.name,
@@ -151,23 +153,26 @@ export async function submitFeedback(
     if (!res.ok || !data.success) {
       return { success: false, error: data?.error ?? "Hindi natanggap ang mensahe." };
     }
-    return { success: true, conversation_id: data.conversation_id };
+    return {
+      success:        true,
+      conversation_id: data.conversation_id,
+      visitor_token:  data.visitor_token,
+    };
   } catch {
     return { success: false, error: "Network error. Subukan ulit." };
   }
 }
 
-// Add this alongside submitFeedback
-
 export async function sendFollowUp(
   conversationId: number,
-  content: string
+  content: string,
+  visitorToken: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await fetch(`/api/chat/conversations/${conversationId}/messages`, {
-      method: "POST",
+      method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, visitor_token: visitorToken }),
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
