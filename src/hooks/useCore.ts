@@ -1,3 +1,5 @@
+//src/hooks/useCore.ts
+
 import { useState, useCallback } from 'react';
 
 // ============= TYPES =============

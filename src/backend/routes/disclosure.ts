@@ -5,6 +5,8 @@ import { formatPaginationResponse } from '@/backend/utils/helpers'
 
 function getProxyUrl(filePath: string): string | null {
   if (!filePath) return null
+  // Proxy route: /api/download/[bucket]/[...filePath]
+  // bucket = "disclosure", filePath already includes "full-disclosure/filename.pdf"
   return `/api/download/disclosure/${filePath}`
 }
 
@@ -41,8 +43,15 @@ export const disclosureRoutes = new Elysia({ prefix: '/disclosure' })
       .lte('date_passed', `${year}-12-31`)
     if (search)   countQuery = countQuery.ilike('title', `%${search}%`)
 
-    const { count, error: countError } = await countQuery
-    if (countError) throw new Error('Failed to fetch disclosure count')
+    const { count, error: countError } = await countQuery   // ← insert below this line
+    
+    if (countError) {
+      console.error('[disclosure] countError code:', countError.code)
+      console.error('[disclosure] countError message:', countError.message)
+      console.error('[disclosure] countError details:', countError.details)
+      console.error('[disclosure] countError hint:', countError.hint)
+      throw new Error('Failed to fetch disclosure count')
+    }
 
     const from = (page - 1) * limit
     const to   = page * limit - 1

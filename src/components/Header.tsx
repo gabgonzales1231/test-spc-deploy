@@ -23,7 +23,7 @@ const navItems = [
     ],
   },
   { href: "/services", label: "Services" },
-  { href: "/disclosure-portal", label: "Disclosure Portal" },
+  { href: "/disclosure-portal", label: "Transparency" },
   { href: "/forms", label: "Forms" },
   { href: "/publications", label: "Publications" },
   {

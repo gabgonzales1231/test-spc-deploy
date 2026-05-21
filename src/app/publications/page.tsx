@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import PesoCard from "@/components/publications/PesoCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Briefcase,
@@ -181,7 +182,7 @@ const fetchVacancies = useCallback(async () => {
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
             <Building2 className="w-4 h-4 mr-2" />
-            Human Resource Management Office
+            Human Resource Management Sector
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">Publications</h1>
           <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
@@ -194,8 +195,10 @@ const fetchVacancies = useCallback(async () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12 space-y-8">
 
+           <PesoCard />
+
         {/* Job Vacancies Card */}
-        <Card className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 shadow-xl">
+        <Card className="border border-emerald-200/30 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="px-6 pt-6 pb-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -388,7 +391,23 @@ const fetchVacancies = useCallback(async () => {
               </>
             )}
           </CardContent>
+
+       
         </Card>
+
+                                  {/* Footer note */}
+        <div className="text-center">
+          <div className="inline-flex items-center px-6 py-3 ">
+            
+            <p className="text-sm text-gray-600 italic">
+              Vacancy listings are updated regularly. Check back often for new postings.
+            </p>
+          </div>
+        </div>
+
+
+
+        
 
         {/* <Card className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 shadow-xl">
           <CardContent className="p-8">
@@ -446,15 +465,7 @@ const fetchVacancies = useCallback(async () => {
           </CardContent>
         </Card> */}
 
-        {/* Footer note */}
-        <div className="text-center">
-          <div className="inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-emerald-200/30">
-            
-            <p className="text-sm text-gray-600">
-              Vacancy listings are updated regularly. Check back often for new postings.
-            </p>
-          </div>
-        </div>
+
       </div>
     </div>
   );

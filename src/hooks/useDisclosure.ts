@@ -1,3 +1,5 @@
+//src/hooks/useDisclosure.ts
+
 import { useCallback } from 'react';
 import { useApi, apiRequest } from './useCore';
 
@@ -7,6 +9,7 @@ export type DisclosureCategory =
   | 'executive-order'
   | 'bids-awards'
   | 'financial-aid'
+  | 'full-disclosure'
 
 export interface DisclosureDocument {
   document_id:   number

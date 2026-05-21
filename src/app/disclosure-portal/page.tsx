@@ -15,7 +15,8 @@ const CATEGORIES: { id: DisclosureCategory; label: string; icon: React.ElementTy
   { id: 'city-resolution', label: 'Resolutions',       icon: ScrollText },
   { id: 'executive-order', label: 'Executive Orders',  icon: Briefcase  },
   { id: 'bids-awards',     label: 'Bids & Awards',     icon: Gavel      },
-  { id: 'financial-aid',   label: 'Financial Aid',     icon: HandCoins  },
+  // { id: 'financial-aid',   label: 'Financial Aid',     icon: HandCoins  },
+{ id: 'full-disclosure', label: 'Full Disclosure', icon: FileText },
 ]
 
 // ─── Year Accordion ───────────────────────────────────────────────────────────
@@ -193,6 +194,7 @@ export default function FullDisclosurePage() {
     'executive-order': useGetPublicDisclosure(),
     'bids-awards':     useGetPublicDisclosure(),
     'financial-aid':   useGetPublicDisclosure(),
+'full-disclosure': useGetPublicDisclosure(),
   } as const
 
   const searchActive = searchQuery.trim().length > 0
@@ -265,18 +267,19 @@ export default function FullDisclosurePage() {
   }
 
   // ── Parse global search results ──
-  const globalResults = Object.fromEntries(
-    CATEGORIES.map(({ id }) => {
-      const raw = hooks[id].data
-      const all: DisclosureDocument[] = !raw
-        ? []
-        : Array.isArray(raw) ? raw : ((raw as { data?: DisclosureDocument[] }).data ?? [])
-      const q = searchQuery.toLowerCase()
-      return [id, all.filter(d => d.title.toLowerCase().includes(q))]
-    })
-  ) as Record<DisclosureCategory, DisclosureDocument[]>
+const globalResults = Object.fromEntries(
+  CATEGORIES.map(({ id }) => {
+    const hook = hooks[id as keyof typeof hooks]
+    const raw = hook?.data
+    const all: DisclosureDocument[] = !raw
+      ? []
+      : Array.isArray(raw) ? raw : ((raw as { data?: DisclosureDocument[] }).data ?? [])
+    const q = searchQuery.toLowerCase()
+    return [id, all.filter(d => d.title.toLowerCase().includes(q))]
+  })
+) as Record<DisclosureCategory, DisclosureDocument[]>
 
-  const globalLoading = CATEGORIES.some(({ id }) => hooks[id].loading)
+const globalLoading = CATEGORIES.some(({ id }) => hooks[id as keyof typeof hooks]?.loading)
 
   const activeLabel = CATEGORIES.find(c => c.id === activeCategory)?.label ?? ''
 
@@ -288,9 +291,9 @@ export default function FullDisclosurePage() {
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
             <Building2 className="w-4 h-4 mr-2" />
-            Transparency
+            Freedom of Information
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">Full Disclosure Portal</h1>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">Transparency</h1>
           <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
             In compliance with the Full Disclosure Policy, we provide transparent access to
             government documents, financial records, and legislative proceedings.

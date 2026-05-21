@@ -25,7 +25,7 @@ const ServiceStandard = ({ number, text }: ServiceStandardProps) => (
 
 export default function SanPabloCityInfoPage() {
   const serviceStandards = [
-    "When we go to work, we will come in complete uniform and display our identification cards.",
+    "When we go to work, we will appear in complete uniform and wear our identification cards.",
     "We will greet our clients with a sincere smile.",
     "When you enter in our office premises, we will introduce ourselves to you so that you can address us back in an appropriate manner.",
     "We will attend our clients' inquiries within three (3) minutes.",
@@ -34,8 +34,8 @@ export default function SanPabloCityInfoPage() {
     "Express/special lanes are provided for Senior Citizens, pregnant women and People with Disability.",
     "We will teach the clients, needed requirements that can expedite their service request.",
     "We will promptly return your denied request and explain to you the reason for such, which in turn will allow us to reprocess it.",
-    "Our service stations will be properly labeled that will include our organizational chart and service flow chart.",
-    "Directional signs will be displayed conspicuously as guide so that you can establish familiarity with our workplace.",
+    "Our service stations will be properly labeled and will include our organizational chart and service flow chart.",
+    "Directional signs will be displayed conspicuously as guide so that you can establish familiarity within our workplace.",
     "Information and complaint desk is at your service in strategic locations.",
     "An information and hotline service is available 24/7 for anyone who has queries.",
     "No noon-break policy is followed and we are to serve beyond office hours if needed.",

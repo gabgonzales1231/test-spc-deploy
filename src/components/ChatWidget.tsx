@@ -501,7 +501,7 @@ export default function ChatWidget() {
                 remainingMessages <= 1 ? "text-red-500" : "text-gray-400"
               }`}>
                 {remainingMessages === 0
-                  ? "Naabot na ang limitasyon ng mensahe ngayon."
+                  ? "Naabot na ang limitasyon ng mensahe ngayong araw."
                   : `${remainingMessages} mensahe na natitira ngayon`
                 }
               </div>

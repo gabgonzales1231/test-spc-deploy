@@ -16,7 +16,7 @@ export function PreOpenBubble({ onDismiss }: PreOpenBubbleProps) {
       </button>
       <p className="m-0 text-[14px] font-medium text-gray-900">Magandang araw! 👋</p>
       <p className="m-0 mt-0.5 text-[12px] text-gray-700">
-        Ako si, {BOT_NAME}.<br />
+        Ako si {BOT_NAME}.<br />
         <span className="text-gray-500 text-xs">Maaaring ipahayag dito ang iyong katanungnan.</span>
       </p>
     </div>
