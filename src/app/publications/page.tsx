@@ -135,6 +135,27 @@ const fetchVacancies = useCallback(async () => {
     fetchVacancies();
   }, [fetchVacancies]);
 
+  function useFadeUp(threshold = 0.15) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return { ref, visible };
+}
+
+const vacancyCard = useFadeUp();
+const footerNote  = useFadeUp();
+
   // ── Filters (Locked to Current Year) ──────────────────────────────────────
   const filtered = useMemo(() => {
     return vacancies.filter((v) => {
@@ -197,8 +218,11 @@ const fetchVacancies = useCallback(async () => {
 
            <PesoCard />
 
-        {/* Job Vacancies Card */}
-        <Card className="border border-emerald-200/30 shadow-xl bg-white/80 backdrop-blur-sm">
+<Card
+  ref={vacancyCard.ref}
+  className={`border border-emerald-200/30 shadow-xl bg-white/80 backdrop-blur-sm transition-all duration-700 ease-out
+    ${vacancyCard.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+>
           <CardHeader className="px-6 pt-6 pb-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -395,8 +419,11 @@ const fetchVacancies = useCallback(async () => {
        
         </Card>
 
-                                  {/* Footer note */}
-        <div className="text-center">
+<div
+  ref={footerNote.ref}
+  className={`text-center transition-all duration-700 ease-out delay-150
+    ${footerNote.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+>
           <div className="inline-flex items-center px-6 py-3 ">
             
             <p className="text-sm text-gray-600 italic">

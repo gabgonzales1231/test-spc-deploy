@@ -23,11 +23,12 @@ export default function PesoCard() {
   return (
     <div
       ref={ref}
-      className={`transition-all duration-700 ease-out ${
+      className={`group transition-all duration-700 ease-out ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-200/40 bg-gradient-to-br from-emerald-50/60 via-white/40 to-emerald-100/30 backdrop-blur-sm shadow-lg px-8 py-10 flex flex-col sm:flex-row items-center gap-8">
+  <div className="relative overflow-hidden rounded-2xl border border-emerald-200/40 bg-gradient-to-br from-emerald-50/60 via-white/40 to-emerald-100/30 backdrop-blur-sm shadow-lg px-8 py-10 flex flex-col sm:flex-row items-center gap-8
+    transition-transform duration-300 ease-out group-hover:scale-[1.015] group-hover:shadow-xl">
 
         {/* Decorative blobs */}
         <div className="absolute -top-12 -right-12 w-56 h-56 bg-emerald-200/20 rounded-full pointer-events-none" />

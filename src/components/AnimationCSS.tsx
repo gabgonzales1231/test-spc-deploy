@@ -1,3 +1,5 @@
+//src/components/AnimationCSS.tsx
+
 'use client';
 
 export default function AnimationCSS() {

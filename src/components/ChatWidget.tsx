@@ -46,7 +46,7 @@ export default function ChatWidget() {
   const [history, setHistory]        = useState<string[]>([]);
   const [menuOpen, setMenuOpen]      = useState(false);
 
-  const { validate, error: inputError, clearError, getRemainingCount } = useInputGuard();
+const { validate, sanitizeInput, error: inputError, clearError, getRemainingCount, cooldownUntil } = useInputGuard();
 
   const [helpdeskText, setHelpdesk]     = useState("");
   const [formSubmitting, setSubmitting] = useState(false);
@@ -283,18 +283,19 @@ export default function ChatWidget() {
       const remaining = getRemainingCount();
       setTimeout(() => {
         pushBotMessage(
-          `📝 Tandaan: Maaari kang magpadala ng hanggang **5 mensahe** bawat araw. ` +
-          `Mayroon kang **${remaining} mensahe** na natitira ngayon.`
+          `📝 Tandaan: Maaari kang magpadala ng hanggang 10 mensahe bawat araw. `
         );
       }, 800);
     }
   }, [currentNodeKey, navigateTo, pushUserMessage, pushBotMessage, getRemainingCount]);
 
-  const handleTextSend = useCallback((text: string) => {
+const handleTextSend = useCallback((text: string) => {
+  const clean = sanitizeInput(text);
+
+  function doSend(t: string) {
     if (liveMode && conversationId && visitorToken) {
-      if (!validate(text)) return;
-      pushUserMessage(text.trim());
-      sendFollowUp(conversationId, text.trim(), visitorToken).then(result => {
+      pushUserMessage(t);
+      sendFollowUp(conversationId, t, visitorToken).then(result => {
         if (!result.success) {
           setIsTyping(true);
           setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 400);
@@ -304,9 +305,8 @@ export default function ChatWidget() {
       return;
     }
 
-    if (!validate(text)) return;
-    pushUserMessage(text.trim());
-    const smallTalk = getSmallTalkResponse(text);
+    pushUserMessage(t);
+    const smallTalk = getSmallTalkResponse(t);
     if (smallTalk) {
       setIsTyping(true);
       setTimeout(() => {
@@ -317,7 +317,7 @@ export default function ChatWidget() {
       }, 600);
       return;
     }
-    const matched = resolveNodeByKeyword(text);
+    const matched = resolveNodeByKeyword(t);
     if (matched) { navigateTo(matched.key, true, currentNodeKey); return; }
     setIsTyping(true);
     setTimeout(() => {
@@ -330,28 +330,33 @@ export default function ChatWidget() {
       setNodeKey(MAIN_MENU_KEY);
       setIsTyping(false);
     }, 600);
-  }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage, liveMode, conversationId, visitorToken, validate, clearError]);
+  }
+
+  if (!validate(clean, doSend)) return;
+  doSend(clean);
+}, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage,
+    liveMode, conversationId, visitorToken, validate, sanitizeInput, clearError]);
 
   // ── Helpdesk submit ───────────────────────────────────────────────────
 
-  async function handleHelpdeskSubmit() {
-    if (!validate(helpdeskText)) return;
-    setSubmitting(true);
+async function handleHelpdeskSubmit() {
+  const clean = sanitizeInput(helpdeskText);   // ← sanitize first
+  if (!validate(clean)) return;                // validate the clean copy
 
-    const msg   = helpdeskText.trim();
-    const msgId = generateId();
-    setHelpdesk("");
+  setSubmitting(true);
+  const msgId = generateId();
+  setHelpdesk("");
 
-    setMessages(prev => [...prev, { id: msgId, role: "user", text: msg, timestamp: new Date() }]);
+  setMessages(prev => [...prev, { id: msgId, role: "user", text: clean, timestamp: new Date() }]);
 
-    const result = await submitFeedback({
-      name:        userInfo.fullName,
-      email:       userInfo.email || null,
-      phone:       userInfo.phone || null,
-      subject:     "Iba Pa",
-      message:     msg,
-      source_node: currentNodeKey,
-    });
+  const result = await submitFeedback({
+    name:        userInfo.fullName,
+    email:       userInfo.email || null,
+    phone:       userInfo.phone || null,
+    subject:     "Iba Pa",
+    message:     clean,                        // ← send clean to API
+    source_node: currentNodeKey,
+  });
 
     setSubmitting(false);
 
@@ -508,16 +513,17 @@ export default function ChatWidget() {
             )}
 
             <ChatInputArea
-              mode={liveMode ? "free-text" : currentNode.inputMode}
-              submitting={formSubmitting}
-              helpdeskText={helpdeskText}
-              inputError={inputError}
-              isClosed={convStatus === "closed"} // Pass the state to the UI
-              onHelpdeskChange={v => { setHelpdesk(v); clearError(); }}
-              onHelpdeskSubmit={handleHelpdeskSubmit}
-              onTextSend={handleTextSend}
-              onClearError={clearError}
-            />
+  mode={liveMode ? "free-text" : currentNode.inputMode}
+  submitting={formSubmitting}
+  helpdeskText={helpdeskText}
+  inputError={inputError}
+  isClosed={convStatus === "closed"}
+  cooldownUntil={cooldownUntil}             // ← add this
+  onHelpdeskChange={v => { setHelpdesk(v); clearError(); }}
+  onHelpdeskSubmit={handleHelpdeskSubmit}
+  onTextSend={handleTextSend}
+  onClearError={clearError}
+/>
           </>
         )}
 
