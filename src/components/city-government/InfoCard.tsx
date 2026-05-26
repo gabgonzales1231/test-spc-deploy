@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { User, Phone, ChevronDown } from "lucide-react";
 import { Department } from "@/components/city-government/types";
 
 export default function InfoCard({ dept }: { dept: Department }) {
-  const [hovered, setHovered] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const Icon = dept.icon;
 
@@ -30,20 +32,51 @@ export default function InfoCard({ dept }: { dept: Department }) {
   const textColor = textColorMap[dept.color] ?? "text-gray-600";
   const bgLight = bgLightMap[dept.color] ?? "bg-gray-50";
 
+  // Intersection Observer to detect when card scrolls into view on mobile
+  useEffect(() => {
+    // Only apply the scroll-expansion observer logic on mobile viewports (< 768px)
+    if (typeof window !== "undefined" && window.innerWidth >= 768) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsIntersecting(entry.isIntersecting);
+      },
+      {
+        root: null, // viewport
+        rootMargin: "-25% 0px -25% 0px", // Trigger when the card occupies the middle zone of the screen
+        threshold: 0.4, // Requires 40% of the card to be visible
+      }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => {
+      if (cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
+    };
+  }, []);
+
+  // Combine desktop hover and mobile viewport scroll visibility configurations
+  const isExpanded = isHovered || isIntersecting;
+
   return (
     <div
-      className="relative overflow-hidden bg-white rounded-2xl border cursor-default w-full"
+      ref={cardRef}
+      className="relative overflow-hidden bg-white rounded-2xl border cursor-default w-full md:hover:border-transparent md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.10)] transition-all duration-300"
       style={{
-        height: hovered ? "272px" : "210px",
-        borderColor: hovered ? "transparent" : "#f3f4f6",
-        boxShadow: hovered
+        height: isExpanded ? "272px" : "210px",
+        borderColor: isExpanded ? "transparent" : "#f3f4f6",
+        boxShadow: isExpanded
           ? "0 12px 32px rgba(0,0,0,0.10)"
           : "0 1px 6px rgba(0,0,0,0.06)",
         transition:
           "height .35s cubic-bezier(.3, 0, 0, 1.3), box-shadow .3s ease, border-color .3s ease",
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Static content — icon, name, description centered */}
       <div className="absolute inset-x-0 top-0 flex flex-col items-center text-center px-6 pt-6 gap-2">
@@ -61,11 +94,11 @@ export default function InfoCard({ dept }: { dept: Department }) {
         </p>
       </div>
 
-      {/* Chevron hint — anchored to bottom, fades out on hover */}
+      {/* Chevron hint — anchored to bottom, fades out when expanded */}
       <div
         className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-0.5"
         style={{
-          opacity: hovered ? 0 : 1,
+          opacity: isExpanded ? 0 : 1,
           transition: "opacity .2s ease",
         }}
       >
@@ -75,12 +108,12 @@ export default function InfoCard({ dept }: { dept: Department }) {
         <ChevronDown className="w-3.5 h-3.5 text-gray-300 animate-bounce" />
       </div>
 
-      {/* Divider + head info — slides up on hover */}
+      {/* Divider + head info — slides up when expanded */}
       <div
         className="absolute left-6 right-6 z-10 flex flex-col items-center gap-2"
         style={{
-          top: hovered ? "210px" : "300px",
-          opacity: hovered ? 1 : 0,
+          top: isExpanded ? "210px" : "300px",
+          opacity: isExpanded ? 1 : 0,
           transition: "all .35s cubic-bezier(.3, 0, 0, 1.3)",
         }}
       >
