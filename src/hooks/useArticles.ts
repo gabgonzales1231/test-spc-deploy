@@ -1,4 +1,4 @@
-//src\hooks\useArticles.ts
+// src/hooks/useArticles.ts
 
 import { useCallback } from 'react';
 import { useApi, apiRequest } from './useCore';
@@ -60,7 +60,9 @@ export function useGetArticle() {
 
 export function useGetArticleBySlug() {
   const apiFunction = useCallback(async (slug: string) => {
-    return apiRequest(`/articles/slug/${slug}`);
+    // FIX: Trim hidden whitespace and safely encode the slug for the URL
+    const safeSlug = encodeURIComponent(slug.trim());
+    return apiRequest(`/articles/slug/${safeSlug}`);
   }, []);
   return useApi(apiFunction);
 }

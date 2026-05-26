@@ -129,10 +129,6 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
           name,
           slug,
           description
-        ),
-        author:author (
-          user_id,
-          username
         )
       `
         )
@@ -186,10 +182,6 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
               name,
               slug,
               description
-            ),
-            author:author (
-              user_id,
-              username
             )
           `
             )
@@ -215,6 +207,19 @@ export const articleRoutes = new Elysia({ prefix: "/articles" })
         console.log("No data returned for slug:", slug);
         throwNotFoundError("Article");
       }
+
+      // 1. Check exact string matching and hidden characters
+      console.log(">>> INCOMING SLUG:", `"${slug}"`);
+      console.log(">>> INCOMING SLUG LENGTH:", slug.length);
+
+      // 2. Test a raw query without any relational joins
+      const { data: rawData, error: rawError } = await supabase
+        .from("articles")
+        .select("article_id, title, slug")
+        .eq("slug", slug);
+
+      console.log(">>> RAW QUERY RESULT:", rawData);
+      console.log(">>> RAW QUERY ERROR:", rawError);
 
       console.log("Article found:", data.title);
       return successResponse(data);

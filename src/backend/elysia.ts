@@ -90,3 +90,8 @@ export const app = new Elysia()
     assets: 'public',
     prefix: '/'
   }))
+
+  console.log(
+  'Registered routes:\n',
+  app.routes.map((r: any) => `${r.method} ${r.path}`).join('\n')
+)
