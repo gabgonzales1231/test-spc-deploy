@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import CharterHeader from "@/components/arta/citizens-charter/charter-header";
 import OfficeSearch from "@/components/arta/citizens-charter/office-search";
 import OfficeList from "@/components/arta/citizens-charter/office-list";
+import CharterFeedbackAccordion from "@/components/arta/citizens-charter/charter-feedback-accordion";
 import { useCitizensCharterSearch } from "@/hooks/useCitizensCharterSearch";
 
 const fadeInUp = {
@@ -44,21 +45,21 @@ export default function CitizensCharterPage() {
             transition={{ duration: 0.6, ease: "easeInOut" }}
             className="fixed inset-0 z-50 bg-gradient-to-t from-[#009A68] to-emerald-500 text-white flex items-center justify-center px-4"
           >
-            <div className="text-center flex flex-col items-center">
+            <div className="text-center flex flex-col items-center space-y-4">
               <div className="mb-6">
                 <h1 className="text-3xl md:text-4xl font-bold font-mono">
                   KARTA NG MAMAMAYAN
                 </h1>
                 <p className="text-xl md:text-3xl font-semibold">
-                  CITIZEN’S CHARTER
+                  CITIZEN'S CHARTER
                 </p>
               </div>
 
               <Image
                 src="/seal.webp"
                 alt="City Seal"
-                width={150}
-                height={150}
+                width={640}
+                height={420}
                 className="drop-shadow-[0_0_0.4rem_rgba(255,255,255,0.5)] mb-6 md:w-[190px] md:h-[190px]"
                 priority
               />
@@ -82,21 +83,27 @@ export default function CitizensCharterPage() {
       </AnimatePresence>
 
       {/* Main Page Content */}
-      {/* We wait for !showIntro so the stagger animation fires perfectly as the splash leaves */}
       {!showIntro && (
         <motion.section
-          className="flex flex-col min-h-screen gap-4 p-4 max-w-4xl mx-auto pt-24"
+          className="flex flex-col min-h-screen gap-4 p-4 max-w-10xl mx-auto pt-24"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
         >
-
           {/* Charter header */}
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
             <CharterHeader />
+          </motion.div>
+
+          {/* Feedback / Complaints Accordion */}
+          <motion.div
+            variants={fadeInUp}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <CharterFeedbackAccordion />
           </motion.div>
 
           {/* Prompt card */}
