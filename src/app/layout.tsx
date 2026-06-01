@@ -61,42 +61,7 @@ export default function RootLayout({
         </ThemeProvider>
         <DisableRightClick />
 
-        {/* Deferred — yields to rendering before executing */}
-        <script
-          defer
-          dangerouslySetInnerHTML={{
-            __html: `
-(function() {
-  var current = window.scrollY;
-  var target = window.scrollY;
-  var ease = 0.08;
-  var running = false;
-
-  function tick() {
-    current += (target - current) * ease;
-    if (Math.abs(target - current) < 0.5) {
-      current = target;
-      running = false;
-      return;
-    }
-    window.scrollTo(0, current);
-    requestAnimationFrame(tick);
-  }
-
-  window.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    target += e.deltaY * 1.5;
-    target = Math.max(0, Math.min(target, document.body.scrollHeight - window.innerHeight));
-    current = window.scrollY;
-    if (!running) {
-      running = true;
-      requestAnimationFrame(tick);
-    }
-  }, { passive: false });
-})();
-            `,
-          }}
-        />
+      
       </body>
     </html>
   );
