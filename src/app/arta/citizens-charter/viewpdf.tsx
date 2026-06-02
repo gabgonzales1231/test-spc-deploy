@@ -68,12 +68,40 @@ export default function PdfViewer() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="relative mb-3">
-        <CharterHeader />
+        <CharterHeader showExit={true} />
       </div>
 
       <h2 className="text-center font-bold mb-4 text-gray-700">PDF Viewer</h2>
 
       <div ref={resizeRef}>
+
+<div className="fixed bottom-20 right-6 flex flex-col gap-2 z-50">
+   {showTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-23 right-7 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m15 11.25-3-3m0 0-3 3m3-3v7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+</svg>
+
+        </button>
+      )}
+
+        {showBottom && (
+    <button
+      onClick={scrollToBottom}
+      className="fixed bottom-23 right-7 bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+</svg>
+
+
+    </button>
+  )}
+      </div>
+
         <Document
           file={file}
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}

@@ -58,8 +58,8 @@ export default function CitizensCharterPage() {
               <Image
                 src="/seal.webp"
                 alt="City Seal"
-                width={640}
-                height={420}
+                width={150}
+                height={150}
                 className="drop-shadow-[0_0_0.4rem_rgba(255,255,255,0.5)] mb-6 md:w-[190px] md:h-[190px]"
                 priority
               />
