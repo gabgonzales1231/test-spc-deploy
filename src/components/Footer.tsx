@@ -48,7 +48,7 @@ export default function Footer() {
     { href: "/", label: "Home" },
     { href: "/news", label: "News" },
     { href: "/about-us", label: "About Us" },
-    { href: "/disclosure-portal", label: "Disclosure Portal" },
+    { href: "/transparency", label: "Transparency" },
     { href: "/forms", label: "Forms" },
     { href: "/publications", label: "Publications" },
     { href: "/arta/citizens-charter", label: "Citizen's Charter" },
