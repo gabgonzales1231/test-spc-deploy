@@ -31,14 +31,13 @@ function ImageCarouselItem({
     );
   }
 
+  const hasText = title || subtitle;
+
   return (
     <CarouselItem className="pl-2 md:pl-4">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
         <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
 
-          {/* ✅ FIX: Removed the custom 'quality' prop to prevent Next.js config errors.
-              Using sizes="10vw" alone is enough to force Next.js to serve a tiny, 
-              lightweight thumbnail for this blurred background. */}
           {isActive && (
             <Image
               src={src}
@@ -67,21 +66,25 @@ function ImageCarouselItem({
             {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
           />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 group-hover:opacity-0" />
+          {hasText && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 group-hover:opacity-0" />
+          )}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 lg:p-12">
-          <div className={`transform transition-all duration-700 ease-out
-            ${isActive ? "translate-y-0 opacity-100" : "translate-y-2 opacity-90"}
-            group-hover:opacity-0 group-hover:translate-y-4`}>
-            <h3 className="text-left text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-3 drop-shadow-lg leading-tight">
-              {title}
-            </h3>
-            <p className="text-left text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
-              {subtitle}
-            </p>
+        {hasText && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 lg:p-12">
+            <div className={`transform transition-all duration-700 ease-out
+              ${isActive ? "translate-y-0 opacity-100" : "translate-y-2 opacity-90"}
+              group-hover:opacity-0 group-hover:translate-y-4`}>
+              <h3 className="text-left text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-3 drop-shadow-lg leading-tight">
+                {title}
+              </h3>
+              <p className="text-left text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
+                {subtitle}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </CarouselItem>
   );
@@ -90,7 +93,6 @@ function ImageCarouselItem({
 export default function HomeCarousel({ banners }: { banners: Banner[] }) {
   const [api, setApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
-
   const [autoplayReady, setAutoplayReady] = useState(false);
 
   const autoplay = useMemo(

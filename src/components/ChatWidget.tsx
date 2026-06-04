@@ -506,7 +506,7 @@ async function handleHelpdeskSubmit() {
                 remainingMessages <= 1 ? "text-red-500" : "text-gray-400"
               }`}>
                 {remainingMessages === 0
-                  ? "Naabot na ang limitasyon ng mensahe ngayong araw."
+                  ? "Naabot na ang limitasyon ng mensahe."
                   : `${remainingMessages} mensahe na lamang.`
                 }
               </div>
