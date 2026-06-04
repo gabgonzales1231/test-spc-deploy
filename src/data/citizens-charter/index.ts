@@ -29,7 +29,7 @@ export const officeList: OfficeEntry[] = [
   { name: "City Mayor's Office - CTMO.pdf", office: "(CTMO)", link: "/citizens-charter/City Mayor's Office - CTMO.pdf" },
   { name: "City Mayor's Office - GAD Division.pdf", office: "(GAD)", link: "/citizens-charter/City Mayor's Office - GAD Division.pdf" },
   { name: "City Mayor's Office - LEDIPO.pdf", office: "(LEDIPO)", link: "/citizens-charter/City Mayor's Office - LEDIPO.pdf" },
-  { name: "City Mayor's Office - MIS.pdf", office: "(MISO)", link: "/citizens-charter/City Mayor's Office - MIS.pdf" },
+  { name: "City Mayor's Office - MISO.pdf", office: "(MISO)", link: "/citizens-charter/City Mayor's Office - MISO.pdf" },
   { name: "City Mayor's Office - OSCA.pdf", office: "(OSCA)", link: "/citizens-charter/City Mayor's Office - OSCA.pdf" },
   { name: "City Mayor's Office - PDAO.pdf", office: "(PDAO)", link: "/citizens-charter/City Mayor's Office - PDAO.pdf" },
   { name: "City Mayor's Office - PESO.pdf", office: "(PESO)", link: "/citizens-charter/City Mayor's Office - PESO.pdf" },
