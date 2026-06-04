@@ -507,7 +507,7 @@ async function handleHelpdeskSubmit() {
               }`}>
                 {remainingMessages === 0
                   ? "Naabot na ang limitasyon ng mensahe ngayong araw."
-                  : `${remainingMessages} mensahe na natitira ngayon`
+                  : `${remainingMessages} mensahe na lamang.`
                 }
               </div>
             )}
