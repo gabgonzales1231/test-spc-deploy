@@ -55,14 +55,14 @@ export default function CitizensCharterPage() {
                 </p>
               </div>
 
-              <Image
-                src="/seal.webp"
-                alt="City Seal"
-                width={150}
-                height={150}
-                className="drop-shadow-[0_0_0.4rem_rgba(255,255,255,0.5)] mb-6 md:w-[190px] md:h-[190px]"
-                priority
-              />
+<Image
+  src="/citizens-charter/logo/chibiMayor.png"
+  alt="City Seal"
+  width={300}
+  height={300}
+  className="drop-shadow-[0_0_0.4rem_rgba(255,255,255,0.5)] mb-6 w-75 md:w-110"
+  priority
+/>
 
               <p className="text-sm md:text-xl font-medium italic">
                 "TULOY PO KAYO SA BAGONG SAN PABLO"

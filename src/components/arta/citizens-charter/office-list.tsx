@@ -1,5 +1,3 @@
-//src/components/arta/citizens-charter/office-list.tsx
-
 "use client";
 
 import Link from "next/link";
@@ -35,13 +33,12 @@ export default function OfficeList({ results, query, onClear }: OfficeListProps)
           key={entry.name}
           className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-50 rounded-md p-3 shadow-sm"
         >
-          <span className="font-medium text-gray-800 text-sm md:text-base">
-            {entry.name.replace(".pdf", "")}
-            <span className="ml-2 text-xs text-gray-500 font-normal">({entry.office})</span>
+          <span className="font-medium text-gray-800">
+            {entry.name} - {entry.office}
           </span>
           <div className="flex gap-3 mt-2 md:mt-0 shrink-0">
             
-            <a  href={entry.link}
+           <a   href={entry.link}
               download
               className="text-sm text-emerald-600 hover:underline"
             >

@@ -152,24 +152,24 @@ export default function SanPabloServicesPage() {
   ];
 
   const services = [
-    {
-      icon: Landmark,
-      title: "Real Property Information System",
-      description:
-        "Calculate your taxes and view your property information - no account required.",
-      link: "https://realpropertytax.sanpablocity.gov.ph",
-      category: "Business",
-      available: true,
-    },
-    {
-      icon: FileText,
-      title: "Business Permits & Licensing",
-      description:
-        "Apply for business permits, renewals, and licenses. Fast-track processing for new business registrations and renewals.",
-      link: "https://bplo.sanpablocity.gov.ph",
-      category: "Business",
-      available: true,
-    },
+    // {
+    //   icon: Landmark,
+    //   title: "Real Property Information System",
+    //   description:
+    //     "Calculate your taxes and view your property information - no account required.",
+    //   link: "https://realpropertytax.sanpablocity.gov.ph",
+    //   category: "Business",
+    //   available: true,
+    // },
+    // {
+    //   icon: FileText,
+    //   title: "Business Permits & Licensing",
+    //   description:
+    //     "Apply for business permits, renewals, and licenses. Fast-track processing for new business registrations and renewals.",
+    //   link: "https://bplo.sanpablocity.gov.ph",
+    //   category: "Business",
+    //   available: true,
+    // },
     {
       icon: Briefcase,
       title: "E-Government Services",
@@ -179,15 +179,15 @@ export default function SanPabloServicesPage() {
       category: "Business",
       available: true,
     },
-    {
-      icon: Droplet,
-      title: "San Pablo City Water District",
-      description:
-        "Providing potable, adequate and affordable water supply in the entire city while remaining to be self reliant and financially viable water district.",
-      link: "https://www.spcwd.org.ph",
-      category: "Utilities",
-      available: true,
-    },
+    // {
+    //   icon: Droplet,
+    //   title: "San Pablo City Water District",
+    //   description:
+    //     "Providing potable, adequate and affordable water supply in the entire city while remaining to be self reliant and financially viable water district.",
+    //   link: "https://www.spcwd.org.ph",
+    //   category: "Utilities",
+    //   available: true,
+    // },
     // {
     //   icon: VenusAndMars,
     //   title: "Gender and Development",

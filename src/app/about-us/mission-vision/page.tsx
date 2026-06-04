@@ -24,23 +24,23 @@ const ServiceStandard = ({ number, text }: ServiceStandardProps) => (
 );
 
 export default function SanPabloCityInfoPage() {
-  const serviceStandards = [
-    "When we go to work, we will appear in complete uniform and wear our identification cards.",
-    "We will greet our clients with a sincere smile.",
-    "When you enter in our office premises, we will introduce ourselves to you so that you can address us back in an appropriate manner.",
-    "We will attend our clients' inquiries within three (3) minutes.",
-    "Appropriate action will immediately follow your queries and you will be referred accordingly.",
-    "We will make you comfortable inside our facilities while you wait for your service request.",
-    "Express/special lanes are provided for Senior Citizens, pregnant women and People with Disability.",
-    "We will teach the clients, needed requirements that can expedite their service request.",
-    "We will promptly return your denied request and explain to you the reason for such, which in turn will allow us to reprocess it.",
-    "Our service stations will be properly labeled and will include our organizational chart and service flow chart.",
-    "Directional signs will be displayed conspicuously as guide so that you can establish familiarity within our workplace.",
-    "Information and complaint desk is at your service in strategic locations.",
-    "An information and hotline service is available 24/7 for anyone who has queries.",
-    "No noon-break policy is followed and we are to serve beyond office hours if needed.",
-    "A satisfied client is our happiness in the government service.",
-  ];
+const serviceStandards = [
+  "When we go to work, we will come in complete uniform and display our identification cards.",
+  "We will greet our clients with a sincere smile.",
+  "When you enter our office premises, we will introduce ourselves to you so that you can address us back in an appropriate manner.",
+  "We will attend our clients' inquiries within three (3) minutes.",
+  "Appropriate action will immediately follow your queries and you will be referred accordingly.",
+  "We will make you comfortable inside our facilities while you wait for your service request.",
+  "Express/special lanes are provided for Senior Citizens, pregnant women and People With Disabilities.",
+  "We will teach the clients, needed requirements that can expedite their service request.",
+  "We will promptly return your denied request and explain to you the reason for such, which in turn will allow us to reprocess it.",
+  "Our service stations will be properly labeled that will include our organizational chart and service flow chart.",
+  "Directional signs will be displayed conspicuously as guide so that you can establish familiarity with our work place.",
+  "Public Assistance Complaints Desk (PACD) is at your service in strategic locations.",
+  "An information and hotline service is available 24/7 for anyone who has queries.",
+  "No noon-break policy is followed and we are to serve beyond office hours if needed.",
+  "A satisfied client is our happiness in the government service.",
+];
 
   const strategicDirections = [
     "Existing policies of the city/agency have to be reviewed and revisited by the implementing office.",
