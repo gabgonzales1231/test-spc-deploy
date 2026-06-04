@@ -351,7 +351,7 @@ export default function SanPabloServicesPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 text-center">
               <div className="text-4xl font-bold text-emerald-700 mb-2">
-                4
+                1
               </div>
               <div className="text-gray-600">Available Services</div>
             </div>

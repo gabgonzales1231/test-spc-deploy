@@ -56,7 +56,7 @@ export default function CitizensCharterPage() {
               </div>
 
 <Image
-  src="/citizens-charter/logo/chibiMayor.png"
+  src="/citizens-charter/logo/chibiMayor.webp"
   alt="City Seal"
   width={300}
   height={300}
