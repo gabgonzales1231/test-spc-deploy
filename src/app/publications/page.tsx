@@ -513,7 +513,7 @@ function EmptyState({ selectedMonth }: { selectedMonth: string }) {
       ) : (
         <>
           <p className="font-medium text-gray-600">No vacancies posted yet</p>
-          <p className="text-sm mt-1">Check back soon for new job postings for the current year.</p>
+          
         </>
       )}
     </div>
