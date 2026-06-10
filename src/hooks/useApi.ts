@@ -18,4 +18,4 @@ export * from './useArticles';
 export * from './useCategories';
 export * from './useBanners';
 export * from './useMedia';
-export * from './useDisclosure';
+export * from './useTransparency';

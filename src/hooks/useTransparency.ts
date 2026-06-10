@@ -1,19 +1,18 @@
-//src/hooks/useDisclosure.ts
+//src/hooks/useTransparency.ts
 
 import { useCallback } from 'react';
 import { useApi, apiRequest } from './useCore';
 
-export type DisclosureCategory =
-  | 'city-ordinance'
-  | 'city-resolution'
+export type TransparencyCategory =
+  | 'city-ordinance-&-resolution'
   | 'executive-order'
   | 'bids-awards'
   | 'financial-aid'
   | 'full-disclosure'
 
-export interface DisclosureDocument {
+export interface TransparencyDocument {
   document_id:   number
-  category:      DisclosureCategory
+  category:      TransparencyCategory
   title:         string
   date_passed:   string | null
   year:          number | null
@@ -23,11 +22,11 @@ export interface DisclosureDocument {
   created_at:    string
 }
 
-export function useGetPublicDisclosure() {
+export function useGetPublicTransparency() {
   const apiFunction = useCallback(async (params?: {
     page?:     number
     limit?:    number
-    category?: DisclosureCategory
+    category?: TransparencyCategory
     year?:     string
     search?:   string
   }) => {
@@ -37,7 +36,7 @@ export function useGetPublicDisclosure() {
     if (params?.category) q.append('category', params.category)
     if (params?.year)     q.append('year',     params.year)
     if (params?.search)   q.append('search',   params.search)
-    return apiRequest(`/disclosure/public?${q.toString()}`)
+    return apiRequest(`/transparency/public?${q.toString()}`)
   }, [])
   return useApi(apiFunction)
 }

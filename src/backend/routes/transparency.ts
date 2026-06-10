@@ -6,8 +6,8 @@ import { formatPaginationResponse } from '@/backend/utils/helpers'
 function getProxyUrl(filePath: string): string | null {
   if (!filePath) return null
   // Proxy route: /api/download/[bucket]/[...filePath]
-  // bucket = "disclosure", filePath already includes "full-disclosure/filename.pdf"
-  return `/api/download/disclosure/${filePath}`
+  // bucket = "transparency", filePath already includes "full-transparency/filename.pdf"
+  return `/api/download/transparency/${filePath}`
 }
 
 function enrichDocument(doc: Record<string, unknown>) {
@@ -22,7 +22,7 @@ function enrichDocument(doc: Record<string, unknown>) {
   }
 }
 
-export const disclosureRoutes = new Elysia({ prefix: '/disclosure' })
+export const transparencyRoutes = new Elysia({ prefix: '/transparency' })
   .use(errorHandler)
 
   .get('/public', async ({ query }) => {
@@ -33,7 +33,7 @@ export const disclosureRoutes = new Elysia({ prefix: '/disclosure' })
     const search   = query.search   as string | undefined
 
     let countQuery = supabase
-      .from('disclosure')
+      .from('transparency')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active')
 
@@ -46,18 +46,18 @@ export const disclosureRoutes = new Elysia({ prefix: '/disclosure' })
     const { count, error: countError } = await countQuery   // ← insert below this line
     
     if (countError) {
-      console.error('[disclosure] countError code:', countError.code)
-      console.error('[disclosure] countError message:', countError.message)
-      console.error('[disclosure] countError details:', countError.details)
-      console.error('[disclosure] countError hint:', countError.hint)
-      throw new Error('Failed to fetch disclosure count')
+      console.error('[transparency] countError code:', countError.code)
+      console.error('[transparency] countError message:', countError.message)
+      console.error('[transparency] countError details:', countError.details)
+      console.error('[transparency] countError hint:', countError.hint)
+      throw new Error('Failed to fetch transparency count')
     }
 
     const from = (page - 1) * limit
     const to   = page * limit - 1
 
     let dataQuery = supabase
-      .from('disclosure')
+      .from('transparency')
       .select('document_id, category, title, date_passed, document_path, status, created_at')
       .eq('status', 'active')
       .order('date_passed', { ascending: false })
@@ -70,7 +70,7 @@ export const disclosureRoutes = new Elysia({ prefix: '/disclosure' })
     if (search)   dataQuery = dataQuery.ilike('title', `%${search}%`)
 
     const { data, error } = await dataQuery
-    if (error) throw new Error('Failed to fetch disclosure documents')
+    if (error) throw new Error('Failed to fetch transparency documents')
 
     const enriched = (data || []).map(enrichDocument)
 

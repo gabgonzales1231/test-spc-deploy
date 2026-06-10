@@ -1,22 +1,24 @@
 "use client"
-//spc-website\src\app\disclosure-portal\page.tsx
+//src/app/transparency/page.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
   FileText, Building2, Search, ChevronDown, ChevronUp,
   ExternalLink, Scale, Gavel, HandCoins, ScrollText, Briefcase, X
 } from 'lucide-react';
-import { useGetPublicDisclosure, DisclosureDocument, DisclosureCategory } from '@/hooks/useDisclosure';
+import { useGetPublicTransparency, TransparencyDocument, TransparencyCategory } from '@/hooks/useTransparency';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CATEGORIES: { id: DisclosureCategory; label: string; icon: React.ElementType }[] = [
-  { id: 'city-ordinance',  label: 'City Ordinances',  icon: Scale      },
-  { id: 'city-resolution', label: 'Resolutions',       icon: ScrollText },
-  { id: 'executive-order', label: 'Executive Orders',  icon: Briefcase  },
+const CATEGORIES: { id: TransparencyCategory; label: string; icon: React.ElementType }[] = [
+  { id: 'full-disclosure', label: 'Full Disclosure', icon: FileText },
   { id: 'bids-awards',     label: 'Bids & Awards',     icon: Gavel      },
+  { id: 'executive-order', label: 'Executive Orders',  icon: Briefcase  },
+  { id: 'city-ordinance-&-resolution',  label: 'City Ordinances & Resolutions',  icon: Scale      },
+
+  
   // { id: 'financial-aid',   label: 'Financial Aid',     icon: HandCoins  },
-{ id: 'full-disclosure', label: 'Full Disclosure', icon: FileText },
+
 ]
 
 // ─── Year Accordion ───────────────────────────────────────────────────────────
@@ -25,7 +27,7 @@ function YearAccordion({
   year, docs, isOpen, onToggle, categoryLabel,
 }: {
   year: number
-  docs: DisclosureDocument[]
+  docs: TransparencyDocument[]
   isOpen: boolean
   onToggle: () => void
   categoryLabel: string
@@ -85,7 +87,7 @@ function GlobalSearchResults({
   loading,
   query,
 }: {
-  results: Record<DisclosureCategory, DisclosureDocument[]>
+  results: Record<TransparencyCategory, TransparencyDocument[]>
   loading: boolean
   query: string
 }) {
@@ -179,22 +181,21 @@ function GlobalSearchResults({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function FullDisclosurePage() {
-  const [activeCategory, setActiveCategory] = useState<DisclosureCategory>('city-ordinance')
+export default function FullTransparencyPage() {
+  const [activeCategory, setActiveCategory] = useState<TransparencyCategory>('full-disclosure')
   const [searchQuery,    setSearchQuery]    = useState('')
   const [openYears,      setOpenYears]      = useState<Record<number, boolean>>({})
 
   // Per-category hook for normal browsing
-  const { execute, data, loading, error } = useGetPublicDisclosure()
+  const { execute, data, loading, error } = useGetPublicTransparency()
 
   // Separate hooks for global search (one per category)
   const hooks = {
-    'city-ordinance':  useGetPublicDisclosure(),
-    'city-resolution': useGetPublicDisclosure(),
-    'executive-order': useGetPublicDisclosure(),
-    'bids-awards':     useGetPublicDisclosure(),
-    'financial-aid':   useGetPublicDisclosure(),
-'full-disclosure': useGetPublicDisclosure(),
+    'city-ordinance-&-resolution':  useGetPublicTransparency(),
+    'executive-order': useGetPublicTransparency(),
+    'bids-awards':     useGetPublicTransparency(),
+    'financial-aid':   useGetPublicTransparency(),
+'full-disclosure': useGetPublicTransparency(),
   } as const
 
   const searchActive = searchQuery.trim().length > 0
@@ -232,13 +233,13 @@ export default function FullDisclosurePage() {
   }, [searchQuery])
 
   // ── Parse documents (normal browse) ──
-  const documents: DisclosureDocument[] = (() => {
+  const documents: TransparencyDocument[] = (() => {
     if (!data) return []
-    const raw = data as { data?: DisclosureDocument[] } | DisclosureDocument[]
+    const raw = data as { data?: TransparencyDocument[] } | TransparencyDocument[]
     return Array.isArray(raw) ? raw : (raw.data ?? [])
   })()
 
-  const byYear = documents.reduce<Record<number, DisclosureDocument[]>>((acc, doc) => {
+  const byYear = documents.reduce<Record<number, TransparencyDocument[]>>((acc, doc) => {
     const y = doc.year ?? (doc.date_passed ? new Date(doc.date_passed).getFullYear() : null)
     if (!y || isNaN(y)) return acc
     if (!acc[y]) acc[y] = []
@@ -271,13 +272,13 @@ const globalResults = Object.fromEntries(
   CATEGORIES.map(({ id }) => {
     const hook = hooks[id as keyof typeof hooks]
     const raw = hook?.data
-    const all: DisclosureDocument[] = !raw
+    const all: TransparencyDocument[] = !raw
       ? []
-      : Array.isArray(raw) ? raw : ((raw as { data?: DisclosureDocument[] }).data ?? [])
+      : Array.isArray(raw) ? raw : ((raw as { data?: TransparencyDocument[] }).data ?? [])
     const q = searchQuery.toLowerCase()
     return [id, all.filter(d => d.title.toLowerCase().includes(q))]
   })
-) as Record<DisclosureCategory, DisclosureDocument[]>
+) as Record<TransparencyCategory, TransparencyDocument[]>
 
 const globalLoading = CATEGORIES.some(({ id }) => hooks[id as keyof typeof hooks]?.loading)
 
@@ -295,7 +296,7 @@ const globalLoading = CATEGORIES.some(({ id }) => hooks[id as keyof typeof hooks
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">Transparency</h1>
           <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
-            In compliance with the Full Disclosure Policy, we provide transparent access to
+            In compliance with the Full Transparency Policy, we provide transparent access to
             government documents, financial records, and legislative proceedings.
           </p>
         </div>

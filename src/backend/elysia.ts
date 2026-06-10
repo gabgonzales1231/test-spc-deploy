@@ -9,11 +9,12 @@ import { bannerRoutes } from '@/backend/routes/banners'
 import { faqsRouter } from '@/backend/routes/faqs'
 import { servicesRouter } from '@/backend/routes/services'
 import { errorHandler } from './utils/error'
-import { disclosureRoutes } from './routes/disclosure'
+
 // Added the forms routes import
 import { formsRoutes } from '@/backend/routes/forms'
 import { chatRoutes } from './routes/chat'
 import { aboutUsRoutes } from './routes/about-us'
+import { transparencyRoutes } from './routes/transparency'
 
 export const app = new Elysia()
   .use(cors({
@@ -80,7 +81,7 @@ export const app = new Elysia()
       .use(bannerRoutes)
       .use(faqsRouter)
       .use(servicesRouter)
-      .use(disclosureRoutes)
+      .use(transparencyRoutes)
       .use(chatRoutes)
       .use(formsRoutes)
       .use(aboutUsRoutes)
