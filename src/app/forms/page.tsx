@@ -14,7 +14,7 @@ const CATEGORIES: { id: FormCategory; label: string; icon: React.ElementType }[]
   { id: 'business-permits-licensing',  label: 'Business Permits & Licensing', icon: ClipboardList  },
   { id: 'city-planning-development',   label: 'City Planning & Development',  icon: Building2      },
   { id: 'building-official',           label: 'Building Official',            icon: HardHat        },
-  { id: 'civil-society-organizations', label: 'Civil Society Organizations',  icon: Users          },
+  // { id: 'civil-society-organizations', label: 'Civil Society Organizations',  icon: Users          },
   { id: 'senior-citizens-affairs',     label: 'Senior Citizens Affairs',      icon: HeartHandshake },
 ]
 

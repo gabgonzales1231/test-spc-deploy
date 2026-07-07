@@ -7,7 +7,7 @@ function getProxyUrl(filePath: string): string | null {
   if (!filePath) return null
   // Proxy route: /api/download/[bucket]/[...filePath]
   // bucket = "transparency", filePath already includes "full-transparency/filename.pdf"
-  return `/api/download/transparency/${filePath}`
+  return `/api/download/documents/${filePath}`
 }
 
 function enrichDocument(doc: Record<string, unknown>) {

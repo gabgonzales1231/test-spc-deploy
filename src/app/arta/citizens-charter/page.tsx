@@ -85,7 +85,7 @@ export default function CitizensCharterPage() {
       {/* Main Page Content */}
       {!showIntro && (
         <motion.section
-          className="flex flex-col min-h-screen gap-4 p-4 max-w-10xl mx-auto pt-24"
+className="flex flex-col min-h-screen gap-4"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
@@ -97,13 +97,15 @@ export default function CitizensCharterPage() {
           >
             <CharterHeader />
           </motion.div>
-
+<div className="px-4 max-w-10xl mx-auto w-full flex flex-col gap-4">
           {/* Feedback / Complaints Accordion */}
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            <CharterFeedbackAccordion />
+            
+              <CharterFeedbackAccordion />
+
           </motion.div>
 
           {/* Prompt card */}
@@ -149,8 +151,12 @@ export default function CitizensCharterPage() {
                 />
               </div>
             </div>
+            
           </motion.div>
+          
+                      </div>
         </motion.section>
+        
       )}
     </>
   );

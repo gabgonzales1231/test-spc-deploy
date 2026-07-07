@@ -1,9 +1,11 @@
+//src/app/about-us/explore/page.tsx
+
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Building2, MapPin, Eye, Mountain, BookOpen, X, ImageOff } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Building2, MapPin, Eye, Mountain, BookOpen, XIcon } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { motion, type Variants } from "framer-motion";
 import {
   Carousel,
   CarouselContent,
@@ -20,110 +22,34 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import { useAboutUs, type AboutUsPhoto } from "@/hooks/useAboutUs";
+import { ImageGallery } from "@/components/explore/ImageGallery";
 
-// ---------------------------------------------------------------------------
-// ImageGallery — CMS-driven, fetches from the "about-us" Supabase folder
-// ---------------------------------------------------------------------------
-
-const ImageGallery = () => {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const { photos, loading, error } = useAboutUs();
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 animate-pulse">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-emerald-100/60 rounded-xl"
-            style={{
-              gridRow: i === 0 ? "span 2" : "span 1",
-              aspectRatio: i === 0 ? "1/1" : "16/9",
-            }}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (error || photos.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
-        <ImageOff className="w-10 h-10" />
-        <p className="text-sm">
-          {error ? "Failed to load photos." : "No photos available yet."}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {photos.map((photo: AboutUsPhoto, index: number) => (
-          <div
-            key={photo.photo_id}
-            className="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 hover:scale-[1.02] active:scale-95"
-            style={{
-              gridRow: index === 0 ? "span 2" : "span 1",
-              aspectRatio: index === 0 ? "1/1" : "16/9",
-            }}
-            onClick={() => setSelectedIndex(index)}
-          >
-            <Image
-              src={photo.url}
-              alt={photo.caption ?? `San Pablo City photo ${index + 1}`}
-              className="w-full h-full object-cover"
-              width={600}
-              height={400}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              {photo.caption && (
-                <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 text-white">
-                  <p className="font-semibold text-xs md:text-base">{photo.caption}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {selectedIndex !== null && (
-        <div
-          className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4"
-          onClick={() => setSelectedIndex(null)}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/10"
-            onClick={() => setSelectedIndex(null)}
-          >
-            <X className="w-8 h-8" />
-          </Button>
-          <div
-            className="max-w-5xl w-full relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src={photos[selectedIndex].url}
-              alt={photos[selectedIndex].caption ?? `San Pablo City photo ${selectedIndex + 1}`}
-              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-              width={1200}
-              height={800}
-            />
-            {photos[selectedIndex].caption && (
-              <p className="text-white text-center mt-6 text-xl font-semibold">
-                {photos[selectedIndex].caption}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-    </>
-  );
+const sectionReveal: Variants = {
+  hidden: { opacity: 0, y: 48 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut", staggerChildren: 0.1 },
+  },
 };
+
+const ScrollRevealSection = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <motion.section
+    className={className}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, amount: 0.22, margin: "0px 0px -80px 0px" }}
+    variants={sectionReveal}
+  >
+    {children}
+  </motion.section>
+);
 
 // ---------------------------------------------------------------------------
 // SevenLakesCarousel — auto-scrolling with pause on hover/interaction
@@ -139,7 +65,6 @@ const SCROLL_INTERVAL = 2000;
 
 const SevenLakesCarousel = () => {
   const [selectedLake, setSelectedLake] = useState<Lake | null>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [api, setApi] = useState<CarouselApi>();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -201,14 +126,12 @@ const SevenLakesCarousel = () => {
     }
   }, []);
 
-  // Start auto-scroll once the Embla API is ready
   useEffect(() => {
     if (!api) return;
     startAutoScroll();
     return () => stopAutoScroll();
   }, [api, startAutoScroll, stopAutoScroll]);
 
-  // Device orientation tilt for the lake detail dialog
   useEffect(() => {
     const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null && event.gamma !== null) {
@@ -230,13 +153,6 @@ const SevenLakesCarousel = () => {
     };
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
-    const y = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
-    setMousePosition({ x: x * 20, y: y * 20 });
-  };
-
   return (
     <div
       className="w-full max-w-6xl mx-auto px-4 overflow-hidden"
@@ -253,7 +169,7 @@ const SevenLakesCarousel = () => {
             <CarouselItem key={index} className="pl-2 md:pl-4 basis-[85%] md:basis-1/2 lg:basis-1/3">
               <div className="p-1">
                 <div
-                  className="cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden rounded-xl group"
+                  className="cursor-pointer overflow-hidden rounded-xl"
                   onClick={() => {
                     stopAutoScroll();
                     setSelectedLake(lake);
@@ -264,7 +180,7 @@ const SevenLakesCarousel = () => {
                       src={lake.image}
                       alt={lake.name}
                       fill
-                      className="object-cover transform group-hover:scale-110 transition-transform duration-500"
+                      className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
@@ -300,8 +216,7 @@ const SevenLakesCarousel = () => {
       >
         <DialogContent
           className="max-w-7xl w-[95vw] h-[90vh] md:h-[85vh] p-0 overflow-hidden border-none"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setMousePosition({ x: 0, y: 0 })}
+          showCloseButton={false}
         >
           {selectedLake && (
             <div className="h-full flex flex-col overflow-hidden">
@@ -312,7 +227,7 @@ const SevenLakesCarousel = () => {
                 <div
                   className="absolute inset-0 w-full h-full"
                   style={{
-                    transform: `rotateY(${mousePosition.x || tilt.x}deg) rotateX(${-(mousePosition.y || tilt.y)}deg) scale(1.1)`,
+                    transform: `rotateY(${tilt.x}deg) rotateX(${-tilt.y}deg) scale(1.1)`,
                     transition: "transform 0.1s ease-out",
                   }}
                 >
@@ -326,7 +241,7 @@ const SevenLakesCarousel = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               </div>
 
-              <div className="flex-1 p-6 md:p-12 flex flex-col justify-start md:justify-center overflow-y-auto bg-white">
+              <div className="flex-1 p-6 md:p-12 flex flex-col justify-start md:justify-center overflow-hidden bg-white">
                 <DialogHeader className="text-left">
                   <DialogTitle className="text-3xl md:text-5xl font-bold text-emerald-800">
                     {selectedLake.name}
@@ -338,7 +253,10 @@ const SevenLakesCarousel = () => {
               </div>
             </div>
           )}
-          <DialogClose className="absolute top-4 right-4 z-50 rounded-full bg-black/20 p-2 text-white hover:bg-black/40 transition-colors" />
+          <DialogClose className="absolute top-4 right-4 z-50 p-2 text-white hover:bg-emerald-700/70 transition-colors">
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
         </DialogContent>
       </Dialog>
     </div>
@@ -407,29 +325,25 @@ export default function SanPabloCityInfoPage() {
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-xs md:text-sm font-medium mb-6 backdrop-blur-sm">
             <Building2 className="w-4 h-4 mr-2" />
-            City of Seven Lakes
+            About City
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight leading-tight">
-            San Pablo City
-            <br />
-            Information
+            Explore San Pablo City
           </h1>
           <p className="text-lg md:text-xl text-emerald-50 max-w-2xl mx-auto opacity-90">
-            Your comprehensive guide to San Pablo City - from our vision and
-            mission to our rich history and commitment to excellent public
-            service.
+            Learn its rich history, notable landmarks, and cultural heritage that reflect the city's identity and legacy of public service.
           </p>
         </div>
       </section>
 
       {/* City Location */}
-      <section className="py-12 md:py-16 px-4">
+      <ScrollRevealSection className="py-12 md:py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-emerald-100 rounded-2xl mb-6">
               <MapPin className="w-8 h-8 md:w-10 md:h-10 text-emerald-700" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">CITY LOCATION</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">City Location</h2>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 md:p-8">
             <p className="text-gray-700 leading-relaxed text-base md:text-lg">
@@ -448,26 +362,32 @@ export default function SanPabloCityInfoPage() {
             </p>
           </div>
         </div>
-      </section>
+      </ScrollRevealSection>
 
       {/* Image Gallery — CMS-driven */}
-      <section className="py-12 md:py-16 px-4 bg-emerald-50/30">
+      <motion.section 
+        className="py-12 md:py-16 px-4 bg-emerald-50/30"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25, margin: "0px 0px -100px 0px" }}
+        variants={sectionReveal}
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-emerald-100 rounded-2xl mb-6">
               <Eye className="w-8 h-8 md:w-10 md:h-10 text-emerald-700" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Discover San Pablo City</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Discover Our City</h2>
             <p className="text-gray-600 text-base md:text-lg">
               A visual journey through our beautiful city
             </p>
           </div>
           <ImageGallery />
         </div>
-      </section>
+      </motion.section>
 
       {/* Seven Lakes Carousel */}
-      <section className="py-12 md:py-16 px-4">
+      <ScrollRevealSection className="py-12 md:py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-emerald-100 rounded-2xl mb-6">
@@ -480,10 +400,10 @@ export default function SanPabloCityInfoPage() {
           </div>
           <SevenLakesCarousel />
         </div>
-      </section>
+      </ScrollRevealSection>
 
       {/* Distance Table */}
-      <section className="py-12 md:py-16 px-4 bg-white/70">
+      <ScrollRevealSection className="py-12 md:py-16 px-4 bg-white/70">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-emerald-100 rounded-2xl mb-6">
@@ -498,10 +418,10 @@ export default function SanPabloCityInfoPage() {
           </div>
           <NeighboringMunicipalities />
         </div>
-      </section>
+      </ScrollRevealSection>
 
       {/* Geography */}
-      <section className="py-12 md:py-16 px-4">
+      <ScrollRevealSection className="py-12 md:py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-emerald-100 rounded-2xl mb-6">
@@ -534,10 +454,10 @@ export default function SanPabloCityInfoPage() {
             </div>
           </div>
         </div>
-      </section>
+      </ScrollRevealSection>
 
       {/* History */}
-      <section className="py-12 md:py-16 px-4 bg-white/50">
+      <ScrollRevealSection className="py-12 md:py-16 px-4 bg-white/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-emerald-100 rounded-2xl mb-6">
@@ -598,7 +518,7 @@ export default function SanPabloCityInfoPage() {
             </p>
           </div>
         </div>
-      </section>
+      </ScrollRevealSection>
 
       <footer className="py-8 px-4 border-t border-gray-100 bg-white">
         <div className="max-w-2xl mx-auto text-center space-y-4">

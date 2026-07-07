@@ -3,6 +3,8 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useLayoutEffect, useRef, useState } from "react";
+
 type FooterLink = {
   href: string;
   label: string;
@@ -11,19 +13,22 @@ type FooterLink = {
 type FooterSectionProps = {
   title: string;
   links?: FooterLink[];
+  linkClassName?: string;
   children?: React.ReactNode;
 };
 
-const FooterSection = ({ title, links, children }: FooterSectionProps) => (
-  <div className="flex flex-col items-start">
-    <h3 className="text-white font-semibold mb-3">{title}</h3>
+const FooterSection = ({ title, links, linkClassName, children }: FooterSectionProps) => (
+  <div className="flex flex-col items-start min-w-0">
+    <h3 className="text-white font-semibold mb-3 text-md">{title}</h3>
     {links && (
       <ul className="space-y-1 text-sm text-left">
         {links.map(({ href, label }) => (
           <li key={label}>
             <Link
               href={href}
-              className="text-emerald-200 hover:text-primary-400 transition-colors"
+              className={`text-emerald-200 hover:text-primary-400 transition-colors break-words ${
+                linkClassName ?? ""
+              }`}
             >
               {label}
             </Link>
@@ -35,22 +40,54 @@ const FooterSection = ({ title, links, children }: FooterSectionProps) => (
   </div>
 );
 
-const SocialIcon = ({ children }: { children: React.ReactNode }) => (
-  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-500 hover:bg-emerald-400 transition-colors">
-    {children}
-  </div>
-);
+type RepublicNoticeProps = {
+  className?: string;
+};
+
+const RepublicNotice = ({ className }: RepublicNoticeProps) => {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const [maxWidth, setMaxWidth] = useState<number | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (headingRef.current) {
+        setMaxWidth(headingRef.current.offsetWidth);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  return (
+    <div className={`flex flex-col items-start min-w-0 w-full ${className ?? ""}`}>
+      <h3
+        ref={headingRef}
+        className="text-white font-semibold mb-2 text-sm uppercase tracking-wide break-words md:whitespace-nowrap md:w-fit"
+      >
+        Republic of the Philippines
+      </h3>
+      <p
+        className="text-emerald-200 text-xs tracking-tight leading-tight md:text-sm md:tracking-normal md:leading-relaxed"
+        style={maxWidth ? { maxWidth } : undefined}
+      >
+        All content is in the public domain unless otherwise stated.
+      </p>
+    </div>
+  );
+};
 
 export default function Footer() {
   const pathname = usePathname();
   const isHidden = pathname.startsWith("/arta/citizens-charter/view");
+
   const cityLinks: FooterLink[] = [
     { href: "/", label: "Home" },
     { href: "/news", label: "News" },
     { href: "/about-us", label: "About Us" },
+    { href: "/services", label: "Services" },
     { href: "/transparency", label: "Transparency" },
     { href: "/forms", label: "Forms" },
-    { href: "/publications", label: "Publications" },
     { href: "/arta/citizens-charter", label: "Citizen's Charter" },
   ];
 
@@ -65,7 +102,7 @@ export default function Footer() {
   ];
 
   const govphLinks: FooterLink[] = [
-    { href: "https://e.gov.ph", label: " eGov Website" },
+    { href: "https://e.gov.ph", label: "eGov Website" },
     {
       href: "https://apps.apple.com/ph/app/egovph/id6447682225",
       label: "Download Apple app",
@@ -75,6 +112,8 @@ export default function Footer() {
       label: "Download Android app",
     },
   ];
+
+  if (isHidden) return null;
 
   return (
     <footer className="bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-900 text-white relative overflow-hidden">
@@ -111,63 +150,144 @@ export default function Footer() {
       </div>
 
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-16 relative z-10">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 mb-8">
-          {/* Brand Section */}
-          <div className="md:col-span-1 flex flex-col items-start">
-            <div className="flex items-center mb-3">
+        {/* ===================== MOBILE LAYOUT ===================== */}
+        <div className="md:hidden px-4 overflow-x-hidden">
+          {/* Brand Header: logos row, then seal + title inline */}
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
               <Image
-              src="/seal.webp"
-                alt="City of San Pablo Logo"
-                width={64}
-                height={64}
+                src="/Logo-Bagong-Pilipinas.png"
+                alt="Bagong Pilipinas Logo"
+                width={48}
+                height={32}
+                className="w-10 h-auto sm:w-[60px]"
                 loading="lazy"
               />
-              <span className="ml-2 text-2xl font-bold">City of San Pablo</span>
+              <Image
+                src="/-transparency-seal-.png"
+                alt="City of San Pablo Logo"
+                width={48}
+                height={32}
+                className="w-10 h-auto sm:w-[60px]"
+                loading="lazy"
+              />
+              <Image
+                src="/republic-ph-logo.png"
+                alt="Republic of the Philippines Logo"
+                width={48}
+                height={32}
+                className="w-10 h-auto sm:w-[60px]"
+                loading="lazy"
+              />
             </div>
-            {/*      <p className="text-emerald-200 mb-4 text-sm leading-relaxed">
-              Efficient, transparent, and people-first governance.
-            </p>
-     <div className="flex space-x-4">
-              <SocialIcon>
-                <IconBrandFacebook className="w-6 h-6 text-white" />
-              </SocialIcon>
-              <SocialIcon>
-                <IconBrandX className="w-6 h-6 text-white" />
-              </SocialIcon>
-              <SocialIcon>
-                <IconBrandInstagram className="w-6 h-6 text-white" />
-              </SocialIcon>
-            </div> */}
+
+            <div className="flex items-center gap-3">
+              <Image
+                src="/seal.webp"
+                alt="City of San Pablo Official Seal"
+                width={90}
+                height={90}
+                className="w-16 h-16 sm:w-[90px] sm:h-[90px] shrink-0"
+                loading="lazy"
+              />
+              <div className="text-left min-w-0">
+                <p className="text-white font-semibold text-lg sm:text-xl leading-tight uppercase break-words">
+                  City Government of San Pablo
+                </p>
+                <p className="text-emerald-200 font-light text-sm uppercase tracking-wide">
+                  Official Website
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Links Sections */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 col-span-1 md:col-span-3">
-            {/* Left Column - City Government Links */}
-            <div>
-              <FooterSection title="City Government links" links={cityLinks} />
-            </div>
+          {/* Row: SPC Quick Links | Government Links */}
+          <div className="grid grid-cols-2 mb-10 min-w-0">
+            <FooterSection title="SPC Quick Links" links={cityLinks} />
+            <FooterSection
+              title="Government Links"
+              links={govLinks}
+              linkClassName="text-xs tracking-tight leading-tight whitespace-nowrap"
+            />
+          </div>
 
-            {/* Right Column - Government Links (Mobile) / Second Column (Desktop) */}
-            <div className="md:hidden">
-              <FooterSection title="Government Links" links={govLinks} />
-            </div>
+          {/* Row: eGOV PH | Republic notice */}
+          <div className="grid grid-cols-2 mb-2 min-w-0">
+            <FooterSection
+              title="eGOV PH"
+              links={govphLinks}
+              linkClassName="text-xs tracking-tight leading-tight"
+            />
+            <RepublicNotice />
+          </div>
+        </div>
 
-            <div className="hidden md:block">
-              <FooterSection title="Government Links" links={govLinks} />
-            </div>
+        {/* ===================== DESKTOP LAYOUT ===================== */}
+        <div className="hidden md:grid md:grid-cols-4 gap-8 mb-8">
+          {/* Brand Section */}
+          <div className="flex flex-col items-start">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-2 mb-3">
+                <Image
+                  src="/Logo-Bagong-Pilipinas.png"
+                  alt="Bagong Pilipinas Logo"
+                  width={60}
+                  height={40}
+                  loading="lazy"
+                />
+                <Image
+                  src="/-transparency-seal-.png"
+                  alt="City of San Pablo Logo"
+                  width={60}
+                  height={40}
+                  loading="lazy"
+                />
+                <Image
+                  src="/republic-ph-logo.png"
+                  alt="Republic of the Philippines Logo"
+                  width={60}
+                  height={40}
+                  loading="lazy"
+                />
+              </div>
 
-            {/* GOVPH Links - Full Width Mobile / Third Column Desktop */}
-            <div className="col-span-2 md:col-span-1 ">
-              <FooterSection title="eGOV PH" links={govphLinks} />
+              <div className="text-center mb-4">
+                <p className="text-white font-semibold text-sm leading-tight uppercase">
+                  City Government of San Pablo
+                </p>
+                <p className="text-emerald-200 text-xs uppercase tracking-wide">
+                  Official Website
+                </p>
+              </div>
+
+              <Image
+                src="/seal.webp"
+                alt="City of San Pablo Official Seal"
+                width={110}
+                height={110}
+                loading="lazy"
+              />
             </div>
+          </div>
+
+          {/* SPC Quick Links */}
+          <FooterSection title="SPC Quick Links" links={cityLinks} />
+
+          {/* Government Links */}
+          <FooterSection title="Government Links" links={govLinks} />
+
+          {/* eGOV PH — configured independently from Republic Notice below */}
+          <div className="flex flex-col items-start">
+            <FooterSection title="eGOV PH" links={govphLinks} />
+            {/* Republic Notice — its own instance/props, edit here without touching eGOV PH above */}
+            <RepublicNotice className="mt-6" />
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-emerald-700 pt-6 grid grid-cols-1 flex justify-center md:flex md:justify-between md:items-center gap-2 text-left">
-          <p className="text-emerald-200 text-sm text-center">
-            &copy; {new Date().getFullYear()} City Government of San Pablo City
+        <div className="border-t border-emerald-700 pt-6 flex flex-col items-center gap-3 text-center">
+          <p className="text-emerald-200 text-sm">
+            &copy; {new Date().getFullYear()} City Government of San Pablo. All rights reserved.
           </p>
           <div className="flex flex-row gap-4 md:gap-6 text-sm justify-center">
             <Link

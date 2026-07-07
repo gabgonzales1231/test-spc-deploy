@@ -24,11 +24,11 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co https://www.sanpablocity.gov.ph https://sanpablocity.gov.ph https://webapi.sanpablocitygov.org https://placehold.co",
+      "img-src 'self' data: blob: https://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co https://kfzpspgisjwnkncmvvjp.supabase.co https://www.sanpablocity.gov.ph https://sanpablocity.gov.ph https://webapi.sanpablocitygov.org https://placehold.co",
       "font-src 'self'",
       // wss:// required for Supabase Realtime WebSocket connections
-      `connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co wss://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co wss://yljsclzmrxuhejgcesiv.supabase.co${isProd ? "" : " http://localhost:3001"}`,
-      "frame-src 'self' https://yljsclzmrxuhejgcesiv.supabase.co",
+      `connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co wss://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co wss://yljsclzmrxuhejgcesiv.supabase.co https://kfzpspgisjwnkncmvvjp.supabase.co wss://kfzpspgisjwnkncmvvjp.supabase.co${isProd ? "" : " http://localhost:3001"}`,
+      "frame-src 'self' https://yljsclzmrxuhejgcesiv.supabase.co https://kfzpspgisjwnkncmvvjp.supabase.co",
       "frame-ancestors 'self'",
     ].join("; "),
   },
@@ -78,6 +78,16 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "yljsclzmrxuhejgcesiv.supabase.co",
+        pathname: "/storage/v1/object/sign/**",
+      },
+      {
+        protocol: "https",
+        hostname: "kfzpspgisjwnkncmvvjp.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "kfzpspgisjwnkncmvvjp.supabase.co",
         pathname: "/storage/v1/object/sign/**",
       },
       {

@@ -1,3 +1,5 @@
+//src/data/officials.ts
+
 export interface Officialnterface {
   id: number;
   name: string;
@@ -45,7 +47,7 @@ export const officials: Officialnterface[] = [
   },
   {
     id: 4,
-    name: "Hon. Shaira Aliya A. Diaz",
+    name: "Hon. Shaira Aliyah A. Diaz",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_diaz.webp",
@@ -111,7 +113,7 @@ export const officials: Officialnterface[] = [
   },
   {
     id: 10,
-    name: "Hon. Lou Vicent B. Amante",
+    name: "Hon. Lou Vincent B. Amante",
     position: "City Councilor",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_lou_amante.webp",
@@ -156,7 +158,7 @@ export const officials: Officialnterface[] = [
   {
     id: 14,
     name: "Hon. Eldrich Khristoffer B. Villanueva",
-    position: "City Councilor",
+    position: "SK President",
     department: "Sangguniang Panglungsod",
     image: "/officials/sp_eldrich_villanueva.webp",
     email: "--",

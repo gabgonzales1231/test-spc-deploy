@@ -1,4 +1,6 @@
-import { ArrowRight, LucideIcon } from "lucide-react";
+// src/components/home/ServiceCard.tsx
+
+import { ArrowRight, Lock, LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 interface ServiceCardProps {
@@ -6,6 +8,7 @@ interface ServiceCardProps {
   title: string;
   description: string;
   link: string;
+  locked?: boolean;
 }
 
 const ServiceCard = ({
@@ -13,14 +16,19 @@ const ServiceCard = ({
   title,
   description,
   link,
+  locked = false,
 }: ServiceCardProps) => {
-  return (
-    <Link
-      href={link}
-      target="_blank"
+  const content = (
+    <div
       className="group bg-white rounded-xl shadow-lg p-6 hover:shadow-xl 
-             transition-all transform hover:-translate-y-1 h-full cursor-pointer flex flex-col"
+             transition-all transform hover:-translate-y-1 h-full flex flex-col relative overflow-hidden"
     >
+      {locked && (
+        <div className="absolute inset-0 bg-gray-100/50 backdrop-grayscale z-10 flex items-center justify-center rounded-xl">
+          
+        </div>
+      )}
+
       <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
         <Icon className="w-6 h-6 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
       </div>
@@ -35,6 +43,16 @@ const ServiceCard = ({
         Access Service
         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
       </div>
+    </div>
+  );
+
+  if (locked) {
+    return <div className="cursor-not-allowed h-full">{content}</div>;
+  }
+
+  return (
+    <Link href={link} target="_blank" className="h-full cursor-pointer">
+      {content}
     </Link>
   );
 };

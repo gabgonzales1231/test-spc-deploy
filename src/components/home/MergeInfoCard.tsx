@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Clock, MapPin } from "lucide-react";
 
 export default function MergedInfoCard() {
@@ -15,9 +15,9 @@ export default function MergedInfoCard() {
 
   const formatDate = (date: Date) =>
     date.toLocaleDateString("en-US", {
-      weekday: "short",
+      weekday: "long",
       year: "numeric",
-      month: "short",
+      month: "long",
       day: "numeric",
     });
 
@@ -33,26 +33,11 @@ export default function MergedInfoCard() {
     <section className="py-3 sm:py-6 px-4" aria-label="Quick Information">
       <div className="max-w-7xl mx-auto">
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-lg sm:rounded-xl shadow-lg px-8 py-5 sm:p-6 overflow-hidden">
-          <div className="flex flex-row items-center justify-center sm:justify-between gap-4 sm:gap-0">
-            {/* DateTime Section - Left */}
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-center sm:justify-start sm:flex-none">
-              <Clock className="w-5 sm:w-6 h-5 sm:h-6 text-white opacity-80 flex-shrink-0" />
-              <div className="text-white">
-                <div className="text-[10px] sm:text-xs opacity-90 whitespace-nowrap">
-                  {formatDate(currentTime)}
-                </div>
-                <div className="text-sm sm:text-lg font-mono font-bold whitespace-nowrap leading-tight">
-                  {formatTime(currentTime)}
-                </div>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="w-px h-10 sm:h-14 bg-white/30 flex-shrink-0 mx-2 sm:mx-0" />
-
-            {/* Location Section - Right */}
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-center sm:justify-end sm:flex-none">
-              <div className="text-white text-right">
+          <div className="flex flex-row items-center justify-center gap-4 sm:gap-0">
+            {/* Location Section */}
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-center">
+              <MapPin className="w-5 sm:w-6 h-5 sm:h-6 text-white opacity-80 flex-shrink-0" />
+              <div className="text-white text-center">
                 <div className="text-sm sm:text-lg font-bold whitespace-nowrap leading-tight">
                   City of San Pablo
                 </div>
@@ -60,7 +45,22 @@ export default function MergedInfoCard() {
                   Laguna, Philippines
                 </div>
               </div>
-              <MapPin className="w-5 sm:w-6 h-5 sm:h-6 text-white opacity-80 flex-shrink-0" />
+            </div>
+
+            {/* Divider */}
+            <div className="w-px h-10 sm:h-14 bg-white/30 flex-shrink-0 mx-2 sm:mx-0" />
+
+            {/* DateTime Section */}
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 justify-center">
+              <Clock className="w-5 sm:w-6 h-5 sm:h-6 text-white opacity-80 flex-shrink-0" />
+              <div className="text-white text-center">
+                <div className="text-[10px] sm:text-xs opacity-90 whitespace-nowrap">
+                  {formatDate(currentTime)}
+                </div>
+                <div className="text-sm sm:text-lg font-mono font-bold whitespace-nowrap leading-tight">
+                  {formatTime(currentTime)}
+                </div>
+              </div>
             </div>
           </div>
         </div>

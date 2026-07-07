@@ -7,7 +7,7 @@ import { formatPaginationResponse } from '@/backend/utils/helpers'
 
 function getProxyUrl(filePath: string): string | null {
   if (!filePath) return null
-  return `/api/download/forms/${filePath}`
+  return `/api/download/documents/${filePath}`
 }
 
 function enrichDocument(doc: Record<string, unknown>) {

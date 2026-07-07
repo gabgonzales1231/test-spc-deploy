@@ -5,6 +5,7 @@ import HomeCarousel from "@/components/home/HomeCarousel";
 import MergedInfoCard from "@/components/home/MergeInfoCard";
 import HomeBelowFold from "@/components/client/HomeBelowFold";
 import StructuredData from "@/components/StructuredData";
+import JobVacancies from "@/components/home/JobVacancies";
 
 // ============= TYPES =============
 export interface Article {
@@ -163,6 +164,8 @@ export default async function HomePage() {
 
         {/* BELOW FOLD — news, services, egov; client boundary starts here */}
         <HomeBelowFold articles={articles} />
+
+       
       </div>
     </>
   );

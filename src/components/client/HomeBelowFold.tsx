@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { ArrowRight, Newspaper } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,7 +8,7 @@ import NewsCard from "@/components/home/NewsCard";
 import ServiceCard from "@/components/home/ServiceCard";
 import { servicesData } from "@/data/service";
 import type { Article } from "@/app/page";
-
+import JobVacancies from "@/components/home/JobVacancies"; // NEW IMPORT
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString("en-US", {
     month: "numeric",
@@ -20,6 +21,36 @@ interface HomeBelowFoldProps {
 }
 
 export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
+  // ── Scroll to Animate Hook ───────────────────────────────────────────────
+  function useFadeUp(threshold = 0.15) {
+    const ref = React.useRef<HTMLDivElement>(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            observer.disconnect();
+          }
+        },
+        { threshold }
+      );
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [threshold]);
+
+    return { ref, visible };
+  }
+
+  // Separate animation nodes for clean layout staggered triggers
+  const newsAnimation = useFadeUp(0.1);
+  const jobsHeaderAnimation = useFadeUp(0.1);
+  const servicesAnimation = useFadeUp(0.12);
+  const egovAnimation = useFadeUp(0.15);
+
   return (
     <>
       {/* NEWS SECTION */}
@@ -28,7 +59,11 @@ export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
         className="py-8 bg-gradient-to-r from-emerald-50 to-white mt-8"
         aria-labelledby="news-heading"
       >
-        <div className="max-w-7xl mx-auto px-4">
+        <div
+          ref={newsAnimation.ref}
+          className={`max-w-7xl mx-auto px-4 transition-all duration-700 ease-out
+            ${newsAnimation.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        >
           <header className="text-center mb-16">
             <h2 id="news-heading" className="text-4xl font-bold text-emerald-900 mb-4">
               News & Updates
@@ -61,16 +96,40 @@ export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
         </div>
       </section>
 
+       {/* PUBLICATIONS & VACANCIES — Merged Client Component */}
+
+        <div
+          ref={jobsHeaderAnimation.ref}
+          className={`transition-all duration-700 ease-out
+            ${jobsHeaderAnimation.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        >
+          <header className="text-center mb-1 mt-10">
+            <h2 id="services-heading" className="text-4xl font-bold text-emerald-900 mb-4">
+              Jobs & eServices
+            </h2>
+                        <p className="text-xl text-emerald-700 font-medium">
+Explore employment opportunities and government digital services.
+            </p>
+
+            </header>
+        </div>
+
+          
+        <JobVacancies />
+        
+
       {/* SERVICES SECTION */}
       <section
         id="services"
         className="py-10 bg-gradient-to-b from-white to-emerald-50/30"
         aria-labelledby="services-heading"
       >
-        <div className="max-w-7xl mx-auto px-4">
-          <h3 id="services-heading" className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Available Services
-          </h3>
+        <div
+          ref={servicesAnimation.ref}
+          className={`max-w-7xl mx-auto px-4 transition-all duration-700 ease-out
+            ${servicesAnimation.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        >
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {servicesData.map((service, index) => (
               <ServiceCard key={index} {...service} />
@@ -94,7 +153,11 @@ export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
           </div>
 
           {/* E-GOV CALL TO ACTION */}
-          <div className="bg-gradient-to-r from-emerald-700 to-emerald-800 rounded-xl p-4 sm:p-6 shadow-lg mt-12">
+          <div
+            ref={egovAnimation.ref}
+            className={`bg-gradient-to-r from-emerald-700 to-emerald-800 rounded-xl p-4 sm:p-6 shadow-lg mt-12 transition-all duration-700 ease-out
+              ${egovAnimation.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          >
             {/* Mobile */}
             <div className="flex flex-col lg:hidden gap-4">
               <div className="flex items-center gap-3">
@@ -106,7 +169,7 @@ export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
                   <p className="text-emerald-50 text-xs opacity-90">Powered by DICT</p>
                 </div>
                 
-                 <a href="https://e.gov.ph"
+                <a href="https://e.gov.ph"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-white text-emerald-800 px-4 py-2 rounded-lg font-bold hover:bg-emerald-50 transition-all hover:scale-105 text-xs sm:text-sm whitespace-nowrap"
@@ -121,7 +184,7 @@ export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
               </p>
               <nav className="flex flex-col sm:flex-row gap-2 w-full" aria-label="eGov mobile application download links">
                 
-               <a   href="https://play.google.com/store/apps/details?id=egov.app&hl=en_US"
+                <a   href="https://play.google.com/store/apps/details?id=egov.app&hl=en_US"
                   target="_blank" rel="noopener noreferrer"
                   className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg transition-all text-xs sm:text-sm font-bold border border-emerald-400/30"
                   aria-label="Download eGov PH on Google Play Store"
@@ -130,13 +193,14 @@ export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
                   <span>Play Store</span>
                 </a>
                 
-               <a   href="https://apps.apple.com/ph/app/egovph/id6447682225"
+                <a   href="https://apps.apple.com/ph/app/egovph/id6447682225"
                   target="_blank" rel="noopener noreferrer"
                   className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg transition-all text-xs sm:text-sm font-bold border border-emerald-400/30"
                   aria-label="Download eGov PH on Apple App Store"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05,20.28C16.03,21.23 14.96,20.95 13.95,20.46C12.88,19.96 11.89,19.94 10.76,20.46C9.33,21.13 8.57,20.81 7.67,20.28C3.54,17.54 4.13,12.27 8.75,12.04C9.84,12.1 10.61,12.68 11.26,12.72C12.29,12.5 13.28,11.89 14.38,11.97C15.73,12.08 16.74,12.64 17.42,13.65C14.57,15.35 15.23,19.4 17.05,20.28M12.03,11.93C11.88,9.82 13.63,8.1 15.66,7.93C16,10.29 13.37,12.08 12.03,11.93Z" /></svg>
-                  <span>App Store</span>
+<svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z" />
+</svg>                    <span>App Store</span>
                 </a>
               </nav>
             </div>
@@ -181,8 +245,9 @@ export default function HomeBelowFold({ articles }: HomeBelowFoldProps) {
                   className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg transition-all text-sm font-bold border border-emerald-400/30"
                   aria-label="Download eGov PH on App Store"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05,20.28C16.03,21.23 14.96,20.95 13.95,20.46C12.88,19.96 11.89,19.94 10.76,20.46C9.33,21.13 8.57,20.81 7.67,20.28C3.54,17.54 4.13,12.27 8.75,12.04C9.84,12.1 10.61,12.68 11.26,12.72C12.29,12.5 13.28,11.89 14.38,11.97C15.73,12.08 16.74,12.64 17.42,13.65C14.57,15.35 15.23,19.4 17.05,20.28M12.03,11.93C11.88,9.82 13.63,8.1 15.66,7.93C16,10.29 13.37,12.08 12.03,11.93Z" /></svg>
-                  <span className="hidden sm:inline text-xs">App Store</span>
+<svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z" />
+</svg>                  <span className="hidden sm:inline text-xs">App Store</span>
                 </a>
               </nav>
             </div>

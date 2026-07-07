@@ -1,6 +1,11 @@
+// src/components/arta/citizens-charter/charter-header.tsx
+
+
+//todo: to make the font sizes responsive to screen size for clean mobile view, we can use Tailwind's responsive font size classes. For example, we can use `text-5xl md:text-6xl` for the main heading and `text-xl md:text-2xl` for the subheading. This way, the font sizes will adjust based on the screen size, providing a better user experience on mobile devices.
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ScrollText } from "lucide-react";
 
 interface CharterHeaderProps {
   showExit?: boolean;
@@ -11,25 +16,32 @@ export default function CharterHeader({
 }: CharterHeaderProps) {
   const router = useRouter();
 
-  return (
-    <header className="bg-gradient-to-b from-[#009A68] to-emerald-500 text-white rounded-2xl p-3 shadow-md shadow-emerald-700 text-center">
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-mono tracking-wide">
-        KARTA NG MAMAMAYAN
-      </h1>
-      <p className="text-base sm:text-lg md:text-2xl">
-        CITIZEN&apos;S CHARTER
-      </p>
+  const currentYear = new Date().getFullYear();
 
+  return (
+    <header className="relative h-[30rem] bg-gradient-to-r from-emerald-600 to-emerald-800 text-white overflow-hidden shadow-md shadow-emerald-700">
       {showExit && (
-        <div className="absolute top-5 right-2 md:top-4 md:right-4">
-          <button
-            onClick={() => router.back()}
-            className="bg-[#005840] p-1 md:p-3 rounded-full cursor-pointer shadow-sm transition hover:shadow-md active:scale-95"
-          >
-            Exit
-          </button>
-        </div>
+        <button
+          onClick={() => router.back()}
+          className="absolute top-6 right-4 md:top-8 md:right-8 inline-flex items-center gap-2 bg-[#005840] px-4 py-2 rounded-full cursor-pointer shadow-sm transition hover:shadow-md active:scale-95 text-sm font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Exit
+        </button>
       )}
+
+      <div className="relative max-w-7xl mx-auto text-center pt-38 md:pt-40 px-4">
+        <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
+          <ScrollText className="w-4 h-4 mr-2" />
+          {currentYear}
+        </div>
+        <h1 className="text-5xl md:text-6xl font-bold tracking-wide mb-4">
+          Karta ng Mamamayan
+        </h1>
+        <p className="text-lg md:text-2xl text-emerald-100 max-w-3xl mx-auto px-3">
+Explore our Citizen's Charter for services, requirements, fees, processing times, and transaction steps.
+        </p>
+      </div>
     </header>
   );
 }

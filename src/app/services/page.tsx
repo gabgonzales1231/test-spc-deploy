@@ -30,6 +30,8 @@ interface ServiceCardProps {
   category: string;
   available: boolean;
 }
+
+
 const ServiceCard = ({
   icon: Icon,
   title,
@@ -89,6 +91,8 @@ const ServiceCard = ({
       </div>
     );
   }
+
+  
 
   return (
     <a
@@ -152,15 +156,15 @@ export default function SanPabloServicesPage() {
   ];
 
   const services = [
-    // {
-    //   icon: Landmark,
-    //   title: "Real Property Information System",
-    //   description:
-    //     "Calculate your taxes and view your property information - no account required.",
-    //   link: "https://realpropertytax.sanpablocity.gov.ph",
-    //   category: "Business",
-    //   available: true,
-    // },
+    {
+      icon: Landmark,
+      title: "Real Property Information System",
+      description:
+        "Calculate your taxes and view your property information - no account required.",
+      link: "https://realpropertytax.sanpablocity.gov.ph",
+      category: "Business",
+      available: false,
+    },
     // {
     //   icon: FileText,
     //   title: "Business Permits & Licensing",
@@ -321,10 +325,13 @@ export default function SanPabloServicesPage() {
       ? services
       : services.filter((service) => service.category === selectedCategory);
 
+      const availableCount = services.filter((service) => service.available).length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       {/* Hero Section */}
-      <section className="relative py-20 pt-40 px-4 bg-gradient-to-r from-emerald-600 to-emerald-800 text-white overflow-hidden">
+      <section  data-solid-header className="relative py-20 pt-40 px-4 bg-gradient-to-r from-emerald-600 to-emerald-800 text-white overflow-hidden">
+       
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-1/2 -right-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-1/2 -left-1/4 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl" />
@@ -345,13 +352,15 @@ export default function SanPabloServicesPage() {
         </div>
       </section>
 
+      
+
       {/* Quick Stats */}
       <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 text-center">
               <div className="text-4xl font-bold text-emerald-700 mb-2">
-                1
+                {availableCount}
               </div>
               <div className="text-gray-600">Available Services</div>
             </div>
@@ -413,34 +422,7 @@ export default function SanPabloServicesPage() {
         </div>
       </section>
 
-      {/* Contact CTA */}
-      <section className="py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 rounded-3xl shadow-2xl p-12 text-center text-white">
-            <h2 className="text-4xl font-bold mb-4">Need Assistance?</h2>
-            <p className="text-emerald-100 text-lg mb-8 max-w-2xl mx-auto">
-              Our dedicated team is here to help you navigate our services and
-              answer any questions you may have.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <a
-                href="#"
-  onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("open-chat")); }}
-  className="px-8 py-4 bg-white text-emerald-700 rounded-full font-semibold hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
->
-  Contact Us
-</a>
 
- <a href="#"
-  onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("open-chat")); }}
-  className="px-8 py-4 bg-emerald-500/20 text-white rounded-full font-semibold hover:bg-emerald-500/30 transition-all duration-300 border border-white/30"
->
-  View FAQs
-</a>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

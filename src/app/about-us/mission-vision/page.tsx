@@ -1,9 +1,13 @@
+//src/app/about-us/mission-vision/page.tsx
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Target, Eye, Award, Navigation, Star, Goal } from "lucide-react";
 
 import Section from "@/components/city-government/Section";
 import SectionHeader from "@/components/city-government/SectionHeader";
+
+import ServiceStandardStack from "@/components/mission-vision/service-standard";
 
 type ServiceStandardProps = {
   number: number;
@@ -116,19 +120,15 @@ const serviceStandards = [
           </Card>
         </Section>
 
-        {/* 15-Point Service Standards */}
-        <Section>
-          <SectionHeader
-            title="Our 15-Point Service Standards for Clients"
-            subtitle="Our commitment to excellence in public service delivery"
-            icon={<Star />}
-          />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {serviceStandards.map((standard, index) => (
-              <ServiceStandard key={index} number={index + 1} text={standard} />
-            ))}
-          </div>
-        </Section>
+{/* 15-Point Service Standards */}
+<Section>
+  <SectionHeader
+    title="Our 15-Point Service Standards for Clients"
+    subtitle="Our commitment to excellence in public service delivery"
+    icon={<Star />}
+  />
+  <ServiceStandardStack standards={serviceStandards} />
+</Section>
 
         {/* Performance Appearance / Agency Mandate */}
         <Section className="bg-white/70 backdrop-blur-sm">

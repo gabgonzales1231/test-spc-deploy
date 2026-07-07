@@ -6,7 +6,7 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 20;
 const RATE_WINDOW = 60_000;
 
-const ALLOWED_BUCKETS = new Set(["disclosure", "forms", "vacancies"]);
+const ALLOWED_BUCKETS = new Set(["documents"]);
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
