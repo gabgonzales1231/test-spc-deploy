@@ -1,3 +1,5 @@
+//src/components/city-government/DepartmentsSection.tsx
+
 "use client";
 
 import React from "react";
@@ -17,42 +19,42 @@ const keyDepartments: Department[] = [
     icon: Building2,
     description: "Urban planning, zoning, and development coordination",
     color: "emerald",
-    head: { name: "--", contact: "--" },
+    head: { email: "--", contact: "--" },
   },
   {
     name: "City Health Office",
     icon: Heart,
     description: "Public health services and healthcare programs",
-    color: "red",
-    head: { name: "--", contact: "--" },
+    color: "emerald",
+    head: { email: "--", contact: "--" },
   },
   {
     name: "City Social Welfare Office",
     icon: Users,
     description: "Social services and community welfare programs",
-    color: "blue",
-    head: { name: "--", contact: "-" },
+    color: "emerald",
+    head: { email: "--", contact: "-" },
   },
   {
     name: "City Education Office",
     icon: GraduationCap,
     description: "Educational programs and school administration",
-    color: "purple",
-    head: { name: "--", contact: "--" },
+    color: "emerald",
+    head: { email: "--", contact: "--" },
   },
   {
     name: "City Engineer's Office",
     icon: Building2,
     description: "Infrastructure development and maintenance",
-    color: "orange",
-    head: { name: "--", contact: "--" },
+    color: "emerald",
+    head: { email: "--", contact: "--" },
   },
   {
     name: "City Treasurer's Office",
     icon: Briefcase,
     description: "Financial management and revenue collection",
-    color: "green",
-    head: { name: "--", contact: "--" },
+    color: "emerald",
+    head: { email: "--", contact: "--" },
   },
 ];
 

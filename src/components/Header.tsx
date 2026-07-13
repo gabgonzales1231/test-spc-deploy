@@ -1,12 +1,10 @@
-// src/components/Header.tsx
-
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, MessageCircle } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 const navItems = [
@@ -14,9 +12,9 @@ const navItems = [
   { href: "/news", label: "News" },
   {
     label: "About Us",
-    href: "/about-us",
     hasDropdown: true,
     subItems: [
+      { label: "About", href: "/about-us" },
       { label: "City Government", href: "/about-us/city-government" },
       { label: "Local Officials", href: "/about-us/local-officials" },
       { label: "Explore San Pablo City", href: "/about-us/explore" },
@@ -73,9 +71,32 @@ export default function Header() {
     timeoutRef.current = setTimeout(() => setOpenDesktopDropdown(null), 150);
   };
 
-  const openChat = () => {
-    window.dispatchEvent(new CustomEvent("open-chat"));
-  };
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+    const tick = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const timeString = now
+    ? now.toLocaleTimeString("en-PH", {
+        timeZone: "Asia/Manila",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "--:--:-- --";
+
+  const dateString = now
+    ? now.toLocaleDateString("en-PH", {
+        timeZone: "Asia/Manila",
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "";
 
   useEffect(() => {
     const HEADER_HEIGHT = 72;
@@ -141,8 +162,8 @@ export default function Header() {
             <Image
               src="/seal.webp"
               alt="City of San Pablo Seal"
-              width={42}
-              height={42}
+              width={52}
+              height={52}
               priority
               className="transition-transform duration-300 group-hover:scale-105"
             />
@@ -167,7 +188,7 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav
-            className="hidden lg:flex items-center gap-1"
+            className="hidden lg:flex items-center gap-[clamp(0px,0.4vw,4px)] flex-nowrap"
             aria-label="Primary navigation"
           >
             {navItems.map((item) => {
@@ -179,15 +200,15 @@ export default function Header() {
                 <div key={item.label} className="relative">
                   {item.hasDropdown ? (
                     <div
-                      className="relative flex items-center"
+                      className="relative flex items-center h-9"
                       onMouseEnter={() => handleMouseEnter(item.label)}
                       onMouseLeave={handleMouseLeave}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center h-full">
                         {item.href ? (
                           <Link
                             href={item.href}
-                            className={`px-3.5 py-2 text-[12.5px] font-medium tracking-wide transition-colors duration-150 ${
+                            className={`h-full flex items-center px-[clamp(0.5rem,0.85vw,0.875rem)] text-[clamp(11px,0.78vw,14px)] font-medium tracking-wide whitespace-nowrap leading-none transition-colors duration-150 ${
                               active
                                 ? "text-emerald-700"
                                 : "text-gray-600 hover:text-gray-900"
@@ -198,7 +219,7 @@ export default function Header() {
                           </Link>
                         ) : (
                           <span
-                            className={`px-3.5 py-2 text-[12.5px] font-medium tracking-wide cursor-default ${
+                            className={`h-full flex items-center px-[clamp(0.5rem,0.85vw,0.875rem)] text-[clamp(11px,0.78vw,14px)] font-medium tracking-wide whitespace-nowrap leading-none cursor-default ${
                               active ? "text-emerald-700" : "text-gray-600"
                             }`}
                           >
@@ -207,7 +228,7 @@ export default function Header() {
                         )}
                         <button
                           type="button"
-                          className={`-ml-1.5 pr-2 py-2 transition-colors duration-150 hover:text-gray-900 ${
+                          className={`h-full flex items-center -ml-1.5 pr-[clamp(0.4rem,0.6vw,0.5rem)] transition-colors duration-150 hover:text-gray-900 ${
                             active ? "text-emerald-700" : "text-gray-400"
                           }`}
                           onClick={() =>
@@ -219,7 +240,7 @@ export default function Header() {
                           aria-haspopup="true"
                         >
                           <ChevronDown
-                            className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                            className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
                               openDesktopDropdown === item.label ? "rotate-180" : ""
                             }`}
                           />
@@ -233,14 +254,20 @@ export default function Header() {
                         <div className="absolute top-full left-0 pt-2 w-56 z-50">
                           <div className="bg-white border border-gray-100 shadow-xl shadow-gray-900/10">
                             {item.subItems!.map((subItem) => {
-                              const subActive =
-                                pathname === subItem.href ||
-                                pathname.startsWith(subItem.href + "/");
+                              const isParentOfSibling = item.subItems!.some(
+                                (other) =>
+                                  other.href !== subItem.href &&
+                                  other.href.startsWith(subItem.href + "/")
+                              );
+                              const subActive = isParentOfSibling
+                                ? pathname === subItem.href
+                                : pathname === subItem.href ||
+                                  pathname.startsWith(subItem.href + "/");
                               return (
                                 <Link
                                   key={subItem.href}
                                   href={subItem.href}
-                                  className={`block px-4 py-2.5 text-[12.5px] transition-colors duration-150 border-b border-gray-50 last:border-0 ${
+                                  className={`block px-4 py-2.5 text-[14px] transition-colors duration-150 border-b border-gray-50 last:border-0 ${
                                     subActive
                                       ? "text-emerald-700 bg-emerald-50/70 font-medium"
                                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -259,7 +286,7 @@ export default function Header() {
                   ) : (
                     <Link
                       href={item.href!}
-                      className={`relative px-3.5 py-2 text-[12.5px] font-medium tracking-wide transition-colors duration-150 ${
+                      className={`relative h-9 flex items-center px-[clamp(0.5rem,0.85vw,0.875rem)] text-[clamp(11px,0.78vw,14px)] font-medium tracking-wide whitespace-nowrap leading-none transition-colors duration-150 ${
                         active
                           ? "text-emerald-700"
                           : "text-gray-600 hover:text-gray-900"
@@ -277,20 +304,18 @@ export default function Header() {
             })}
           </nav>
 
-          {/* Right side — Ask a question + mobile toggle */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={openChat}
-              className="hidden lg:flex items-center gap-2 px-4 py-2 text-[13.5px] font-semibold text-white rounded-md transition-all duration-200 hover:brightness-110 active:scale-95"
-              style={{
-                background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                boxShadow: "0 2px 8px rgba(5,150,105,0.35)",
-              }}
-            >
-              <MessageCircle className="w-4 h-4 shrink-0" />
-              Ask a question
-            </button>
+          {/* Right side — Time/date divider + mobile toggle */}
+          <div className="flex items-center gap-3 h-full ">
+            <div className="hidden lg:flex self-stretch items-center pl-[clamp(1rem,1.5vw,1.5rem)] border-l border-gray-200 shrink-0">
+<div className="flex flex-col justify-center leading-tight">
+  <span className="text-[clamp(13px,1vw,20px)] font-semibold text-emerald-700 tabular-nums tracking-tight whitespace-nowrap">
+    {timeString}
+  </span>
+  <span className="text-[clamp(8px,0.62vw,12px)] font-medium text-gray-500 mt-0.5 tracking-wide whitespace-nowrap">
+    {dateString}
+  </span>
+</div>
+            </div>
 
             <Button
               variant="ghost"
@@ -382,9 +407,15 @@ export default function Header() {
                     {openMobileDropdown === item.label && (
                       <div className="pl-3 mb-1 space-y-0.5 border-l-2 border-emerald-500/30">
                         {item.subItems!.map((subItem) => {
-                          const subActive =
-                            pathname === subItem.href ||
-                            pathname.startsWith(subItem.href + "/");
+                          const isParentOfSibling = item.subItems!.some(
+                            (other) =>
+                              other.href !== subItem.href &&
+                              other.href.startsWith(subItem.href + "/")
+                          );
+                          const subActive = isParentOfSibling
+                            ? pathname === subItem.href
+                            : pathname === subItem.href ||
+                              pathname.startsWith(subItem.href + "/");
                           return (
                             <Link
                               key={subItem.href}
@@ -426,20 +457,16 @@ export default function Header() {
             );
           })}
 
-          {/* Mobile Ask a question */}
+          {/* Mobile time/date */}
           <div className="pt-3 pb-1">
-            <button
-              type="button"
-              onClick={() => { toggleMenu(); openChat(); }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[14px] font-semibold text-white rounded-md transition-all duration-200 active:scale-95"
-              style={{
-                background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                boxShadow: "0 2px 8px rgba(5,150,105,0.30)",
-              }}
-            >
-              <MessageCircle className="w-4 h-4 shrink-0" />
-              Ask a question
-            </button>
+            <div className="w-full flex flex-col items-center gap-0.5 py-3 border-t border-gray-100">
+              <span className="text-[18px] font-bold text-gray-900 tabular-nums tracking-tight">
+                {timeString}
+              </span>
+              <span className="text-[14px] font-medium text-gray-500 tracking-wide">
+                {dateString}
+              </span>
+            </div>
           </div>
         </nav>
       </div>

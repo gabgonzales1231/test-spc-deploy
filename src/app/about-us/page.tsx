@@ -1,8 +1,11 @@
+//src/app/about-us/page.tsx
+
 "use client";
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Award, Navigation, Star } from "lucide-react";
+import { Award, Navigation, Star, Eye, Landmark, Building2 } from "lucide-react";
+import Image from "next/image";
 
 import Section from "@/components/city-government/Section";
 import SectionHeader from "@/components/city-government/SectionHeader";
@@ -36,10 +39,41 @@ export default function AboutUsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 pb-12">
+
+            {/* Hero Section */}
+      <section className="relative py-20 pt-40 px-4 bg-gradient-to-r from-emerald-600 to-emerald-800 text-white overflow-hidden">
+        <div className="relative max-w-7xl mx-auto text-center">
+          <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
+            <Building2 className="w-4 h-4 mr-2" />
+            City of San Pablo, Laguna
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+            About Us
+          </h1>
+          <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
+Learn about our mission, vision, leadership, and commitment to <br /> serving every San Pableño.
+          </p>
+        </div>
+      </section>
+      
       {/* Main About Section */}
-      <section id="about" className="pt-40 pb-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+      
+<section id="about" className="pt-40 pb-16 bg-white">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
+    {/* Row 1: Hero image + intro */}
+    <div className="grid lg:grid-cols-2 gap-16 items-center">
+      {/* Hero image */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-lg">
+        <Image
+          src="/about-hero.jpg"
+          alt="San Pablo City Capitol"
+          fill
+          className="object-cover"
+          priority
+        />
+      </div>
+
+            {/* About text */}
             <div>
               <h2 className="text-4xl font-bold text-gray-900 mb-6">
                 About San Pablo City
@@ -66,7 +100,7 @@ export default function AboutUsPage() {
                   promoting sustainable development, and ensuring the welfare of
                   our citizens through transparent and accountable governance.
                 </p>
-                <div className="grid grid-cols-2 gap-6 mt-8">
+                {/* <div className="grid grid-cols-2 gap-6 mt-8">
                   <div className="border-l-4 border-emerald-600 pl-4">
                     <div className="text-2xl font-bold text-emerald-600">
                       1940
@@ -79,15 +113,25 @@ export default function AboutUsPage() {
                     </div>
                     <div className="text-gray-600">km² Area</div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
+          </div>
 
-            <div className="bg-emerald-50 p-8 rounded-2xl">
+          {/* Row 2: Section header */}
+          <SectionHeader
+            title="Our Vision & Mission"
+            subtitle="The guiding principles behind every program and policy we pursue"
+            icon={undefined}
+          />
+
+          {/* Row 3: Vision + Mission */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className="bg-white-80 p-8 rounded-2xl border border-emerald-100">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Our Vision
+                Vision
               </h3>
-              <blockquote className="text-lg text-gray-700 italic mb-6">
+              <blockquote className="text-lg text-gray-700 italic">
                 &quot;A walkable and progressive economic hub driven by
                 investment and tourism by year 2034 with God-loving, empowered,
                 educated, healthy and disciplined citizens proud of their
@@ -95,10 +139,13 @@ export default function AboutUsPage() {
                 growth, sustainable development under a transparent, innovative
                 and accountable governance.&quot;
               </blockquote>
+            </div>
+
+            <div className="bg-white-80 p-8 rounded-2xl border border-emerald-100">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Our Mission
+                Mission
               </h3>
-              <blockquote className="text-lg text-gray-700 italic mb-6">
+              <blockquote className="text-lg text-gray-700 italic">
                 &quot;To serve as the catalyst for inclusive and sustainable
                 local development by creating an enabling environment for
                 investment, tourism, enterprise growth. We are committed to
@@ -107,33 +154,13 @@ export default function AboutUsPage() {
                 protect natural resources and ensure the well being and
                 prosperity of every constituent.&quot;
               </blockquote>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-emerald-600 rounded-full mt-2" />
-                  <span className="text-gray-700">
-                    Transparent and accountable governance
-                  </span>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-emerald-600 rounded-full mt-2" />
-                  <span className="text-gray-700">
-                    Sustainable environmental protection
-                  </span>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-emerald-600 rounded-full mt-2" />
-                  <span className="text-gray-700">
-                    Inclusive economic development
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* 15-Point Service Standards */}
-      <Section>
+      <Section className="bg-white">
         <SectionHeader
           title="Our 15-Point Service Standards for Clients"
           subtitle="Our commitment to excellence in public service delivery"
@@ -143,7 +170,7 @@ export default function AboutUsPage() {
       </Section>
 
       {/* Strategic Directions */}
-      <Section>
+      {/* <Section>
         <SectionHeader
           title="Strategic Directions"
           subtitle="These directions can be realized by strictly following:"
@@ -160,7 +187,7 @@ export default function AboutUsPage() {
                   <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
                     {index + 1}
                   </div>
-                  <p className="text-gray-700 leading-relaxed text-lg">
+                  <p className="text-gray-700 leading-relaxed text-lg">out
                     {direction}
                   </p>
                 </div>
@@ -168,7 +195,7 @@ export default function AboutUsPage() {
             </Card>
           ))}
         </div>
-      </Section>
+      </Section> */}
     </div>
   );
 }

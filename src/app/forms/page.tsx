@@ -291,7 +291,18 @@ export default function FormsPage() {
       {/* ── Global Search Bar ── */}
       <div className="bg-white sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-3 flex justify-end">
-          <div className="relative w-full md:w-96">
+          {/*
+            Desktop: search bar width matches the content card width only
+            (max-w-7xl minus the md:w-64 sidebar and gap-8 gap = 18rem),
+            but only when the sidebar is actually showing (i.e. not searching).
+            Once a search is active the sidebar is hidden and the card goes
+            full width, so the bar expands to match.
+          */}
+          <div
+            className={`relative w-full ${
+              searchActive ? 'md:w-full' : 'md:w-[calc(100%-18rem)]'
+            }`}
+          >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input
               type="text"

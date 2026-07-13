@@ -1,3 +1,5 @@
+// src/components/city-government/Section.tsx
+
 import React from "react";
 
 export default function Section({

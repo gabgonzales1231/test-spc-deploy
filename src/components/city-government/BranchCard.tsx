@@ -5,7 +5,7 @@ import { Branch } from "./types";
 export default function BranchCard({ branch }: { branch: Branch }) {
   const Icon = branch.icon;
   return (
-    <Card className="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/50 border border-emerald-200/30 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+    <Card className="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/50 border border-emerald-200/30">
       <CardHeader className="p-6 pb-4">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:bg-emerald-200 transition-colors">

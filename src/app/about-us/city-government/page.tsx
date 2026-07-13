@@ -1,3 +1,5 @@
+//src/app/about-us/city-government/page.tsx
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -14,6 +16,7 @@ import {
   Shield,
   Briefcase,
   GraduationCap,
+  Key,
 } from "lucide-react";
 
 import Section from "@/components/city-government/Section";
@@ -32,13 +35,6 @@ import {
   Contact,
 } from "@/components/city-government/types";
 
-/* -------------------- Data -------------------- */
-const cityStats: Stat[] = [
-  { label: "Population", value: "285,348", icon: Users, color: "emerald" },
-  { label: "Land Area", value: "197.56 km²", icon: MapPin, color: "blue" },
-  { label: "Barangays", value: "80", icon: Building2, color: "purple" },
-  { label: "Established", value: "1940", icon: Calendar, color: "orange" },
-];
 
 const governmentBranches: Branch[] = [
   {
@@ -88,7 +84,13 @@ const achievements: string[] = [
   "Digital Transformation Excellence",
 ];
 
-const contacts: Contact[] = [
+const officeHoursContact: Contact = {
+  title: "Office Hours",
+  icon: Clock,
+  lines: ["Mon - Fri: 8:00 AM - 5:00 PM"],
+};
+
+const otherContacts: Contact[] = [
   {
     title: "Phone",
     icon: Phone,
@@ -100,9 +102,9 @@ const contacts: Contact[] = [
     lines: ["info@sanpablocity.gov.ph"],
   },
   {
-    title: "Office Hours",
-    icon: Clock,
-    lines: ["Mon - Fri: 8:00 AM - 5:00 PM"],
+    title: "Address",
+    icon: MapPin,
+    lines: ["City Hall, San Pablo City, Laguna, Philippines"],
   },
 ];
 
@@ -130,28 +132,6 @@ export default function CityGovernmentPage() {
         </div>
       </section>
 
-      {/* City Statistics */}
-      <Section className="-mt-8 relative z-10">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {cityStats.map((stat, index) => (
-            <Card
-              key={index}
-              className="bg-white/80 backdrop-blur-sm border border-emerald-200/30 hover:shadow-lg transition-all duration-300 group"
-            >
-              <CardContent className="p-6 flex items-center space-x-4">
-                <IconBadge icon={stat.icon} color={stat.color} />
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stat.value}
-                  </p>
-                  <p className="text-gray-600 text-sm">{stat.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </Section>
-
       {/* Government Branches */}
       <Section className="bg-white/50 backdrop-blur-sm">
         <SectionHeader
@@ -168,7 +148,9 @@ export default function CityGovernmentPage() {
 
       {/* Key Departments */}
 <Section>
+    
   <SectionHeader
+
     title="Key Departments"
     subtitle="Essential services delivered through various city departments"
     icon={undefined}
@@ -177,7 +159,7 @@ export default function CityGovernmentPage() {
 </Section>
 
       {/* Achievements */}
-      <Section className="bg-gradient-to-r from-emerald-600 to-emerald-800 text-gray-100">
+      {/* <Section className="bg-gradient-to-r from-emerald-600 to-emerald-800 text-gray-100">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white-900 mb-4">
             Recent Achievements
@@ -201,7 +183,7 @@ export default function CityGovernmentPage() {
             </Card>
           ))}
         </div>
-      </Section>
+      </Section> */}
 
       {/* Contact Information */}
       <Section className="bg-white/70 backdrop-blur-sm">
@@ -210,10 +192,44 @@ export default function CityGovernmentPage() {
           subtitle="We're here to serve you"
           icon={undefined}
         />
-        <div className="grid md:grid-cols-3 gap-8">
-          {contacts.map((contact, index) => (
-            <ContactCard key={index} contact={contact} />
-          ))}
+        <div className="bg-emerald-100 border border-emerald-100 rounded-2xl p-8 md:p-10">
+          <div className="grid md:grid-cols-2 gap-10 md:gap-12 md:divide-x md:divide-emerald-200/60">
+            {/* Column 1: Office Hours + Contact Us button */}
+            <div className="flex flex-col items-center text-center justify-center">
+              <div className="w-full max-w-md">
+                <ContactCard contact={officeHoursContact} />
+              </div>
+            </div>
+
+            {/* Column 2: Phone, Email, Address — plain rows, no card */}
+            <div className="flex flex-col justify-center md:pl-12">
+              <div className="divide-y divide-emerald-200/60">
+                {otherContacts.map((contact, index) => {
+                  const Icon = contact.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-start gap-4 py-5 first:pt-0 last:pb-0"
+                    >
+                      <div className="w-11 h-11 flex-shrink-0 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-1">
+                          {contact.title}
+                        </h4>
+                        {contact.lines.map((line, i) => (
+                          <p key={i} className="text-gray-600">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
     </div>

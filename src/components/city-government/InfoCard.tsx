@@ -1,7 +1,9 @@
+//src/components/city-government/InfoCard.tsx
+
 "use client";
 
 import React from "react";
-import { User, Phone } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Department } from "@/components/city-government/types";
 
 export default function InfoCard({ dept }: { dept: Department }) {
@@ -32,9 +34,9 @@ export default function InfoCard({ dept }: { dept: Department }) {
     <div
       className="relative overflow-hidden bg-white rounded-2xl border cursor-default w-full"
       style={{
-        height: "230px",
+        height: "210px",
         borderColor: "transparent",
-        boxShadow: "0 12px 32px rgba(0,0,0,0.10)",
+        boxShadow: "0 6px 10px rgba(0,0,0,0.10)",
       }}
     >
       {/* Static content — icon, name, description centered */}
@@ -57,17 +59,19 @@ export default function InfoCard({ dept }: { dept: Department }) {
       <div className="absolute left-6 right-6 top-[160px] z-10 flex flex-col items-center gap-2">
         <div className="w-full h-px bg-gray-100" />
         <div className="flex items-center gap-2">
-          <User className={`w-3.5 h-3.5 shrink-0 ${textColor}`} />
+          <Mail className={`w-3.5 h-3.5 shrink-0 ${textColor}`} />
           <span className="text-xs text-gray-500 truncate">
-            {dept.head?.name ?? "To be announced"}
+            {dept.head?.email ?? "To be announced"}
           </span>
         </div>
+        {/* Phone number hidden
         <div className="flex items-center gap-2">
           <Phone className={`w-3.5 h-3.5 shrink-0 ${textColor}`} />
           <span className={`text-xs font-medium truncate ${textColor}`}>
             {dept.head?.contact ?? "—"}
           </span>
         </div>
+        */}
       </div>
     </div>
   );

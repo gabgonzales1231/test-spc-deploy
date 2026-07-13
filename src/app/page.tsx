@@ -160,7 +160,7 @@ export default async function HomePage() {
         </section>
 
         {/* INFO BAR — client component for live clock, isolated below hero */}
-        <MergedInfoCard />
+        {/* <MergedInfoCard /> */}
 
         {/* BELOW FOLD — news, services, egov; client boundary starts here */}
         <HomeBelowFold articles={articles} />

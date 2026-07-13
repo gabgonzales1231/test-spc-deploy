@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useLayoutEffect, useRef, useState } from "react";
 
 type FooterLink = {
   href: string;
@@ -45,32 +44,12 @@ type RepublicNoticeProps = {
 };
 
 const RepublicNotice = ({ className }: RepublicNoticeProps) => {
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const [maxWidth, setMaxWidth] = useState<number | undefined>(undefined);
-
-  useLayoutEffect(() => {
-    const measure = () => {
-      if (headingRef.current) {
-        setMaxWidth(headingRef.current.offsetWidth);
-      }
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
-
   return (
-    <div className={`flex flex-col items-start min-w-0 w-full ${className ?? ""}`}>
-      <h3
-        ref={headingRef}
-        className="text-white font-semibold mb-2 text-sm uppercase tracking-wide break-words md:whitespace-nowrap md:w-fit"
-      >
+    <div className={`flex flex-col items-start min-w-0 w-full max-w-[190px] lg:max-w-[220px] xl:max-w-[260px] ${className ?? ""}`}>
+      <h3 className="text-white font-semibold mb-2 text-sm uppercase tracking-wide break-words">
         Republic of the Philippines
       </h3>
-      <p
-        className="text-emerald-200 text-xs tracking-tight leading-tight md:text-sm md:tracking-normal md:leading-relaxed"
-        style={maxWidth ? { maxWidth } : undefined}
-      >
+      <p className="text-emerald-200 text-xs tracking-tight leading-tight md:text-sm md:tracking-normal md:leading-relaxed break-words">
         All content is in the public domain unless otherwise stated.
       </p>
     </div>
@@ -225,14 +204,15 @@ export default function Footer() {
         {/* ===================== DESKTOP LAYOUT ===================== */}
         <div className="hidden md:grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand Section */}
-          <div className="flex flex-col items-start">
-            <div className="flex flex-col items-center">
-              <div className="flex items-center gap-2 mb-3">
+          <div className="flex flex-col items-start pr-4 md:pr-6 lg:pr-8 min-w-0">
+            <div className="flex flex-col items-center w-full">
+              <div className="flex items-center gap-1.5 md:gap-2 mb-3">
                 <Image
                   src="/Logo-Bagong-Pilipinas.png"
                   alt="Bagong Pilipinas Logo"
                   width={60}
                   height={40}
+                  className="w-8 md:w-9 lg:w-[52px] xl:w-[60px] h-auto"
                   loading="lazy"
                 />
                 <Image
@@ -240,6 +220,7 @@ export default function Footer() {
                   alt="City of San Pablo Logo"
                   width={60}
                   height={40}
+                  className="w-8 md:w-9 lg:w-[52px] xl:w-[60px] h-auto"
                   loading="lazy"
                 />
                 <Image
@@ -247,6 +228,7 @@ export default function Footer() {
                   alt="Republic of the Philippines Logo"
                   width={60}
                   height={40}
+                  className="w-8 md:w-9 lg:w-[52px] xl:w-[60px] h-auto"
                   loading="lazy"
                 />
               </div>
@@ -265,6 +247,7 @@ export default function Footer() {
                 alt="City of San Pablo Official Seal"
                 width={110}
                 height={110}
+                className="w-20 md:w-24 lg:w-[90px] xl:w-[110px] h-auto"
                 loading="lazy"
               />
             </div>
@@ -277,7 +260,7 @@ export default function Footer() {
           <FooterSection title="Government Links" links={govLinks} />
 
           {/* eGOV PH — configured independently from Republic Notice below */}
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-start min-w-0">
             <FooterSection title="eGOV PH" links={govphLinks} />
             {/* Republic Notice — its own instance/props, edit here without touching eGOV PH above */}
             <RepublicNotice className="mt-6" />

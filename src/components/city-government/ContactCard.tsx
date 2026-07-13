@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Contact } from "./types";
+import ContactUsButton from "@/components/city-government/ContactUsButton";
 
 export default function ContactCard({ contact }: { contact: Contact }) {
   const Icon = contact.icon;
@@ -16,6 +17,7 @@ export default function ContactCard({ contact }: { contact: Contact }) {
             {line}
           </p>
         ))}
+        <ContactUsButton />
       </CardContent>
     </Card>
   );

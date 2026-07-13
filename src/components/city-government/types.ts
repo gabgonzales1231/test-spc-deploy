@@ -20,7 +20,7 @@ export type Department = {
   description: string;
   color: string;
     head?: {
-    name: string;
+    email: string;
     contact: string;
   };
 };
