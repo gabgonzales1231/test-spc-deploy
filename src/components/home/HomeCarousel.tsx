@@ -14,6 +14,8 @@ import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner } from "@/app/page";
 
+const FALLBACK_ASPECT_RATIO = 1688 / 1250; // used only until the real image loads
+
 function ImageCarouselItem({
   src, alt, title, subtitle,
   isActive = false,
@@ -23,10 +25,17 @@ function ImageCarouselItem({
   src: string; alt: string; title: string; subtitle: string;
   isActive?: boolean; isPriority?: boolean; isVisible?: boolean;
 }) {
+  const [ratio, setRatio] = useState<number | null>(null);
+  const containerClass = "w-full max-h-[80vh] sm:max-h-[75vh] md:max-h-[80vh]";
+  const containerStyle = { aspectRatio: ratio ?? FALLBACK_ASPECT_RATIO };
+
   if (!isVisible && !isPriority) {
     return (
       <CarouselItem className="pl-2 md:pl-4">
-        <div className="w-full h-[60vh] sm:h-[70vh] md:h-[80vh] bg-slate-100 rounded-2xl" />
+        <div
+          className={`${containerClass} bg-slate-100 rounded-2xl`}
+          style={containerStyle}
+        />
       </CarouselItem>
     );
   }
@@ -35,22 +44,23 @@ function ImageCarouselItem({
 
   return (
     <CarouselItem className="pl-2 md:pl-4">
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
-        <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
-
-          {isActive && (
-            <Image
-              src={src}
-              alt=""
-              fill
-              unoptimized
-              className="object-cover scale-110 blur-2xl opacity-60"
-              sizes="10vw"
-              priority={isPriority}
-              {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
-              aria-hidden="true"
-            />
-          )}
+      <div className="relative rounded-2xl overflow-hidden group">
+        <div
+          className={`relative ${containerClass} overflow-hidden`}
+          style={containerStyle}
+        >
+          <Image
+            src={src}
+            alt=""
+            fill
+            unoptimized
+            className={`object-cover scale-110 blur-2xl transition-opacity duration-700
+              ${isActive ? "opacity-60" : "opacity-0"}`}
+            sizes="10vw"
+            priority={isPriority}
+            {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
+            aria-hidden="true"
+          />
 
           <Image
             src={src}
@@ -58,10 +68,17 @@ function ImageCarouselItem({
             fill
             unoptimized
             className={`object-contain transition-all duration-700 ease-out
-              ${isActive ? "scale-[1.02]" : "scale-100"}`}
+              ${isActive ? "scale-[1.00]" : "scale-100"}`}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
             priority={isPriority}
             {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth && img.naturalHeight) {
+                const natural = img.naturalWidth / img.naturalHeight;
+                setRatio((prev) => (prev === natural ? prev : natural));
+              }
+            }}
           />
 
           {hasText && (
