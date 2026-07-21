@@ -14,8 +14,6 @@ import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner } from "@/app/page";
 
-const FALLBACK_ASPECT_RATIO = 1688 / 1250; // used only until the real image loads
-
 function ImageCarouselItem({
   src, alt, title, subtitle,
   isActive = false,
@@ -25,17 +23,10 @@ function ImageCarouselItem({
   src: string; alt: string; title: string; subtitle: string;
   isActive?: boolean; isPriority?: boolean; isVisible?: boolean;
 }) {
-  const [ratio, setRatio] = useState<number | null>(null);
-  const containerClass = "w-full max-h-[80vh] sm:max-h-[75vh] md:max-h-[80vh]";
-  const containerStyle = { aspectRatio: ratio ?? FALLBACK_ASPECT_RATIO };
-
   if (!isVisible && !isPriority) {
     return (
       <CarouselItem className="pl-2 md:pl-4">
-        <div
-          className={`${containerClass} bg-slate-100 rounded-2xl`}
-          style={containerStyle}
-        />
+        <div className="w-full aspect-[16/9] sm:aspect-auto sm:h-[70vh] md:h-[80vh] bg-slate-100 rounded-2xl" />
       </CarouselItem>
     );
   }
@@ -45,22 +36,56 @@ function ImageCarouselItem({
   return (
     <CarouselItem className="pl-2 md:pl-4">
       <div className="relative rounded-2xl overflow-hidden group">
-        <div
-          className={`relative ${containerClass} overflow-hidden`}
-          style={containerStyle}
-        >
+        {/* Mobile: image fits its own natural aspect ratio, no cropping/letterboxing */}
+        <div className="relative w-full sm:hidden">
           <Image
             src={src}
-            alt=""
-            fill
+            alt={alt}
+            width={1600}
+            height={900}
             unoptimized
-            className={`object-cover scale-110 blur-2xl transition-opacity duration-700
-              ${isActive ? "opacity-60" : "opacity-0"}`}
-            sizes="10vw"
+            className="w-full h-auto object-contain rounded-2xl"
+            sizes="100vw"
             priority={isPriority}
-            {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
-            aria-hidden="true"
+            {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
           />
+
+          {hasText && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 group-hover:opacity-0" />
+          )}
+
+          {hasText && (
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+              <div className={`transform transition-all duration-700 ease-out
+                ${isActive ? "translate-y-0 opacity-100" : "translate-y-2 opacity-90"}
+                group-hover:opacity-0 group-hover:translate-y-4`}>
+                <h3 className="text-left text-lg font-bold text-white mb-1 drop-shadow-lg leading-tight">
+                  {title}
+                </h3>
+                <p className="text-left text-xs text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
+                  {subtitle}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* sm and up: fixed-height container with blurred background + contained image */}
+        <div className="hidden sm:block relative w-full sm:h-[70vh] md:h-[80vh] overflow-hidden">
+
+          {isActive && (
+            <Image
+              src={src}
+              alt=""
+              fill
+              unoptimized
+              className="object-cover scale-110 blur-2xl opacity-60"
+              sizes="10vw"
+              priority={isPriority}
+              {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
+              aria-hidden="true"
+            />
+          )}
 
           <Image
             src={src}
@@ -69,37 +94,30 @@ function ImageCarouselItem({
             unoptimized
             className={`object-contain transition-all duration-700 ease-out
               ${isActive ? "scale-[1.00]" : "scale-100"}`}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+            sizes="(max-width: 1024px) 90vw, 1200px"
             priority={isPriority}
             {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
-            onLoad={(e) => {
-              const img = e.currentTarget;
-              if (img.naturalWidth && img.naturalHeight) {
-                const natural = img.naturalWidth / img.naturalHeight;
-                setRatio((prev) => (prev === natural ? prev : natural));
-              }
-            }}
           />
 
           {hasText && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 group-hover:opacity-0" />
           )}
-        </div>
 
-        {hasText && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 lg:p-12">
-            <div className={`transform transition-all duration-700 ease-out
-              ${isActive ? "translate-y-0 opacity-100" : "translate-y-2 opacity-90"}
-              group-hover:opacity-0 group-hover:translate-y-4`}>
-              <h3 className="text-left text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-3 drop-shadow-lg leading-tight">
-                {title}
-              </h3>
-              <p className="text-left text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
-                {subtitle}
-              </p>
+          {hasText && (
+            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-12">
+              <div className={`transform transition-all duration-700 ease-out
+                ${isActive ? "translate-y-0 opacity-100" : "translate-y-2 opacity-90"}
+                group-hover:opacity-0 group-hover:translate-y-4`}>
+                <h3 className="text-left text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2 md:mb-3 drop-shadow-lg leading-tight">
+                  {title}
+                </h3>
+                <p className="text-left text-sm md:text-base lg:text-lg xl:text-xl text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
+                  {subtitle}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </CarouselItem>
   );
@@ -139,12 +157,12 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
     <div className="w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50/20 pt-8 sm:pt-12">
       <div className="px-2 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-24 pt-32 sm:pt-28 md:pt-32">
         <Carousel
-          className="w-full mx-auto relative"
+          className="w-full mx-auto relative items-start sm:items-stretch"
           opts={{ loop: banners.length > 1 }}
           plugins={autoplayReady && banners.length > 1 ? [autoplay] : []}
           setApi={setApi}
         >
-          <CarouselContent>
+          <CarouselContent className="items-start sm:items-stretch">
             {banners.map((banner, index) => {
               const isVisible =
                 Math.abs(index - currentSlide) <= 1 ||
