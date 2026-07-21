@@ -5,8 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import HotlinesSidebar from "@/components/home/HotlinesSidebar";
-import ChatWidgetLoader from "@/components/ChatWidgetLoader";
+import FloatingWidgets from "@/components/FloatingWidgets";
 import DataPrivacyPolicyPopup from "@/components/home/DataPrivacyPolicy";
 import AnimationCSS from "@/components/AnimationCSS";
 import DisableRightClick from "@/components/DisableRightClick";
@@ -54,8 +53,7 @@ export default function RootLayout({
         >
           <DataPrivacyPolicyPopup />
           <Header />
-          <HotlinesSidebar />
-          <ChatWidgetLoader />
+          <FloatingWidgets />
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>

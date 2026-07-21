@@ -5,7 +5,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, ArrowLeft } from "lucide-react";
 import CharterHeader from "@/components/arta/citizens-charter/charter-header";
 
 import "react-pdf/dist/Page/TextLayer.css";
@@ -20,6 +20,10 @@ export default function PdfViewer() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const file = decodeURIComponent(searchParams.get("file") ?? "");
+  const fileName = file
+    .split("/")
+    .pop()
+    ?.replace(/\.[^/.]+$/, "") ?? "";
 
   const [numPages, setNumPages] = useState<number>(0);
   const [pageWidth, setPageWidth] = useState<number>(800);
@@ -68,12 +72,32 @@ export default function PdfViewer() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="relative mb-3">
-        <CharterHeader showExit={true} />
+    <div className="min-h-screen bg-gray-100 pl-4 pr-4">
+
+      {/* Sticky Exit / Back controls */}
+      <div className="sticky top-4 z-50 flex items-center justify-between">
+        <button
+          onClick={() => {
+            sessionStorage.removeItem("cc_skip_intro");
+            router.push("/arta/citizens-charter");
+          }}
+          className="bg-white/90 backdrop-blur border border-gray-200 text-gray-700 rounded-lg py-1.5 px-4 text-sm font-semibold shadow hover:shadow-md hover:bg-gray-50 active:scale-95 transition flex items-center gap-1.5"
+        >
+          <ArrowLeft className="size-4" />
+          Exit
+        </button>
+
+        <button
+          onClick={() => router.back()}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white border border-emerald-400 rounded-lg py-1.5 px-4 text-sm font-semibold shadow hover:shadow-md active:scale-95 transition"
+        >
+          Back
+        </button>
       </div>
 
-      <h2 className="text-center font-bold mb-4 text-gray-700">PDF Viewer</h2>
+      <h2 className="text-center font-bold mb-4 text-gray-700 truncate px-2">
+        {fileName}
+      </h2>
 
       <div ref={resizeRef}>
 
@@ -81,7 +105,7 @@ export default function PdfViewer() {
    {showTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-23 right-7 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
+          className="fixed right-7 bg-emerald-500 hover:bg-emerald-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m15 11.25-3-3m0 0-3 3m3-3v7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -93,7 +117,7 @@ export default function PdfViewer() {
         {showBottom && (
     <button
       onClick={scrollToBottom}
-      className="fixed bottom-23 right-7 bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
+      className="fixed right-7 bg-emerald-500 hover:bg-emerald-700 text-white p-3 rounded-full shadow-lg transition active:scale-95"
     >
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -118,14 +142,6 @@ export default function PdfViewer() {
         </Document>
       </div>
 
-      <div className="flex justify-center mt-6 mb-4">
-        <button
-          onClick={() => router.back()}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white border border-emerald-400 rounded-lg py-1.5 px-5 text-sm font-semibold shadow hover:shadow-md active:scale-95 transition"
-        >
-          Back
-        </button>
-      </div>
     </div>
   );
 }

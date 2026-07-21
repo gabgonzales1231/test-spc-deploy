@@ -1,3 +1,5 @@
+//src/app/arta/citizens-charter/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -23,13 +25,12 @@ export default function CitizensCharterPage() {
   const { query, setQuery, results, clearQuery } = useCitizensCharterSearch();
   const [showIntro, setShowIntro] = useState(true);
 
-  // Automatically transition the splash screen after 2.5 seconds
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const skipIntro = sessionStorage.getItem("cc_skip_intro");
+    if (skipIntro) {
       setShowIntro(false);
-    }, 2500);
-
-    return () => clearTimeout(timer);
+      sessionStorage.removeItem("cc_skip_intro");
+    }
   }, []);
 
   return (
@@ -43,7 +44,8 @@ export default function CitizensCharterPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -40 }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
-            className="fixed inset-0 z-50 bg-gradient-to-t from-[#009A68] to-emerald-500 text-white flex items-center justify-center px-4"
+            onClick={() => setShowIntro(false)}
+            className="fixed inset-0 z-50 bg-gradient-to-t from-[#009A68] to-emerald-500 text-white flex items-center justify-center px-4 cursor-pointer"
           >
             <div className="text-center flex flex-col items-center space-y-4">
               <div className="mb-6">
@@ -68,15 +70,14 @@ export default function CitizensCharterPage() {
                 "TULOY PO KAYO SA BAGONG SAN PABLO"
               </p>
 
-              {/* Loading Progress Bar */}
-              <div className="w-48 md:w-64 h-1.5 mt-8 bg-white/30 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 2.3, ease: "easeInOut" }}
-                />
-              </div>
+              {/* Click to continue prompt */}
+              <motion.p
+                className="text-xs md:text-base font-semibold tracking-wide mt-8 uppercase"
+                animate={{ opacity: [1, 0.4, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              >
+                Click anywhere to continue
+              </motion.p>
             </div>
           </motion.section>
         )}

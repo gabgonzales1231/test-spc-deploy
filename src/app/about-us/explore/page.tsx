@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Building2, MapPin, Eye, Mountain, BookOpen, XIcon, Calendar, Users } from "lucide-react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { motion, type Variants } from "framer-motion";
 import Section from "@/components/city-government/Section";
 import {
@@ -27,6 +28,17 @@ import { ImageGallery } from "@/components/explore/ImageGallery";
 import { Stat } from "@/components/city-government/types";
 import { Card, CardContent } from "@/components/ui/card";
 import IconBadge from "@/components/city-government/IconBadge";
+
+// Leaflet touches `window`/`document` on load, so it must never be
+// server-rendered.
+const CityOfficesMap = dynamic(() => import("@/components/explore/Map"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] md:h-[600px] rounded-2xl border border-emerald-100 bg-emerald-50/50 animate-pulse flex items-center justify-center">
+      <p className="text-emerald-700/60 text-sm">Loading map…</p>
+    </div>
+  ),
+});
 
 const sectionReveal: Variants = {
   hidden: { opacity: 0, y: 48 },
@@ -404,6 +416,22 @@ export default function SanPabloCityInfoPage() {
               kilometers and located southwesterly of Manila.
             </p>
           </div>
+        </div>
+      </ScrollRevealSection>
+
+            {/* City Offices Map */}
+      <ScrollRevealSection className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-emerald-100 rounded-2xl mb-6">
+              <Building2 className="w-8 h-8 md:w-10 md:h-10 text-emerald-700" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Find a City Office</h2>
+            <p className="text-gray-600 text-base md:text-lg">
+              Locate city government offices within San Pablo City
+            </p>
+          </div>
+          <CityOfficesMap />
         </div>
       </ScrollRevealSection>
 
