@@ -43,6 +43,7 @@ function ImageCarouselItem({
               src={src}
               alt=""
               fill
+              unoptimized
               className="object-cover scale-110 blur-2xl opacity-60"
               sizes="10vw"
               priority={isPriority}
@@ -55,12 +56,9 @@ function ImageCarouselItem({
             src={src}
             alt={alt}
             fill
-            className={`object-contain
-              ${isPriority
-                ? "transition-transform transition-opacity duration-700 ease-out"
-                : "transition-all duration-700 ease-out"}
-              ${isActive ? "scale-[1.02]" : "scale-100"}
-              group-hover:scale-105`}
+            unoptimized
+            className={`object-contain transition-all duration-700 ease-out
+              ${isActive ? "scale-[1.02]" : "scale-100"}`}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
             priority={isPriority}
             {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
