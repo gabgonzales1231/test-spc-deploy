@@ -4,6 +4,15 @@ import { Elysia, t } from "elysia";
 import { supabase } from "@/backend/config/database";
 import { randomBytes } from "crypto";
 
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const DOC_TYPES = ["application/pdf"];
+const ALLOWED_ATTACHMENT_TYPES = [...IMAGE_TYPES, ...DOC_TYPES];
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10MB
+
+function sanitizeName(name: string) {
+  return name.trim().replace(/[^a-zA-Z0-9]+/g, "-");
+}
+
 export const chatRoutes = new Elysia({ prefix: "/chat" })
 
   .post("/conversations", async ({ body, request, set }) => {
@@ -116,6 +125,100 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
     }),
   })
 
+  // Visitor attachment upload — requires visitor_token, same ownership rules as /messages
+  .post("/conversations/:id/upload", async ({ params, body, set }) => {
+    const conversationId = parseInt(params.id);
+    const { file, visitor_token, content } = body;
+
+    const { data: conversation, error: fetchError } = await supabase
+      .from("conversations")
+      .select("id, status, visitor_token, full_name")
+      .eq("id", conversationId)
+      .single();
+
+    if (fetchError || !conversation) {
+      set.status = 404;
+      return { success: false, error: "Conversation not found" };
+    }
+
+    if (conversation.visitor_token !== visitor_token) {
+      set.status = 403;
+      return { success: false, error: "Unauthorized" };
+    }
+
+    if (conversation.status === "closed") {
+      set.status = 400;
+      return { success: false, error: "This conversation has been closed" };
+    }
+
+    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+      set.status = 415;
+      return { success: false, error: "Unsupported file type. Only JPG, PNG, WEBP, and PDF are allowed." };
+    }
+
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      set.status = 413;
+      return { success: false, error: "File exceeds the 10MB size limit." };
+    }
+
+    const isImage = IMAGE_TYPES.includes(file.type);
+    const subfolder = isImage ? "images" : "files";
+    const label = isImage ? "image" : "file";
+
+    const ext = file.name.split(".").pop();
+    const timestamp = Date.now();
+    const safeName = sanitizeName(conversation.full_name);
+    const filename = `${safeName}_${label}_${timestamp}.${ext}`;
+    const path = `${subfolder}/${conversationId}/${filename}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("chat_attachments")
+      .upload(path, file, { contentType: file.type });
+
+    if (uploadError) {
+      set.status = 500;
+      return { success: false, error: "Upload failed." };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("chat_attachments")
+      .getPublicUrl(path);
+
+    const { error: msgError } = await supabase
+      .from("chat_messages")
+      .insert({
+        conversation_id:  conversationId,
+        sender_type:      "visitor",
+        sender_id:        null,
+        content:          content?.trim() || "",
+        is_read:          false,
+        attachment_url:   publicUrlData.publicUrl,
+        attachment_type:  file.type,
+        attachment_size:  file.size,
+      });
+
+    if (msgError) {
+      set.status = 500;
+      return { success: false, error: msgError.message };
+    }
+
+    return {
+      success: true,
+      data: {
+        attachment_url:  publicUrlData.publicUrl,
+        attachment_type: file.type,
+        attachment_size: file.size,
+      },
+    };
+  }, {
+    params: t.Object({ id: t.String() }),
+    body:   t.Object({
+      file:          t.File(),
+      visitor_token: t.String(),
+      content:       t.Optional(t.String()),
+    }),
+  })
+
   // Message history — requires visitor_token
   .get("/conversations/:id/messages", async ({ params, query, set }) => {
     const convId = parseInt(params.id);
@@ -126,7 +229,6 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: "Unauthorized" };
     }
 
-    // UPDATE: Now selecting 'status' as well
     const { data: conversation, error: fetchError } = await supabase
       .from("conversations")
       .select("id, status, visitor_token")
@@ -145,7 +247,7 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
 
     const { data, error } = await supabase
       .from("chat_messages")
-      .select("id, sender_type, content, created_at")
+      .select("id, sender_type, content, created_at, attachment_url, attachment_type, attachment_size")
       .eq("conversation_id", convId)
       .order("created_at", { ascending: true });
 
@@ -154,7 +256,6 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: error.message };
     }
 
-    // UPDATE: Returning the status to the frontend
     return { success: true, status: conversation.status, data: data ?? [] };
   }, {
     params: t.Object({ id: t.String() }),

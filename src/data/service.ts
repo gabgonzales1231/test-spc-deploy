@@ -29,7 +29,7 @@ export const servicesData: Service[] = [
 
   {
     icon: Briefcase,
-    title: "E-Government Services",
+    title: "Business Permits & Licensing",
     description:
       "Essentially providing the Filipino access to an online one-stop shop giving a variety of LGU System Automation.",
     link: "https://elgu-city-of-san-pablo-laguna.e.gov.ph",

@@ -14,7 +14,7 @@ export function QuickReplies({ replies, onSelect }: QuickRepliesProps) {
         <button
           key={qr.value}
           onClick={() => onSelect(qr.value, qr.label)}
-          className="bg-transparent border border-[#08A872] rounded-full text-[#08A872] text-xs py-1.5 px-3 cursor-pointer text-left leading-relaxed transition-colors hover:bg-[#08A872]/10"
+          className="bg-transparent border border-[#2563EB] rounded-full text-[#2563EB] text-xs py-1.5 px-3 cursor-pointer text-left leading-relaxed transition-colors hover:bg-[#2563EB]/10"
         >
           {qr.label}
         </button>

@@ -81,7 +81,7 @@ export default function PdfViewer() {
             sessionStorage.removeItem("cc_skip_intro");
             router.push("/arta/citizens-charter");
           }}
-          className="bg-white/90 backdrop-blur border border-gray-200 text-gray-700 rounded-lg py-1.5 px-4 text-sm font-semibold shadow hover:shadow-md hover:bg-gray-50 active:scale-95 transition flex items-center gap-1.5"
+          className="bg-orange-500 hover:bg-orange-600 text-white border border-orange-400 rounded-lg py-1.5 px-4 text-sm font-semibold shadow hover:shadow-md active:scale-95 transition flex items-center gap-1.5"
         >
           <ArrowLeft className="size-4" />
           Exit
@@ -89,7 +89,7 @@ export default function PdfViewer() {
 
         <button
           onClick={() => router.back()}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white border border-emerald-400 rounded-lg py-1.5 px-4 text-sm font-semibold shadow hover:shadow-md active:scale-95 transition"
+          className="bg-[#2563EB] hover:bg-blue-700 text-white border border-blue-400 rounded-lg py-1.5 px-4 text-sm font-semibold shadow hover:shadow-md active:scale-95 transition"
         >
           Back
         </button>

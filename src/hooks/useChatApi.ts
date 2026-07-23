@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 const MAX_LEN       = 1000;
-const DAY_CAP       = 10;
+const DAY_CAP       = 25;
 const RATE_WINDOW   = 4_000;
 const DAY_KEY       = "jp_msg_day";
 const CNT_KEY       = "jp_msg_count";
@@ -44,9 +44,11 @@ function setLastSentAt(ts: number) {
 }
 
 export function useInputGuard() {
-  const [error, setError]                   = useState<string | null>(null);
-  const [cooldownUntil, setCooldownUntil]   = useState<number | null>(null);
-  const pendingRef                          = useRef<{ text: string; send: (t: string) => void } | null>(null);
+  const [error, setError]                 = useState<string | null>(null);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  // Generic no-arg thunk — works for a delayed text send, a delayed attachment
+  // send, or anything else that needs to retry once the rate window clears.
+  const pendingRef                        = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (cooldownUntil === null) return;
@@ -54,35 +56,31 @@ export function useInputGuard() {
     const t = setTimeout(() => {
       setCooldownUntil(null);
       if (pendingRef.current) {
-        const { text, send } = pendingRef.current;
+        const fn = pendingRef.current;
         pendingRef.current = null;
-        send(text);
+        fn();
       }
     }, remaining);
     return () => clearTimeout(t);
   }, [cooldownUntil]);
 
-  // send callback is passed in so the hook can fire it after the delay
-  function validate(text: string, onDelayed?: (t: string) => void): boolean {
-    const t = sanitizeInput(text);
-
-    if (!t || SPAM_RE.test(t)) {
-      setError("This is an invalid inquiry.");
-      return false;
-    }
-
+  // Shared rate-limit / daily-cap gate. Consumes one "slot" (day count +
+  // last-sent timestamp) whenever a send is allowed to proceed — either
+  // immediately, or scheduled via onDelayed once the rate window clears.
+  function checkLimit(onDelayed?: () => void): boolean {
     const now     = Date.now();
     const elapsed = now - getLastSentAt();
-if (elapsed < RATE_WINDOW) {
-  if (onDelayed) {
-    setLastSentAt(now);
-    incrementDayCount();
-    setError(null);
-    pendingRef.current = { text: t, send: onDelayed };
-    setCooldownUntil(now + RATE_WINDOW - elapsed);   // remaining ms, not a new full window
-  }
-  return false;
-}
+
+    if (elapsed < RATE_WINDOW) {
+      if (onDelayed) {
+        setLastSentAt(now);
+        incrementDayCount();
+        setError(null);
+        pendingRef.current = onDelayed;
+        setCooldownUntil(now + RATE_WINDOW - elapsed); // remaining ms, not a new full window
+      }
+      return false;
+    }
 
     if (getDayCount() >= DAY_CAP) {
       setError("Daily message limit reached. Please try again tomorrow.");
@@ -95,11 +93,32 @@ if (elapsed < RATE_WINDOW) {
     return true;
   }
 
+  // Text-message path — sanitizes/spam-checks first, then applies the shared gate.
+  function validate(text: string, onDelayed?: (t: string) => void): boolean {
+    const t = sanitizeInput(text);
+
+    if (!t || SPAM_RE.test(t)) {
+      setError("This is an invalid inquiry.");
+      return false;
+    }
+
+    return checkLimit(onDelayed ? () => onDelayed(t) : undefined);
+  }
+
+  // Attachment path — no text to sanitize/spam-check, but still burns the
+  // same daily cap and rate-limit window as a text message.
+  function validateAttachment(onDelayed?: () => void): boolean {
+    return checkLimit(onDelayed);
+  }
+
   function clearError() { setError(null); }
 
   function getRemainingCount(): number {
     return Math.max(0, DAY_CAP - getDayCount());
   }
 
-  return { validate, sanitizeInput, error, clearError, getRemainingCount, cooldownUntil };
+  return {
+    validate, validateAttachment, sanitizeInput,
+    error, clearError, getRemainingCount, cooldownUntil,
+  };
 }

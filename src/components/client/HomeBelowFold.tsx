@@ -217,8 +217,8 @@ Explore employment opportunities and government digital services.
                 </div>
               </div>
               <div className="text-white flex-1 text-center md:text-left">
-                <p className="text-sm leading-relaxed font-medium">
-                  Access integrated government services in one platform. Complete transactions anytime, anywhere.
+                <p className="text-sm leading-relaxed font-medium uppercase">
+                  To access integrated e-government services in one platform.
                 </p>
               </div>
               <nav className="flex flex-wrap gap-2 justify-end flex-shrink-0" aria-label="eGov PH platform links">

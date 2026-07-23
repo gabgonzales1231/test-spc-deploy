@@ -13,7 +13,7 @@ interface ChatFormProps {
 }
 
 const baseInput =
-  "w-full border rounded-lg py-2 px-3 text-[13px] bg-background text-foreground outline-none focus:border-[#08A872] transition-colors";
+  "w-full border rounded-lg py-2 px-3 text-[13px] bg-background text-foreground outline-none focus:border-[#2563EB] transition-colors";
 
 export function ChatForm({ userInfo, formErrors, onChange, onBlur, onSubmit }: ChatFormProps) {
   const inputClass = (field: keyof UserInfo) =>
@@ -22,7 +22,7 @@ export function ChatForm({ userInfo, formErrors, onChange, onBlur, onSubmit }: C
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="bg-[#08A872] px-4 py-3.5 flex items-center gap-2.5 shrink-0">
+      <div className="bg-[#2563EB] px-4 py-3.5 flex items-center gap-2.5 shrink-0">
         <JPAvatar size={32} />
         <div className="flex-1">
           <div className="text-white text-sm font-medium leading-tight">{BOT_NAME}</div>
@@ -90,7 +90,7 @@ export function ChatForm({ userInfo, formErrors, onChange, onBlur, onSubmit }: C
 
         <button
           onClick={onSubmit}
-          className="mt-4 w-full bg-[#08A872] text-white border-none rounded-full py-2.5 text-sm font-semibold cursor-pointer transition-opacity hover:opacity-90"
+          className="mt-4 w-full bg-[#2563EB] text-white border-none rounded-full py-2.5 text-sm font-semibold cursor-pointer transition-opacity hover:opacity-90"
         >
           Start Conversation
         </button>

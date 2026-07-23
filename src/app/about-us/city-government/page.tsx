@@ -61,18 +61,7 @@ const governmentBranches: Branch[] = [
       "Committee Offices",
     ],
   },
-  {
-    title: "Judicial Branch",
-    icon: Shield,
-    description:
-      "Local courts ensuring justice and law enforcement within the city",
-    offices: [
-      "Municipal Trial Court",
-      "Regional Trial Court",
-      "Prosecutor's Office",
-      "Public Attorney's Office",
-    ],
-  },
+
 ];
 
 
@@ -135,11 +124,11 @@ export default function CityGovernmentPage() {
       {/* Government Branches */}
       <Section className="bg-white/50 backdrop-blur-sm">
         <SectionHeader
-          title="Branches of Government"
-          subtitle="Three co-equal branches working together for effective governance"
+          title="Our Government"
+          subtitle="This is our co-equal branches of the LGU. Working together for people-centered governance"
           icon={undefined}
         />
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {governmentBranches.map((branch, index) => (
             <BranchCard key={index} branch={branch} />
           ))}

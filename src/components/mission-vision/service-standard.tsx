@@ -97,17 +97,17 @@ export default function ServiceStandardStack({
   const behind = [1, 2].map((offset) => standards[(index + offset) % total]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
+    <div className="grid grid-cols-1 md:grid-cols-1 gap-10 md:gap-12 items-center">
       {/* Image column */}
-      <div className="flex justify-center">
+      {/* <div className="flex justify-center">
 <Image
   src="/15-point.png"
   alt="15-point"
   width={550}
-  height={550}
+  height={650}
   className="h-auto w-auto max-w-[400px] sm:max-w-[550px]"
 />
-      </div>
+      </div> */}
 
       {/* Cards column */}
       <div className="relative mx-auto w-full max-w-2xl overflow-hidden px-4 sm:px-6">

@@ -6,8 +6,23 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import EPACDForm from "@/components/arta/epacd/EPACDForm";
 
-const navItems = [
+interface SubNavItem {
+  label: string;
+  href: string;
+  isModal?: boolean;
+}
+
+interface NavItem {
+  href?: string;
+  label: string;
+  hasDropdown?: boolean;
+  subItems?: SubNavItem[];
+}
+
+const navItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/news", label: "News" },
   {
@@ -28,6 +43,7 @@ const navItems = [
     hasDropdown: true,
     subItems: [
       { label: "Citizen's Charter", href: "/arta/citizens-charter" },
+      { label: "E-PACD", href: "#epacd", isModal: true },
     ],
   },
 ];
@@ -38,8 +54,21 @@ export default function Header() {
   const [openDesktopDropdown, setOpenDesktopDropdown] = useState<string | null>(null);
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
   const [isSolid, setIsSolid] = useState(false);
+  const [isEpacdOpen, setIsEpacdOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const openEpacd = () => {
+    setOpenDesktopDropdown(null);
+    setOpenMobileDropdown(null);
+    setIsMenuOpen(false);
+    setIsEpacdOpen(true);
+  };
 
   const isHiddenRoute = pathname === "/arta/citizens-charter/view";
 
@@ -61,6 +90,9 @@ export default function Header() {
 
   const toggleMobileDropdown = (label: string) =>
     setOpenMobileDropdown((prev) => (prev === label ? null : label));
+
+  const toggleDesktopDropdown = (label: string) =>
+    setOpenDesktopDropdown((prev) => (prev === label ? null : label));
 
   const handleMouseEnter = (label: string) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -120,8 +152,17 @@ export default function Header() {
   }, [pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? "hidden" : "";
-  }, [isMenuOpen]);
+    document.body.style.overflow = isMenuOpen || isEpacdOpen ? "hidden" : "";
+  }, [isMenuOpen, isEpacdOpen]);
+
+  useEffect(() => {
+    if (!isEpacdOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsEpacdOpen(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isEpacdOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -136,6 +177,7 @@ export default function Header() {
   }, []);
 
   return (
+    <>
     <header
       ref={headerRef}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${
@@ -176,14 +218,14 @@ export default function Header() {
                 Official Website
               </p>
             </div>
-<div className="sm:hidden">
-  <p className="text-[15px] font-semibold text-gray-900 tracking-tight leading-tight">
-    City Government of San Pablo
-  </p>
-  <p className="text-[11px] font-medium tracking-[0.1em] uppercase text-emerald-700 leading-tight mt-0.5">
-    Official Website
-  </p>
-</div>
+            <div className="sm:hidden">
+              <p className="text-[15px] font-semibold text-gray-900 tracking-tight leading-tight">
+                City Government of San Pablo
+              </p>
+              <p className="text-[11px] font-medium tracking-[0.1em] uppercase text-emerald-700 leading-tight mt-0.5">
+                Official Website
+              </p>
+            </div>
           </Link>
 
           {/* Desktop Nav */}
@@ -208,34 +250,36 @@ export default function Header() {
                         {item.href ? (
                           <Link
                             href={item.href}
-                            className={`h-full flex items-center px-[clamp(0.5rem,0.85vw,0.875rem)] text-[clamp(11px,0.78vw,14px)] font-medium tracking-wide whitespace-nowrap leading-none transition-colors duration-150 ${
+                            className={`border border-gray-300 h-full flex items-center px-[clamp(0.5rem,0.85vw,0.875rem)] text-[clamp(11px,0.78vw,14px)] font-medium tracking-wide whitespace-nowrap leading-none transition-colors duration-150 ${
                               active
                                 ? "text-emerald-700"
                                 : "text-gray-600 hover:text-gray-900"
                             }`}
                             prefetch={false}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleDesktopDropdown(item.label);
+                            }}
                           >
                             {item.label}
                           </Link>
                         ) : (
-                          <span
+                          <button
+                            type="button"
                             className={`h-full flex items-center px-[clamp(0.5rem,0.85vw,0.875rem)] text-[clamp(11px,0.78vw,14px)] font-medium tracking-wide whitespace-nowrap leading-none cursor-default ${
                               active ? "text-emerald-700" : "text-gray-600"
                             }`}
+                            onClick={() => toggleDesktopDropdown(item.label)}
                           >
                             {item.label}
-                          </span>
+                          </button>
                         )}
                         <button
                           type="button"
                           className={`h-full flex items-center -ml-1.5 pr-[clamp(0.4rem,0.6vw,0.5rem)] transition-colors duration-150 hover:text-gray-900 ${
                             active ? "text-emerald-700" : "text-gray-400"
                           }`}
-                          onClick={() =>
-                            setOpenDesktopDropdown((prev) =>
-                              prev === item.label ? null : item.label
-                            )
-                          }
+                          onClick={() => toggleDesktopDropdown(item.label)}
                           aria-expanded={openDesktopDropdown === item.label}
                           aria-haspopup="true"
                         >
@@ -273,7 +317,14 @@ export default function Header() {
                                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                   }`}
                                   prefetch={false}
-                                  onClick={() => setOpenDesktopDropdown(null)}
+                                  onClick={(e) => {
+                                    if (subItem.isModal) {
+                                      e.preventDefault();
+                                      openEpacd();
+                                      return;
+                                    }
+                                    setOpenDesktopDropdown(null);
+                                  }}
                                 >
                                   {subItem.label}
                                 </Link>
@@ -307,14 +358,14 @@ export default function Header() {
           {/* Right side — Time/date divider + mobile toggle */}
           <div className="flex items-center gap-3 h-full ">
             <div className="hidden lg:flex self-stretch items-center pl-[clamp(1rem,1.5vw,1.5rem)] border-l border-gray-200 shrink-0">
-<div className="flex flex-col justify-center leading-tight">
-  <span className="text-[clamp(13px,1vw,20px)] font-semibold text-emerald-700 tabular-nums tracking-tight whitespace-nowrap">
-    {timeString}
-  </span>
-  <span className="text-[clamp(8px,0.62vw,12px)] font-medium text-gray-500 mt-0.5 tracking-wide whitespace-nowrap">
-    {dateString}
-  </span>
-</div>
+              <div className="flex flex-col justify-center leading-tight">
+                <span className="text-[clamp(13px,1vw,20px)] font-semibold text-emerald-700 tabular-nums tracking-tight whitespace-nowrap">
+                  {timeString}
+                </span>
+                <span className="text-[clamp(8px,0.62vw,12px)] font-medium text-gray-500 mt-0.5 tracking-wide whitespace-nowrap">
+                  {dateString}
+                </span>
+              </div>
             </div>
 
             <Button
@@ -426,7 +477,14 @@ export default function Header() {
                                   : "text-gray-600 hover:text-gray-900"
                               }`}
                               prefetch={false}
-                              onClick={toggleMenu}
+                              onClick={(e) => {
+                                if (subItem.isModal) {
+                                  e.preventDefault();
+                                  openEpacd();
+                                  return;
+                                }
+                                toggleMenu();
+                              }}
                             >
                               {subItem.label}
                             </Link>
@@ -471,5 +529,31 @@ export default function Header() {
         </nav>
       </div>
     </header>
+
+    {isMounted &&
+      isEpacdOpen &&
+      createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm px-4 py-8 sm:py-12"
+          onClick={() => setIsEpacdOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsEpacdOpen(false)}
+              className="absolute -top-3 -right-3 z-10 flex items-center justify-center h-9 w-9 rounded-full bg-white text-gray-600 shadow-lg hover:text-gray-900 hover:bg-gray-50 transition-colors"
+              aria-label="Close EPACD form"
+            >
+              <X className="h-4.5 w-4.5" />
+            </button>
+            <EPACDForm />
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

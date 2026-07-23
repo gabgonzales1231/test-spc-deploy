@@ -37,7 +37,7 @@ export function ChatHeader({
   }, [menuOpen, onCloseMenu]);
 
   return (
-    <div className="bg-[#08A872] px-4 py-3.5 flex items-center gap-2.5 shrink-0">
+    <div className="bg-[#2563EB] px-4 py-3.5 flex items-center gap-2.5 shrink-0">
       <JPAvatar size={32} />
       <div className="flex-1">
         <div className="text-white text-sm font-medium leading-tight">{BOT_NAME}</div>

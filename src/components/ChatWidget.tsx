@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -48,7 +46,7 @@ export default function ChatWidget() {
   const [history, setHistory]        = useState<string[]>([]);
   const [menuOpen, setMenuOpen]      = useState(false);
 
-const { validate, sanitizeInput, error: inputError, clearError, getRemainingCount, cooldownUntil } = useInputGuard();
+const { validate, validateAttachment, sanitizeInput, error: inputError, clearError, getRemainingCount, cooldownUntil } = useInputGuard();
 
   const [helpdeskText, setHelpdesk]     = useState("");
   const [formSubmitting, setSubmitting] = useState(false);
@@ -57,6 +55,7 @@ const { validate, sanitizeInput, error: inputError, clearError, getRemainingCoun
   const [liveMode, setLiveMode]         = useState(false);
   const [hasUnread, setHasUnread]       = useState(false); // red dot on bubble
   const [convStatus, setConvStatus]     = useState<string | null>(null); // ← Added status state
+  const [uploading, setUploading]       = useState(false); // attachment upload in progress
 
   const channelRef = useRef<ReturnType<typeof supabaseRealtime.channel> | null>(null);
 
@@ -90,13 +89,23 @@ const { validate, sanitizeInput, error: inputError, clearError, getRemainingCoun
             if (json.status) {
               setConvStatus(json.status);
             }
-            const rows: { id: number; sender_type: string; content: string; created_at: string }[] =
-              json?.data ?? [];
+            const rows: {
+              id: number;
+              sender_type: string;
+              content: string;
+              created_at: string;
+              attachment_url?: string | null;
+              attachment_type?: string | null;
+              attachment_size?: number | null;
+            }[] = json?.data ?? [];
             setMessages(rows.map(row => ({
-              id:        String(row.id),
-              role:      row.sender_type === "agent" ? "bot" : "user",
-              text:      row.content,
-              timestamp: new Date(row.created_at),
+              id:             String(row.id),
+              role:           row.sender_type === "agent" ? "bot" : "user",
+              text:           row.content,
+              timestamp:      new Date(row.created_at),
+              attachmentUrl:  row.attachment_url ?? undefined,
+              attachmentType: row.attachment_type ?? undefined,
+              attachmentSize: row.attachment_size ?? undefined,
             })));
           })
           .catch(() => {
@@ -171,6 +180,9 @@ const { validate, sanitizeInput, error: inputError, clearError, getRemainingCoun
             sender_type: string;
             content: string;
             created_at: string;
+            attachment_url?: string | null;
+            attachment_type?: string | null;
+            attachment_size?: number | null;
           };
 
           if (row.conversation_id !== conversationId) return;
@@ -180,10 +192,13 @@ const { validate, sanitizeInput, error: inputError, clearError, getRemainingCoun
           setMessages(prev => {
             if (prev.find(m => m.id === String(row.id))) return prev;
             return [...prev, {
-              id:        String(row.id),
-              role:      "bot" as const,
-              text:      row.content,
-              timestamp: new Date(row.created_at),
+              id:             String(row.id),
+              role:           "bot" as const,
+              text:           row.content,
+              timestamp:      new Date(row.created_at),
+              attachmentUrl:  row.attachment_url ?? undefined,
+              attachmentType: row.attachment_type ?? undefined,
+              attachmentSize: row.attachment_size ?? undefined,
             }];
           });
 
@@ -225,8 +240,19 @@ const { validate, sanitizeInput, error: inputError, clearError, getRemainingCoun
     }]);
   }, []);
 
-  const pushUserMessage = useCallback((text: string) => {
-    setMessages(prev => [...prev, { id: generateId(), role: "user", text, timestamp: new Date() }]);
+  const pushUserMessage = useCallback((
+    text: string,
+    attachment?: { url: string; type: string; size?: number }
+  ) => {
+    setMessages(prev => [...prev, {
+      id:             generateId(),
+      role:           "user",
+      text,
+      timestamp:      new Date(),
+      attachmentUrl:  attachment?.url,
+      attachmentType: attachment?.type,
+      attachmentSize: attachment?.size,
+    }]);
   }, []);
 
   const navigateTo = useCallback((nodeKey: string, pushToHistory = true, fromKey?: string) => {
@@ -280,113 +306,200 @@ const { validate, sanitizeInput, error: inputError, clearError, getRemainingCoun
   const handleQuickReply = useCallback((value: string, label: string) => {
     pushUserMessage(label);
     navigateTo(value, true, currentNodeKey);
+  }, [currentNodeKey, navigateTo, pushUserMessage]);
 
-    if (value === "iba-pa") { 
-      const remaining = getRemainingCount();
-      setTimeout(() => {
-        pushBotMessage(
-          `📝 Tandaan: Maaari kang magpadala ng hanggang 10 mensahe bawat araw. `
-        );
-      }, 800);
-    }
-  }, [currentNodeKey, navigateTo, pushUserMessage, pushBotMessage, getRemainingCount]);
+  // ── Text send (handles both flow-engine navigation AND Help Desk conversation creation) ──
 
-const handleTextSend = useCallback((text: string) => {
-  const clean = sanitizeInput(text);
+  const handleTextSend = useCallback((text: string) => {
+    const clean = sanitizeInput(text);
 
-  function doSend(t: string) {
-    if (liveMode && conversationId && visitorToken) {
-      pushUserMessage(t);
-      sendFollowUp(conversationId, t, visitorToken).then(result => {
-        if (!result.success) {
+    async function doSend(t: string) {
+      // Already talking to a human agent — just forward the follow-up.
+      if (liveMode && conversationId && visitorToken) {
+        pushUserMessage(t);
+        sendFollowUp(conversationId, t, visitorToken).then(result => {
+          if (!result.success) {
+            setIsTyping(true);
+            setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 400);
+          }
+        });
+        clearError();
+        return;
+      }
+
+      // On the Help Desk node, not live yet — this message creates the conversation.
+      if (currentNodeKey === "iba-pa") {
+        setSubmitting(true);
+        const msgId = generateId();
+        pushUserMessage(t);
+
+        const result = await submitFeedback({
+          name:        userInfo.fullName,
+          email:       userInfo.email || null,
+          phone:       userInfo.phone || null,
+          subject:     "Iba Pa",
+          message:     t,
+          source_node: currentNodeKey,
+        });
+
+        setSubmitting(false);
+
+        if (result.success && result.conversation_id && result.visitor_token) {
+          setConvId(result.conversation_id);
+          setVisitorToken(result.visitor_token);
+          setLiveMode(true);
+          setConvStatus("open");
+
+          try {
+            localStorage.setItem(SESSION_CONV_KEY,  String(result.conversation_id));
+            localStorage.setItem(SESSION_TOKEN_KEY, result.visitor_token);
+            localStorage.setItem(STAGE_KEY,         "chat");
+          } catch {}
+
+          setMessages(prev => prev.map(m => m.id === msgId ? { ...m, delivered: true } : m));
+
+          setTimeout(() => {
+            pushBotMessage(
+              "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff. Maaari kang mag-type ng karagdagang tanong habang naghihintay."
+            );
+          }, 600);
+
+          setNodeKey(MAIN_MENU_KEY);
+        } else if (!result.success) {
           setIsTyping(true);
-          setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 400);
+          setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 600);
         }
-      });
-      clearError();
-      return;
-    }
+        return;
+      }
 
-    pushUserMessage(t);
-    const smallTalk = getSmallTalkResponse(t);
-    if (smallTalk) {
+      // Everything else — existing flow-engine logic, unchanged.
+      pushUserMessage(t);
+      const smallTalk = getSmallTalkResponse(t);
+      if (smallTalk) {
+        setIsTyping(true);
+        setTimeout(() => {
+          const main = getMainMenuNode();
+          pushBotMessage(smallTalk + "\n\n" + injectContent(main.message, cms), main);
+          setNodeKey(MAIN_MENU_KEY);
+          setIsTyping(false);
+        }, 600);
+        return;
+      }
+      const matched = resolveNodeByKeyword(t);
+      if (matched) { navigateTo(matched.key, true, currentNodeKey); return; }
       setIsTyping(true);
       setTimeout(() => {
         const main = getMainMenuNode();
-        pushBotMessage(smallTalk + "\n\n" + injectContent(main.message, cms), main);
+        pushBotMessage(
+          "Hindi ko maintindihan ang iyong mensahe. Piliin ang isa sa mga pagpipilian:\n\n" +
+          injectContent(main.message, cms),
+          main
+        );
         setNodeKey(MAIN_MENU_KEY);
         setIsTyping(false);
       }, 600);
-      return;
     }
-    const matched = resolveNodeByKeyword(t);
-    if (matched) { navigateTo(matched.key, true, currentNodeKey); return; }
-    setIsTyping(true);
-    setTimeout(() => {
-      const main = getMainMenuNode();
-      pushBotMessage(
-        "Hindi ko maintindihan ang iyong mensahe. Piliin ang isa sa mga pagpipilian:\n\n" +
-        injectContent(main.message, cms),
-        main
-      );
-      setNodeKey(MAIN_MENU_KEY);
-      setIsTyping(false);
-    }, 600);
-  }
 
-  if (!validate(clean, doSend)) return;
-  doSend(clean);
-}, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage,
-    liveMode, conversationId, visitorToken, validate, sanitizeInput, clearError]);
+    if (!validate(clean, doSend)) return;
+    doSend(clean);
+  }, [cms, currentNodeKey, navigateTo, pushBotMessage, pushUserMessage,
+      liveMode, conversationId, visitorToken, validate, sanitizeInput, clearError, userInfo]);
 
-  // ── Helpdesk submit ───────────────────────────────────────────────────
+  // ── Attachment send ───────────────────────────────────────────────────
+  // Requires an existing conversation (visitor_token + conversationId), since
+  // the upload endpoint is scoped to /chat/conversations/:id/upload.
+  // Gated by validateAttachment so it burns the same daily cap / rate-limit
+  // window as a text message — if the window is still open, the actual
+  // upload is deferred (doSend) and retried automatically once it clears.
 
-async function handleHelpdeskSubmit() {
-  const clean = sanitizeInput(helpdeskText);   // ← sanitize first
-  if (!validate(clean)) return;                // validate the clean copy
-
-  setSubmitting(true);
-  const msgId = generateId();
-  setHelpdesk("");
-
-  setMessages(prev => [...prev, { id: msgId, role: "user", text: clean, timestamp: new Date() }]);
-
-  const result = await submitFeedback({
-    name:        userInfo.fullName,
-    email:       userInfo.email || null,
-    phone:       userInfo.phone || null,
-    subject:     "Iba Pa",
-    message:     clean,                        // ← send clean to API
-    source_node: currentNodeKey,
-  });
-
-    setSubmitting(false);
-
-    if (result.success && result.conversation_id && result.visitor_token) {
-      setConvId(result.conversation_id);
-      setVisitorToken(result.visitor_token);
-      setLiveMode(true);
-      setConvStatus("open"); // Assign an initial open status
-
+  function handleAttachmentSend(file: File, caption: string) {
+    async function doSend() {
+      setUploading(true);
       try {
-        localStorage.setItem(SESSION_CONV_KEY,  String(result.conversation_id));
-        localStorage.setItem(SESSION_TOKEN_KEY, result.visitor_token);
-        localStorage.setItem(STAGE_KEY,         "chat");
-      } catch {}
+        let convId = conversationId;
+        let token  = visitorToken;
 
-      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, delivered: true } : m));
+        const fallbackLabel = file.type.startsWith("image/") ? "📷 Photo" : "📎 File";
+        const initialMessage = caption || fallbackLabel;
 
-      setTimeout(() => {
-        pushBotMessage(
-          "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff. Maaari kang mag-type ng karagdagang tanong habang naghihintay."
-        );
-      }, 600);
+        // No conversation yet — create one first (same as a Help Desk text message would).
+        if (!convId || !token) {
+          const created = await submitFeedback({
+            name:        userInfo.fullName,
+            email:       userInfo.email || null,
+            phone:       userInfo.phone || null,
+            subject:     "Iba Pa",
+            message:     initialMessage,
+            source_node: currentNodeKey,
+          });
 
-      setNodeKey(MAIN_MENU_KEY);
-    } else if (!result.success) {
-      setIsTyping(true);
-      setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 600);
+          if (!created.success || !created.conversation_id || !created.visitor_token) {
+            setIsTyping(true);
+            setTimeout(() => { pushBotMessage(`May error: ${created.error}`); setIsTyping(false); }, 400);
+            return;
+          }
+
+          convId = created.conversation_id;
+          token  = created.visitor_token;
+
+          setConvId(convId);
+          setVisitorToken(token);
+          setLiveMode(true);
+          setConvStatus("open");
+
+          try {
+            localStorage.setItem(SESSION_CONV_KEY,  String(convId));
+            localStorage.setItem(SESSION_TOKEN_KEY, token);
+            localStorage.setItem(STAGE_KEY,         "chat");
+          } catch {}
+
+          setNodeKey(MAIN_MENU_KEY);
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("visitor_token", token);
+        // If we just created the conversation, its first message already carries
+        // `initialMessage` — don't duplicate that text onto the attachment row too.
+        const isNewConversation = convId !== conversationId;
+        if (!isNewConversation && caption) formData.append("content", caption);
+
+        const res = await fetch(`/api/chat/conversations/${convId}/upload`, {
+          method: "POST",
+          body: formData,
+        });
+        const result = await res.json();
+
+        if (result.success && result.data) {
+          pushUserMessage(
+            isNewConversation ? initialMessage : (caption || fallbackLabel),
+            {
+              url:  result.data.attachment_url,
+              type: result.data.attachment_type,
+              size: result.data.attachment_size,
+            }
+          );
+          if (isNewConversation) {
+            setTimeout(() => {
+              pushBotMessage(
+                "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff."
+              );
+            }, 600);
+          }
+        } else {
+          setIsTyping(true);
+          setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 400);
+        }
+      } catch {
+        setIsTyping(true);
+        setTimeout(() => { pushBotMessage("Nabigo ang pag-upload. Subukan muli."); setIsTyping(false); }, 400);
+      } finally {
+        setUploading(false);
+      }
     }
+
+    if (!validateAttachment(doSend)) return;
+    doSend();
   }
 
   // ── Hamburger ─────────────────────────────────────────────────────────
@@ -515,17 +628,19 @@ async function handleHelpdeskSubmit() {
             )}
 
             <ChatInputArea
-  mode={liveMode ? "free-text" : currentNode.inputMode}
-  submitting={formSubmitting}
-  helpdeskText={helpdeskText}
-  inputError={inputError}
-  isClosed={convStatus === "closed"}
-  cooldownUntil={cooldownUntil}             // ← add this
-  onHelpdeskChange={v => { setHelpdesk(v); clearError(); }}
-  onHelpdeskSubmit={handleHelpdeskSubmit}
-  onTextSend={handleTextSend}
-  onClearError={clearError}
-/>
+              mode={liveMode ? "free-text" : currentNode.inputMode}
+              submitting={formSubmitting}
+              helpdeskText={helpdeskText}
+              inputError={inputError}
+              isClosed={convStatus === "closed"}
+              cooldownUntil={cooldownUntil}
+              uploading={uploading}
+              onHelpdeskChange={v => { setHelpdesk(v); clearError(); }}
+              onHelpdeskSubmit={() => handleTextSend(helpdeskText)}
+              onTextSend={handleTextSend}
+              onAttachmentSend={handleAttachmentSend}
+              onClearError={clearError}
+            />
           </>
         )}
 
@@ -536,7 +651,7 @@ async function handleHelpdeskSubmit() {
         onClick={() => { setIsOpen(v => !v); setBubble(true); }}
         aria-label={isOpen ? "Close chat" : "Open city virtual assistant"}
         aria-expanded={isOpen}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#08A872] border-none cursor-pointer z-[9999] flex items-center justify-center shadow-[0_4px_16px_rgba(8,168,114,0.35),0_2px_4px_rgba(0,0,0,0.1)] transition-transform duration-200 hover:scale-[1.08]"
+className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-800 border-none cursor-pointer z-[9999] flex items-center justify-center shadow-[0_4px_16px_rgba(8,168,114,0.35),0_2px_4px_rgba(0,0,0,0.1)] transition-transform duration-200 hover:scale-[1.08]"
       >
         {isOpen ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

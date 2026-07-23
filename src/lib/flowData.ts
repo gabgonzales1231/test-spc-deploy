@@ -19,8 +19,8 @@ export const STATIC_FLOW_NODES: Record<string, FlowNode> = {
     message:
       "Kamusta! Welcome sa Opisyal na chatbot ng San Pablo.\n\nI-type o piliin ang iyong kailangan mula sa mga sumusunod na pagpipilian:",
     options: [
-      { label: "Serbisyo",            value: "serbisyo" },
-      { label: "Tanong o Suhestiyon", value: "tanong" },
+      { label: "Resources",            value: "serbisyo" },
+      { label: "FAQs", value: "tanong" },
       { label: "Help Desk",              value: "iba-pa" },
     ],
     inputMode: "buttons",
@@ -28,14 +28,14 @@ export const STATIC_FLOW_NODES: Record<string, FlowNode> = {
 
   serbisyo: {
     key: "serbisyo",
-    message: "🟩 Pumili ka ng \"Serbisyo.\" Pumili mula sa mga sumusunod na kategorya:",
+    message: "Narito ang mga available na opsyon. Pumili sa mga sumusunod:",
     options: [], // populated at runtime by buildDynamicNodes()
     inputMode: "buttons",
   },
 
   tanong: {
     key: "tanong",
-    message: "🟨 Pumili ka ng \"Tanong o Suhestiyon\". Pumili ng kategorya:",
+    message: "Anong katanungan ang nais mong masagot? Pumili sa mga sumusunod:",
     options: [], // populated at runtime by buildDynamicNodes()
     inputMode: "buttons",
   },
@@ -44,7 +44,7 @@ export const STATIC_FLOW_NODES: Record<string, FlowNode> = {
     key: "iba-pa",
     message: "Isend ang iyong tanong para masagot ng aming help desk.",
     options: [],
-    inputMode: "helpdesk-text",
+    inputMode: "free-text",
     isTerminal: true,
   },
 };

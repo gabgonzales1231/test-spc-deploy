@@ -330,7 +330,7 @@ export default function FormsPage() {
         {!searchActive && (
           <aside className="md:w-64 flex-shrink-0">
             <h2 className="text-xl font-bold text-gray-900 mb-3 pb-3 border-b-2 border-gray-200">
-              Departments
+              Offices
             </h2>
             <nav className="flex flex-col gap-1">
               {CATEGORIES.map(({ id, label, icon: Icon }) => {

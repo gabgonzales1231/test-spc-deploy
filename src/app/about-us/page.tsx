@@ -65,7 +65,7 @@ Learn about our mission, vision, leadership, and commitment to <br /> serving ev
       {/* Hero image */}
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-lg">
         <Image
-          src="/about-hero.jpg"
+          src="/white-house.webp"
           alt="San Pablo City Capitol"
           fill
           className="object-cover"

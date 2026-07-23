@@ -62,16 +62,16 @@ export default function CitizensCharterPage() {
   alt="City Seal"
   width={160}
   height={160}
-  className="drop-shadow-[0_0_0.4rem_rgba(255,255,255,0.5)] mb-6 w-[240px] md:w-[352px]"
+  className="drop-shadow-[0_0_0.4rem_rgba(255,255,255,0.5)] mb-6 w-[240px] md:w-[302px]"
   priority
 />
-              <p className="text-sm md:text-xl font-medium italic">
-                "TULOY PO KAYO SA BAGONG SAN PABLO"
+              <p className="text-sm md:text-xl font-medium italic uppercase">
+                "Tuloy po kayo sa digital na pamahalaan ng lungsod ng Pitong lawa"
               </p>
 
               {/* Click to continue prompt */}
               <motion.p
-                className="text-xs md:text-base font-semibold tracking-wide mt-8 uppercase"
+                className="text-xs lg:text-base font-semibold tracking-wide mt-8 uppercase"
                 animate={{ opacity: [1, 0.4, 1] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
               >

@@ -9,6 +9,9 @@ interface ChatMessagesProps {
   messages: ChatMessage[];
   isTyping: boolean;
   onQuickReply: (value: string, label: string) => void;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  attachmentSize?: number;
 }
 
 function MessageText({ text }: { text: string }) {
@@ -19,7 +22,7 @@ function MessageText({ text }: { text: string }) {
     <>
       {parts.map((part, i) =>
         URL_REGEX.test(part) ? (
-          
+
            <a key={i}
             href={part}
             target="_blank"
@@ -33,6 +36,64 @@ function MessageText({ text }: { text: string }) {
         )
       )}
     </>
+  );
+}
+
+function FileIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <path d="M14 2v6h6" />
+    </svg>
+  );
+}
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+interface AttachmentPreviewProps {
+  url: string;
+  type?: string;
+  size?: number;
+  isUser: boolean;
+}
+
+function AttachmentPreview({ url, type, size, isUser }: AttachmentPreviewProps) {
+  const isImage = type?.startsWith("image/");
+
+  if (isImage) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="block mt-1 max-w-[220px]">
+        <img
+          src={url}
+          alt="Attachment"
+          className="rounded-lg border border-border max-h-[180px] w-auto object-cover"
+        />
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`mt-1 flex items-center gap-2 rounded-lg border px-2.5 py-2 max-w-[220px] transition-opacity hover:opacity-80 ${
+        isUser
+          ? "border-white/30 bg-white/10 text-white"
+          : "border-border bg-background text-foreground"
+      }`}
+    >
+      <FileIcon />
+      <div className="min-w-0 flex flex-col">
+        <span className="text-[12px] truncate">Attachment</span>
+        {size ? <span className="text-[10px] opacity-70">{formatFileSize(size)}</span> : null}
+      </div>
+    </a>
   );
 }
 
@@ -57,11 +118,19 @@ export function ChatMessages({ messages, isTyping, onQuickReply }: ChatMessagesP
               <div
                 className={`w-full px-3 py-2 text-[13px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden ${
                   msg.role === "user"
-                    ? "rounded-[14px_14px_4px_14px] bg-[#08A872] text-white"
+                    ? "rounded-[14px_14px_4px_14px] bg-[#2563EB] text-white"
                     : "rounded-[14px_14px_14px_4px] bg-muted text-foreground"
                 }`}
               >
                 <MessageText text={msg.text} />
+                {msg.attachmentUrl && (
+                  <AttachmentPreview
+                    url={msg.attachmentUrl}
+                    type={msg.attachmentType}
+                    size={msg.attachmentSize}
+                    isUser={msg.role === "user"}
+                  />
+                )}
               </div>
               <span className="text-[10px] text-muted-foreground px-1">
                 {formatTime(msg.timestamp)}

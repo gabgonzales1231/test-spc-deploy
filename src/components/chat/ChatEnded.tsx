@@ -10,7 +10,7 @@ export function ChatEnded({ onNewChat }: ChatEndedProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="bg-[#08A872] px-4 py-3.5 flex items-center gap-2.5 shrink-0">
+      <div className="bg-[#2563EB] px-4 py-3.5 flex items-center gap-2.5 shrink-0">
         <JPAvatar size={32} />
         <div className="flex-1">
           <div className="text-white text-sm font-medium leading-tight">{BOT_NAME}</div>
@@ -27,7 +27,7 @@ export function ChatEnded({ onNewChat }: ChatEndedProps) {
         </p>
         <button
           onClick={onNewChat}
-          className="w-full bg-[#08A872] text-white border-none rounded-full py-2.5 text-sm font-semibold cursor-pointer transition-opacity hover:opacity-90"
+          className="w-full bg-[#2563EB] text-white border-none rounded-full py-2.5 text-sm font-semibold cursor-pointer transition-opacity hover:opacity-90"
         >
           Start New Chat
         </button>
