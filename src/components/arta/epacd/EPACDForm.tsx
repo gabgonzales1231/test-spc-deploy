@@ -438,20 +438,6 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
               Address <span className="text-emerald-600">*</span>
             </p>
 
-            <div className="mb-3">
-              <input
-                name="streetName"
-                type="text"
-                value={form.streetName}
-                onChange={handleTextChange}
-                maxLength={155}
-                placeholder="Street Name (e.g. house no., street, subdivision)"
-                className={`${inputClass} uppercase placeholder:normal-case`}
-              />
-              <p className="mt-1 text-[12px] text-gray-400">
-                {form.streetName.length}/155 characters
-              </p>
-            </div>
 
             <div className="grid sm:grid-cols-2 gap-3">
               <select
@@ -526,10 +512,26 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
                 ))}
               </select>
             </div>
+            
             {addressError && (
               <p className="mt-1.5 text-[12.5px] text-red-600">{addressError}</p>
             )}
           </div>
+
+           <div className="mb-3">
+              <input
+                name="streetName"
+                type="text"
+                value={form.streetName}
+                onChange={handleTextChange}
+                maxLength={155}
+                placeholder="Street Name (e.g. house no., street, subdivision)"
+                className={`${inputClass} uppercase placeholder:normal-case`}
+              />
+              <p className="mt-1 text-[12px] text-gray-400">
+                {form.streetName.length}/155 characters
+              </p>
+            </div>
 
           <div className="grid sm:grid-cols-2 gap-5">
             <div>
