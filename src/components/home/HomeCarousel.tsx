@@ -42,7 +42,7 @@ function ImageCarouselItem({
   if (!isVisible && !isPriority) {
     return (
       <CarouselItem className="pl-2 md:pl-4">
-        <div className={`w-full ${heightClass} bg-slate-100 rounded-2xl`} style={heightStyle} />
+        <div className="w-full aspect-[16/9] sm:aspect-auto sm:h-[70vh] md:h-[80vh] bg-slate-100 rounded-2xl" />
       </CarouselItem>
     );
   }
@@ -51,15 +51,43 @@ function ImageCarouselItem({
 
   return (
     <CarouselItem className="pl-2 md:pl-4">
-      <div
-        className="relative rounded-2xl overflow-hidden shadow-2xl group cursor-pointer"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onClick={onToggle}
-        role="button"
-        aria-label={isPlaying ? "Pause carousel" : "Play carousel"}
-      >
-        <div className={`relative w-full ${heightClass} overflow-hidden`} style={heightStyle}>
+      <div className="relative rounded-2xl overflow-hidden group">
+        {/* Mobile: image fits its own natural aspect ratio, no cropping/letterboxing */}
+        <div className="relative w-full sm:hidden">
+          <Image
+            src={src}
+            alt={alt}
+            width={1600}
+            height={900}
+            unoptimized
+            className="w-full h-auto object-contain rounded-2xl"
+            sizes="100vw"
+            priority={isPriority}
+            {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
+          />
+
+          {hasText && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 group-hover:opacity-0" />
+          )}
+
+          {hasText && (
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+              <div className={`transform transition-all duration-700 ease-out
+                ${isActive ? "translate-y-0 opacity-100" : "translate-y-2 opacity-90"}
+                group-hover:opacity-0 group-hover:translate-y-4`}>
+                <h3 className="text-left text-lg font-bold text-white mb-1 drop-shadow-lg leading-tight">
+                  {title}
+                </h3>
+                <p className="text-left text-xs text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
+                  {subtitle}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* sm and up: fixed-height container with blurred background + contained image */}
+        <div className="hidden sm:block relative w-full sm:h-[70vh] md:h-[80vh] overflow-hidden">
 
           {isActive && (
             <Image
@@ -67,7 +95,7 @@ function ImageCarouselItem({
               alt=""
               fill
               unoptimized
-              className="hidden sm:block object-cover scale-110 blur-2xl opacity-60"
+              className="object-cover scale-110 blur-2xl opacity-60"
               sizes="10vw"
               priority={isPriority}
               {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
@@ -79,9 +107,10 @@ function ImageCarouselItem({
             src={src}
             alt={alt}
             fill
+            unoptimized
             className={`object-contain transition-all duration-700 ease-out
-              ${isActive ? "scale-[1.02]" : "scale-100"}`}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
+              ${isActive ? "scale-[1.00]" : "scale-100"}`}
+            sizes="(max-width: 1024px) 90vw, 1200px"
             priority={isPriority}
             {...(isPriority ? { fetchPriority: "high" } : { loading: "lazy" })}
             onLoad={(e) => {
@@ -112,28 +141,22 @@ function ImageCarouselItem({
               </div>
             </div>
           )}
-        </div>
 
-        {hasText && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 lg:p-12 pointer-events-none">
-            <h3
-              className={`text-left text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl
-                font-bold text-white mb-1 sm:mb-2 md:mb-3 drop-shadow-lg leading-tight
-                transform transition-all duration-500 ease-out
-                ${hovered ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}
-            >
-              {title}
-            </h3>
-            <p
-              className={`text-left text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl
-                text-white/90 max-w-2xl drop-shadow-md leading-relaxed
-                transform transition-all duration-500 ease-out
-                ${hovered ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}
-            >
-              {subtitle}
-            </p>
-          </div>
-        )}
+          {hasText && (
+            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-12">
+              <div className={`transform transition-all duration-700 ease-out
+                ${isActive ? "translate-y-0 opacity-100" : "translate-y-2 opacity-90"}
+                group-hover:opacity-0 group-hover:translate-y-4`}>
+                <h3 className="text-left text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2 md:mb-3 drop-shadow-lg leading-tight">
+                  {title}
+                </h3>
+                <p className="text-left text-sm md:text-base lg:text-lg xl:text-xl text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
+                  {subtitle}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </CarouselItem>
   );
@@ -243,19 +266,18 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
   return (
     <div className="w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50/20 pt-8 sm:pt-12">
       <div className="px-2 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-24 pt-32 sm:pt-28 md:pt-32">
-        <div ref={wrapperRef}>
-          <Carousel
-            className="w-full mx-auto relative"
-            opts={opts}
-            plugins={plugins}
-            setApi={setApi}
-          >
-            <CarouselContent>
-              {banners.map((banner, index) => {
-                const isVisible =
-                  Math.abs(index - currentSlide) <= 1 ||
-                  (currentSlide === 0 && index === banners.length - 1) ||
-                  (currentSlide === banners.length - 1 && index === 0);
+        <Carousel
+          className="w-full mx-auto relative items-start sm:items-stretch"
+          opts={{ loop: banners.length > 1 }}
+          plugins={autoplayReady && banners.length > 1 ? [autoplay] : []}
+          setApi={setApi}
+        >
+          <CarouselContent className="items-start sm:items-stretch">
+            {banners.map((banner, index) => {
+              const isVisible =
+                Math.abs(index - currentSlide) <= 1 ||
+                (currentSlide === 0 && index === banners.length - 1) ||
+                (currentSlide === banners.length - 1 && index === 0);
 
                 return (
                   <ImageCarouselItem
@@ -309,6 +331,6 @@ export default function HomeCarousel({ banners }: { banners: Banner[] }) {
           </div>
         )}
       </div>
-    </div>
+
   );
 }
