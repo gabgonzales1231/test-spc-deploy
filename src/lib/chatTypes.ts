@@ -23,7 +23,10 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
   quickReplies?: QuickReply[]; // only on bot messages
-    delivered?: boolean; // ← add this
+  delivered?: boolean; // ← add this
+  attachmentUrl?: string; // URL of an uploaded file/image attached to this message
+  attachmentType?: string; // MIME type of the attachment (e.g. "image/png")
+  attachmentSize?: number; // Size of the attachment in bytes
 }
 
 // Navigation history entry
