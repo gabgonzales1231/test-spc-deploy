@@ -401,7 +401,7 @@ export default function SanPabloCityInfoPage() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">City Location</h2>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 md:p-8">
-            <p className="text-gray-700 leading-relaxed text-base md:text-lg">
+            <p className="text-gray-700 leading-relaxed text-base md:text-lg text-justify">
               San Pablo City is located at the Southern tip of the Province of
               Laguna in the island of Luzon at geographical coordinates, 14°
               4&apos; north latitude and 121° 19&apos; east longitude. It is
@@ -411,7 +411,7 @@ export default function SanPabloCityInfoPage() {
               in the southeastern tip; and the municipalities of Tiaong and
               Dolores, Quezon in the south.
             </p>
-            <p className="text-gray-700 leading-relaxed text-base md:text-lg mt-4">
+            <p className="text-gray-700 leading-relaxed text-base md:text-lg mt-4 text-justify">
               Kilometerage distance from the National Capital Region is about 82
               kilometers and located southwesterly of Manila.
             </p>
@@ -514,7 +514,7 @@ export default function SanPabloCityInfoPage() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Geography and Topology</h2>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 md:p-8">
-            <p className="text-gray-700 leading-relaxed text-base md:text-lg mb-6">
+            <p className="text-gray-700 leading-relaxed text-base md:text-lg mb-6 text-justify">
 San Pablo City, also known as the City of Seven Lakes, is located at geographical coordinates 14° 4′ north latitude and 121° east longitude. It is about 87 kilometers south-southwest of the City of Manila, with Rizal Park as the reference point. The City is the center of other progressive cities in Southern Luzon as it belongs to a vital economic hub. The City at 14° 15′ 20″ north latitude is bounded by the mountain ranges of Kaisungan and Calauan Hills in the south; Mabilog in the northwest; San Cristobal and Banahaw Mountains in the east; and Susong-Dalaga, Napayong, and Masalukot Hills in the south to the southeast.
             </p>
             <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-100">

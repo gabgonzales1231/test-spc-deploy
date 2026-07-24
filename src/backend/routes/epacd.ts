@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 // Receives complaint submissions from the public site and forwards
 // them via email to the designated recipient.
 
-const RECIPIENT_EMAIL = "gabgonzales.ph@gmail.com";
+const RECIPIENT_EMAIL = "epacd.spc@gmail.com";
 
 // ---- Validation rules -----------------------------------------------
 // givenName / surname: required

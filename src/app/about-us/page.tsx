@@ -78,7 +78,7 @@ Learn about our mission, vision, leadership, and commitment to <br /> serving ev
               <h2 className="text-4xl font-bold text-gray-900 mb-6">
                 About San Pablo City
               </h2>
-              <div className="prose prose-lg text-gray-600 space-y-4">
+              <div className="prose prose-lg text-gray-600 space-y-4 text-justify">
                 <p>
                   Known as the &quot;City of Seven Lakes,&quot; San Pablo City
                   is a 1st class component city in the province of Laguna,
@@ -127,7 +127,7 @@ Learn about our mission, vision, leadership, and commitment to <br /> serving ev
 
           {/* Row 3: Vision + Mission */}
           <div className="grid lg:grid-cols-2 gap-8">
-            <div className="bg-white-80 p-8 rounded-2xl border border-emerald-100">
+            <div className="bg-white-80 p-8 rounded-2xl border border-emerald-100 text-justify">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 Vision
               </h3>
@@ -145,7 +145,7 @@ Learn about our mission, vision, leadership, and commitment to <br /> serving ev
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 Mission
               </h3>
-              <blockquote className="text-lg text-gray-700 italic">
+              <blockquote className="text-lg text-gray-700 italic text-justify">
                 &quot;To serve as the catalyst for inclusive and sustainable
                 local development by creating an enabling environment for
                 investment, tourism, enterprise growth. We are committed to

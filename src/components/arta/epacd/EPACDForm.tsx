@@ -445,7 +445,7 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
             City Government of San Pablo
           </p>
           <h2 className="mt-1 text-[22px] sm:text-[24px] font-semibold text-gray-900 tracking-tight">
-            Electronic Public Assistance Complaints Desk
+            Electronic Public Assistance and Complaints Desk
           </h2>
           <p className="mt-1 text-[13px] text-gray-500">
             Submit your concern and our office will get back to you as soon as possible.
