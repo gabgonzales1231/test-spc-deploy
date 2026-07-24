@@ -162,14 +162,13 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
     }
 
     const isImage = IMAGE_TYPES.includes(file.type);
-    const subfolder = isImage ? "images" : "files";
     const label = isImage ? "image" : "file";
 
     const ext = file.name.split(".").pop();
     const timestamp = Date.now();
     const safeName = sanitizeName(conversation.full_name);
     const filename = `${safeName}_${label}_${timestamp}.${ext}`;
-    const path = `${subfolder}/${conversationId}/${filename}`;
+    const path = `${conversationId}/${filename}`;
 
     const { error: uploadError } = await supabase.storage
       .from("chat_attachments")

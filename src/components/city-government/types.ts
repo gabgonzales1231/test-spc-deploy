@@ -19,7 +19,7 @@ export type Department = {
   icon: React.ElementType;
   description: string;
   color: string;
-    head?: {
+  head?: {
     email: string;
     contact: string;
   };
@@ -29,4 +29,28 @@ export type Contact = {
   title: string;
   icon: React.ElementType;
   lines: string[];
+};
+
+/* -------------------- Sector grouping (new) -------------------- */
+
+export type SectorId =
+  | "social"
+  | "economic"
+  | "infrastructure"
+  | "environment"
+  | "institutional"
+  | "legislative";
+
+export type DepartmentOffice = {
+  name: string;
+  head: string;
+  email: string;
+  address: string;
+};
+
+export type SectorGroup = {
+  id: SectorId;
+  label: string;
+  icon: React.ElementType;
+  offices: DepartmentOffice[];
 };

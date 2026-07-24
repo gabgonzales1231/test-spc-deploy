@@ -18,6 +18,7 @@ import { transparencyRoutes } from './routes/transparency'
 import { mapRoutes } from './routes/map'
 import { epacdRoutes } from './routes/epacd'
 import { psgcRoutes } from './routes/psgc'
+import { officesRoutes } from './routes/offices'
 
 export const app = new Elysia()
   .use(cors({
@@ -91,6 +92,7 @@ export const app = new Elysia()
       .use(mapRoutes)
       .use(epacdRoutes)
       .use(psgcRoutes)
+      .use(officesRoutes)
   })
   // Static assets
   .use(staticPlugin({

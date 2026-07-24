@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, Send, RotateCcw, CheckCircle2, AlertCircle } from "lucide-react";
+import gsap from "gsap";
 
 // ---- PSGC address types ------------------------------------------------
 interface PsgcOption {
@@ -108,6 +109,68 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
   const [loadingCities, setLoadingCities] = useState(false);
   const [loadingBarangays, setLoadingBarangays] = useState(false);
   const [addressError, setAddressError] = useState("");
+
+  // ---- GSAP entrance animation on mount ----
+  const cardRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!cardRef.current || !headerRef.current || !formRef.current) return;
+
+    const ctx = gsap.context(() => {
+      const formEl = formRef.current!;
+      const targetHeight = formEl.scrollHeight;
+      const computed = window.getComputedStyle(formEl);
+      const paddingTop = computed.paddingTop;
+      const paddingBottom = computed.paddingBottom;
+
+      // Starting states: card clipped to just its header height, header
+      // shifted up, form collapsed into a short pill shape (zero height,
+      // zero vertical padding, fully rounded corners).
+      gsap.set(cardRef.current, { autoAlpha: 0, y: 24, overflow: "hidden" });
+      gsap.set(headerRef.current, { autoAlpha: 0, y: -16 });
+      gsap.set(formEl, {
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        opacity: 0,
+        borderRadius: 999,
+        overflow: "hidden",
+      });
+
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.to(cardRef.current, { autoAlpha: 1, y: 0, duration: 0.5 })
+        .to(
+          headerRef.current,
+          { autoAlpha: 1, y: 0, duration: 1.5 },
+          "-=0.15"
+        )
+        .to(
+          formEl,
+          {
+            height: targetHeight,
+            paddingTop,
+            paddingBottom,
+            opacity: 1,
+            borderRadius: 0,
+            duration: 0.8,
+            ease: "power3.inOut",
+          },
+          "+=0.05"
+        )
+        // Hand control back to the Tailwind classes (max-h-[75vh]
+        // overflow-y-auto, py-7) once the reveal finishes, so the form can
+        // still scroll and grow naturally (address dropdowns, errors, etc.)
+        .set(formEl, {
+          clearProps: "height,paddingTop,paddingBottom,opacity,overflow,borderRadius",
+        })
+        .set(cardRef.current, { clearProps: "overflow" });
+    }, cardRef);
+
+    return () => ctx.revert();
+  }, []);
 
   // ---- Load regions on mount ----
   useEffect(() => {
@@ -369,9 +432,15 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] overflow-hidden">
+      <div
+        ref={cardRef}
+        className="bg-white border border-gray-200 rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] overflow-hidden drop-shadow-lg"
+      >
         {/* Header */}
-        <div className="px-6 sm:px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-emerald-50/60 to-white">
+        <div
+          ref={headerRef}
+          className="px-6 sm:px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-emerald-50/60 to-white"
+        >
           <p className="text-[12px] font-semibold tracking-[0.12em] uppercase text-emerald-700">
             City Government of San Pablo
           </p>
@@ -384,7 +453,11 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-7 space-y-5 max-h-[75vh] overflow-y-auto">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="px-6 sm:px-8 py-7 space-y-5 max-h-[75vh] overflow-y-auto"
+        >
           {/* Name */}
           <div>
             <p className="text-[13px] font-medium text-gray-700 mb-1.5">

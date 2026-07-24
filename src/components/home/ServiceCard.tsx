@@ -51,7 +51,7 @@ const ServiceCard = ({
   }
 
   return (
-    <Link href={link} target="_blank" className="h-full cursor-pointer">
+    <Link href={link} className="h-full cursor-pointer">
       {content}
     </Link>
   );

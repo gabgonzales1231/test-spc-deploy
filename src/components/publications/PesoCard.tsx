@@ -64,7 +64,6 @@ export default function PesoCard() {
         <div className="flex-shrink-0 z-99">
           
           <a  href="https://www.facebook.com/PESO.sanpablo"
-            target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-sm font-semibold shadow-md shadow-emerald-200 transition-all duration-150"
           >

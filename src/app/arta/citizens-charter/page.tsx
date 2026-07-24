@@ -66,7 +66,7 @@ export default function CitizensCharterPage() {
   priority
 />
               <p className="text-sm md:text-xl font-medium italic uppercase">
-                "Tuloy po kayo sa digital na pamahalaan ng lungsod ng Pitong lawa"
+                "Tuloy po kayo sa digital na pamahalaang lungsod ng Pitong lawa"
               </p>
 
               {/* Click to continue prompt */}

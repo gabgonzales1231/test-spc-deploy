@@ -28,7 +28,7 @@ const securityHeaders = [
       "font-src 'self'",
       // wss:// required for Supabase Realtime WebSocket connections
       `connect-src 'self' https://hvalkmxibjgrwipfuvhw.supabase.co wss://hvalkmxibjgrwipfuvhw.supabase.co https://yljsclzmrxuhejgcesiv.supabase.co wss://yljsclzmrxuhejgcesiv.supabase.co https://kfzpspgisjwnkncmvvjp.supabase.co wss://kfzpspgisjwnkncmvvjp.supabase.co${isProd ? "" : " http://localhost:3001"}`,
-      "frame-src 'self' https://yljsclzmrxuhejgcesiv.supabase.co https://kfzpspgisjwnkncmvvjp.supabase.co",
+      "frame-src 'self' https://yljsclzmrxuhejgcesiv.supabase.co https://kfzpspgisjwnkncmvvjp.supabase.co http://oras.pagasa.dost.gov.ph",
       "frame-ancestors 'self'",
     ].join("; "),
   },

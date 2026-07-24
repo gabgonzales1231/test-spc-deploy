@@ -98,7 +98,7 @@ const ServiceCard = ({
     <a
       id={title}
       href={link}
-      target="_blank"
+
       rel="noopener noreferrer"
       className="group bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 sm:p-8 hover:shadow-2xl hover:border-emerald-300 transition-all duration-300 hover:-translate-y-1 active:translate-y-0"
     >

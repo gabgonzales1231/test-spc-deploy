@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Contact } from "./types";
 import ContactUsButton from "@/components/city-government/ContactUsButton";
+import { CalendarX2 } from "lucide-react";
 
 export default function ContactCard({ contact }: { contact: Contact }) {
   const Icon = contact.icon;
@@ -17,6 +18,12 @@ export default function ContactCard({ contact }: { contact: Contact }) {
             {line}
           </p>
         ))}
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <CalendarX2 className="w-4 h-4 text-emerald-600" />
+          <span className="text-sm font-medium text-emerald-700">
+            No Noon Break Policy
+          </span>
+        </div>
         <ContactUsButton />
       </CardContent>
     </Card>

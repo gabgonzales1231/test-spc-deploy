@@ -268,26 +268,48 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-emerald-700 pt-6 flex flex-col items-center gap-3 text-center">
-          <p className="text-emerald-200 text-sm">
-            &copy; {new Date().getFullYear()} City Government of San Pablo. All rights reserved.
-          </p>
-          <div className="flex flex-row gap-4 md:gap-6 text-sm justify-center">
+        <div className="relative pt-6">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-600/60 to-transparent" />
+
+          <div className="flex flex-col items-center gap-3 text-center">
+            <p className="text-emerald-200/90 text-sm">
+              &copy; {new Date().getFullYear()} City Government of San Pablo. All rights reserved.
+            </p>
+
+            <p className="inline-flex items-center gap-1.5 text-xs text-emerald-300/60 tracking-wide">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                className="w-3.5 h-3.5 shrink-0 opacity-70"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L4.5 12l5.25-5M14.25 7l5.25 5-5.25 5" />
+              </svg>
+              Developed by
+              <span className="text-emerald-200/90 font-medium">
+                San Pablo City LGU &ndash; MIS Office
+              </span>
+            </p>
+          </div>
+
+          <div className="mt-5 pt-4 border-t border-white/10 flex flex-row flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
             <Link
               href="/privacy-policy"
-              className="text-emerald-200 hover:text-primary-400 transition-colors"
+              className="text-emerald-200/90 hover:text-primary-400 transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
               href="/terms-of-service"
-              className="text-emerald-200 hover:text-primary-400 transition-colors"
+              className="text-emerald-200/90 hover:text-primary-400 transition-colors"
             >
               Terms of Service
             </Link>
             <Link
               href="/cookie-policy"
-              className="text-emerald-200 hover:text-primary-400 transition-colors"
+              className="text-emerald-200/90 hover:text-primary-400 transition-colors"
             >
               Cookie Policy
             </Link>

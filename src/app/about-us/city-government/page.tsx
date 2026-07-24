@@ -93,7 +93,7 @@ const otherContacts: Contact[] = [
   {
     title: "Address",
     icon: MapPin,
-    lines: ["City Hall, San Pablo City, Laguna, Philippines"],
+    lines: ["City Hall, A. Mabinit St., Barangay V-A (Pob.) 4000, San Pablo City, Laguna, Philippines"],
   },
 ];
 
@@ -125,7 +125,7 @@ export default function CityGovernmentPage() {
       <Section className="bg-white/50 backdrop-blur-sm">
         <SectionHeader
           title="Our Government"
-          subtitle="This is our co-equal branches of the LGU. Working together for people-centered governance"
+          subtitle="This is our co-equal branches of the LGU. Working together for a people-centered governance"
           icon={undefined}
         />
         <div className="grid md:grid-cols-2 gap-8">
@@ -140,8 +140,8 @@ export default function CityGovernmentPage() {
     
   <SectionHeader
 
-    title="Key Departments"
-    subtitle="Essential services delivered through various city departments"
+    title="Government Sectors"
+    subtitle="The city offices responsible for delivering key government services."
     icon={undefined}
   />
   <DepartmentsSection />

@@ -19,3 +19,4 @@ export * from './useCategories';
 export * from './useBanners';
 export * from './useMedia';
 export * from './useTransparency';
+export * from './useOffices';
