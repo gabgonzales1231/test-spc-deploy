@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { Loader2, Send, RotateCcw, CheckCircle2, AlertCircle, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
 import gsap from "gsap";
@@ -17,6 +18,7 @@ declare global {
         container: HTMLElement,
         params: Record<string, unknown>
       ) => number;
+      ready: (cb: () => void) => void;
     };
     onEpacdCaptchaVerified?: (token: string) => void;
     onEpacdCaptchaExpired?: () => void;
@@ -118,13 +120,11 @@ function extractArray(json: unknown): PsgcOption[] {
 const inputClass =
   "w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-[14px] text-gray-900 placeholder:text-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed";
 
-interface EPACDFormProps {
-  onClose?: () => void;
-}
-
-export default function EPACDForm({ onClose }: EPACDFormProps) {
+export default function EPACDForm() {
+  const router = useRouter();
   const [form, setForm] = useState<FormState>(initialState);
   const [status, setStatus] = useState<SubmitStatus>("idle");
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // PSGC dropdown data
@@ -147,6 +147,8 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
   // reCAPTCHA v2
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaContainerRef = useRef<HTMLDivElement>(null);
+  const captchaWidgetIdRef = useRef<number | null>(null);
+  const [recaptchaScriptLoaded, setRecaptchaScriptLoaded] = useState(false);
 
   // ---- GSAP entrance animation on mount ----
   const cardRef = useRef<HTMLDivElement>(null);
@@ -157,54 +159,20 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
     if (!cardRef.current || !headerRef.current || !formRef.current) return;
 
     const ctx = gsap.context(() => {
-      const formEl = formRef.current!;
-      const targetHeight = formEl.scrollHeight;
-      const computed = window.getComputedStyle(formEl);
-      const paddingTop = computed.paddingTop;
-      const paddingBottom = computed.paddingBottom;
+      // Simple page-appropriate entrance: a light fade + upward slide,
+      // header leading slightly ahead of the form fields.
+      gsap.set(cardRef.current, { autoAlpha: 0, y: 16 });
+      gsap.set(headerRef.current, { autoAlpha: 0, y: 8 });
+      gsap.set(formRef.current, { autoAlpha: 0, y: 8 });
 
-      // Starting states: card clipped to just its header height, header
-      // shifted up, form collapsed into a short pill shape (zero height,
-      // zero vertical padding, fully rounded corners).
-      gsap.set(cardRef.current, { autoAlpha: 0, y: 24, overflow: "hidden" });
-      gsap.set(headerRef.current, { autoAlpha: 0, y: -16 });
-      gsap.set(formEl, {
-        height: 0,
-        paddingTop: 0,
-        paddingBottom: 0,
-        opacity: 0,
-        borderRadius: 999,
-        overflow: "hidden",
-      });
+      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-      tl.to(cardRef.current, { autoAlpha: 1, y: 0, duration: 0.5 })
-        .to(
-          headerRef.current,
-          { autoAlpha: 1, y: 0, duration: 1.5 },
-          "-=0.15"
-        )
-        .to(
-          formEl,
-          {
-            height: targetHeight,
-            paddingTop,
-            paddingBottom,
-            opacity: 1,
-            borderRadius: 0,
-            duration: 0.8,
-            ease: "power3.inOut",
-          },
-          "+=0.05"
-        )
-        // Hand control back to the Tailwind classes (max-h-[75vh]
-        // overflow-y-auto, py-7) once the reveal finishes, so the form can
-        // still scroll and grow naturally (address dropdowns, errors, etc.)
-        .set(formEl, {
-          clearProps: "height,paddingTop,paddingBottom,opacity,overflow,borderRadius",
-        })
-        .set(cardRef.current, { clearProps: "overflow" });
+      tl.to(cardRef.current, { autoAlpha: 1, y: 0, duration: 0.4 })
+        .to(headerRef.current, { autoAlpha: 1, y: 0, duration: 0.35 }, "-=0.25")
+        .to(formRef.current, { autoAlpha: 1, y: 0, duration: 0.35 }, "-=0.2")
+        .set([cardRef.current, headerRef.current, formRef.current], {
+          clearProps: "opacity,transform,visibility",
+        });
     }, cardRef);
 
     return () => ctx.revert();
@@ -219,6 +187,55 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
       delete window.onEpacdCaptchaExpired;
     };
   }, []);
+
+  // ---- Success overlay enter transition ----
+  useEffect(() => {
+    if (status !== "success") {
+      setShowSuccessOverlay(false);
+      return;
+    }
+    // Mount the overlay at opacity/scale 0 first, then flip the visible
+    // class on the next frame so the transition actually animates instead
+    // of snapping straight to its end state.
+    const raf = requestAnimationFrame(() => setShowSuccessOverlay(true));
+    return () => cancelAnimationFrame(raf);
+  }, [status]);
+
+  // ---- reCAPTCHA explicit render ----
+  // We render the widget ourselves instead of relying on the implicit
+  // `g-recaptcha` class auto-scan. The auto-scan only runs once, right when
+  // recaptcha/api.js first finishes loading — if the script is already
+  // cached (e.g. the user navigated back to this form, or this component
+  // remounted) that scan never happens again for our (new) container div,
+  // so the widget silently never appears. Explicit rendering lets us
+  // (re)render on every mount as long as the grecaptcha library is ready.
+  useEffect(() => {
+    if (!recaptchaScriptLoaded) return;
+    if (!captchaContainerRef.current) return;
+    if (captchaWidgetIdRef.current !== null) return; // already rendered
+
+    const renderWidget = () => {
+      if (!window.grecaptcha || !captchaContainerRef.current) return;
+      // Guard against re-rendering into a container that already has a
+      // widget (e.g. React StrictMode double-invoking effects in dev).
+      if (captchaContainerRef.current.childElementCount > 0) return;
+
+      captchaWidgetIdRef.current = window.grecaptcha.render(
+        captchaContainerRef.current,
+        {
+          sitekey: RECAPTCHA_SITE_KEY,
+          callback: "onEpacdCaptchaVerified",
+          "expired-callback": "onEpacdCaptchaExpired",
+        }
+      );
+    };
+
+    if (window.grecaptcha?.ready) {
+      window.grecaptcha.ready(renderWidget);
+    } else {
+      renderWidget();
+    }
+  }, [recaptchaScriptLoaded]);
 
   // ---- Load regions on mount ----
   useEffect(() => {
@@ -345,6 +362,13 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
       return;
     }
 
+    if (name === "email") {
+      // Email is case-sensitive-ish and looks broken uppercased — keep it
+      // exactly as typed, same treatment as the message field.
+      setForm((prev) => ({ ...prev, email: value }));
+      return;
+    }
+
     if (name === "streetName") {
       setForm((prev) => ({ ...prev, streetName: value.toUpperCase().slice(0, 155) }));
       return;
@@ -466,8 +490,8 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
     if (!form.message.trim()) {
       return "Please enter your message.";
     }
-    if (form.message.length > 255) {
-      return "Message must be 255 characters or fewer.";
+    if (form.message.length > 500) {
+      return "Message must be 500 characters or fewer.";
     }
     if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
       return "Attachments must not exceed 5MB in total.";
@@ -517,12 +541,13 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
       setFiles([]);
       setFileError("");
       setCaptchaToken(null);
-      window.grecaptcha?.reset();
+      window.grecaptcha?.reset(captchaWidgetIdRef.current ?? undefined);
 
-      // Auto-close the modal shortly after a successful submission
+      // Give the person a moment to see the success message, then send
+      // them back to wherever they came from.
       setTimeout(() => {
-        onClose?.();
-      }, 1500);
+        router.back();
+      }, 3500);
     } catch (err) {
       setStatus("error");
       setErrorMsg(
@@ -531,7 +556,7 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
       // A used or expired token can't be reused — force a fresh checkbox
       // solve before the next attempt.
       setCaptchaToken(null);
-      window.grecaptcha?.reset();
+      window.grecaptcha?.reset(captchaWidgetIdRef.current ?? undefined);
     }
   };
 
@@ -539,15 +564,15 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
   const emailCount = form.email.length;
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-2xl lg:max-w-6xl mx-auto mt-10 lg:mt-10">
       <div
         ref={cardRef}
-        className="bg-white border border-gray-200 rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] overflow-hidden drop-shadow-lg"
+        className="bg-gray-50/60 rounded-2xl overflow-hidden"
       >
         {/* Header */}
         <div
           ref={headerRef}
-          className="px-6 sm:px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-emerald-50/60 to-white"
+          className="px-6 sm:px-8 py-6 bg-gray-50/60"
         >
           <p className="text-[12px] font-semibold tracking-[0.12em] uppercase text-emerald-700">
             City Government of San Pablo
@@ -564,8 +589,10 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
         <form
           ref={formRef}
           onSubmit={handleSubmit}
-          className="px-6 sm:px-8 py-7 space-y-5 max-h-[75vh] overflow-y-auto"
+          className="px-6 sm:px-8 py-7 grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-5 lg:items-start"
         >
+          {/* Left column: identity + address */}
+          <div className="space-y-5">
           {/* Name */}
           <div>
             <p className="text-[13px] font-medium text-gray-700 mb-1.5">
@@ -755,14 +782,17 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
                 onChange={handleTextChange}
                 maxLength={30}
                 placeholder="juan@email.com"
-                className={`${inputClass} uppercase placeholder:normal-case`}
+                className={inputClass}
               />
               <p className="mt-1 text-[12px] text-gray-400">
                 {emailCount}/30 characters
               </p>
             </div>
           </div>
+          </div>
 
+          {/* Right column: message, attachments, captcha, actions */}
+          <div className="space-y-5">
           <div>
             <label
               htmlFor="message"
@@ -777,12 +807,12 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
               value={form.message}
               onChange={handleTextChange}
               required
-              maxLength={255}
+              maxLength={500}
               placeholder="Describe your concern or complaint in detail..."
               className={`${inputClass} resize-none`}
             />
             <p className="mt-1 text-[12px] text-gray-400">
-              {messageCount}/255 characters
+              {messageCount}/500 characters
             </p>
           </div>
 
@@ -855,26 +885,15 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
 
           {/* CAPTCHA */}
           <div>
-            <Script src="https://www.google.com/recaptcha/api.js" strategy="afterInteractive" />
-            <div
-              ref={captchaContainerRef}
-              className="g-recaptcha"
-              data-sitekey={RECAPTCHA_SITE_KEY}
-              data-callback="onEpacdCaptchaVerified"
-              data-expired-callback="onEpacdCaptchaExpired"
+            <Script
+              src="https://www.google.com/recaptcha/api.js?render=explicit"
+              strategy="afterInteractive"
+              onReady={() => setRecaptchaScriptLoaded(true)}
             />
+            <div ref={captchaContainerRef} />
           </div>
 
           {/* Status messages */}
-          {status === "success" && (
-            <div className="flex items-start gap-2.5 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3">
-              <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0 mt-0.5" />
-              <p className="text-[13.5px] text-emerald-800">
-                Your complaint has been sent successfully. Thank you for reaching out.
-              </p>
-            </div>
-          )}
-
           {status === "error" && errorMsg && (
             <div className="flex items-start gap-2.5 rounded-lg bg-red-50 border border-red-100 px-4 py-3">
               <AlertCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
@@ -911,8 +930,46 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
               )}
             </button>
           </div>
+          </div>
         </form>
       </div>
+
+      {/* Success overlay */}
+      {status === "success" && (
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-white/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${
+            showSuccessOverlay ? "opacity-100" : "opacity-0"
+          }`}
+          role="alertdialog"
+          aria-modal="true"
+          aria-live="polite"
+        >
+          <div
+            className={`mx-4 w-full max-w-sm rounded-2xl bg-white px-8 py-9 text-center shadow-xl ring-1 ring-gray-900/5 transition-all duration-300 ease-out ${
+              showSuccessOverlay
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-95"
+            }`}
+          >
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+              <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+            </div>
+
+            <h3 className="mt-4 text-[16px] font-semibold text-gray-900">
+              Complaint sent successfully
+            </h3>
+            <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-500">
+              Thank you for reaching out. We&apos;ve received your submission
+              and will get back to you soon.
+            </p>
+
+            <div className="mt-6 flex items-center justify-center gap-2 text-[12.5px] text-gray-400">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              You are now being redirected back to the previous page...
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

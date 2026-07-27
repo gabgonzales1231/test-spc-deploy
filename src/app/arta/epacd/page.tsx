@@ -2,14 +2,17 @@ import type { Metadata } from "next";
 import EPACDForm from "@/components/arta/epacd/EPACDForm";
 
 export const metadata: Metadata = {
-  title: "Electronic Public Assistance and Complaints Desk | City Government of San Pablo",
+  title: "E-PACD | San Pablo City",
   description:
-    "Submit your concern or complaint to the City Government of San Pablo through the Electronic Public Assistance and Complaints Desk (EPACD).",
+    "Electronic Public Assistance and Complaints Desk — submit a concern or complaint to the City Government of San Pablo.",
 };
 
-export default function EPACDPage() {
+export default function EpacdPage() {
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-4 sm:py-16">
+    <main className="min-h-screen bg-gray-50/60 px-4 py-8 sm:py-12">
+      <h1 className="mx-auto mb-4 w-full max-w-2xl text-[15px] font-semibold tracking-wide text-gray-500 sm:text-[16px]">
+        E-PACD
+      </h1>
       <EPACDForm />
     </main>
   );

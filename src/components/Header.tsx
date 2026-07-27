@@ -7,12 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import EPACDForm from "@/components/arta/epacd/EPACDForm";
 
 interface SubNavItem {
   label: string;
   href: string;
-  isModal?: boolean;
   isRedress?: boolean;
 }
 
@@ -44,7 +42,7 @@ const navItems: NavItem[] = [
     hasDropdown: true,
     subItems: [
       { label: "Citizen's Charter", href: "/arta/citizens-charter" },
-      { label: "E-PACD", href: "#epacd", isModal: true },
+      { label: "E-PACD", href: "/arta/epacd" },
       { label: "Redress Mechanism", href: "#redress", isRedress: true },
     ],
   },
@@ -249,7 +247,6 @@ export default function Header() {
   const [openDesktopDropdown, setOpenDesktopDropdown] = useState<string | null>(null);
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
   const [isSolid, setIsSolid] = useState(false);
-  const [isEpacdOpen, setIsEpacdOpen] = useState(false);
   const [isRedressOpen, setIsRedressOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -259,13 +256,6 @@ export default function Header() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const openEpacd = () => {
-    setOpenDesktopDropdown(null);
-    setOpenMobileDropdown(null);
-    setIsMenuOpen(false);
-    setIsEpacdOpen(true);
-  };
 
   const toggleRedress = () => {
     // Keep the parent dropdown open so the panel can sit beside it
@@ -359,7 +349,7 @@ export default function Header() {
   }, [pathname]);
 
   useEffect(() => {
-    const shouldLock = isMenuOpen || isEpacdOpen || isRedressOpen;
+    const shouldLock = isMenuOpen || isRedressOpen;
     if (shouldLock) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = "hidden";
@@ -370,7 +360,7 @@ export default function Header() {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
     }
-  }, [isMenuOpen, isEpacdOpen, isRedressOpen]);
+  }, [isMenuOpen, isRedressOpen]);
 
   useEffect(() => {
     if (!isRedressOpen) return;
@@ -380,15 +370,6 @@ export default function Header() {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isRedressOpen]);
-
-  useEffect(() => {
-    if (!isEpacdOpen) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsEpacdOpen(false);
-    };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isEpacdOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -548,11 +529,6 @@ export default function Header() {
                                   }`}
                                   prefetch={false}
                                   onClick={(e) => {
-                                    if (subItem.isModal) {
-                                      e.preventDefault();
-                                      openEpacd();
-                                      return;
-                                    }
                                     if (subItem.isRedress) {
                                       e.preventDefault();
                                       toggleRedress();
@@ -720,11 +696,6 @@ export default function Header() {
                               }`}
                               prefetch={false}
                               onClick={(e) => {
-                                if (subItem.isModal) {
-                                  e.preventDefault();
-                                  openEpacd();
-                                  return;
-                                }
                                 if (subItem.isRedress) {
                                   e.preventDefault();
                                   toggleRedress();
@@ -776,31 +747,6 @@ export default function Header() {
         </nav>
       </div>
     </header>
-
-    {isMounted &&
-      isEpacdOpen &&
-      createPortal(
-        <div
-          className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm px-4 py-8 sm:py-12"
-          onClick={() => setIsEpacdOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-2xl my-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setIsEpacdOpen(false)}
-              className="absolute -top-3 -right-3 z-10 flex items-center justify-center h-9 w-9 rounded-full bg-white text-gray-600 shadow-lg hover:text-gray-900 hover:bg-gray-50 transition-colors"
-              aria-label="Close EPACD form"
-            >
-              <X className="h-4.5 w-4.5" />
-            </button>
-            <EPACDForm />
-          </div>
-        </div>,
-        document.body
-      )}
 
     {isMounted &&
       isRedressOpen &&
