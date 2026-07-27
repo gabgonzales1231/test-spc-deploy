@@ -103,8 +103,7 @@ className="flex flex-col min-h-screen gap-4"
             variants={fadeInUp}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            
-              <CharterFeedbackAccordion />
+          
 
           </motion.div>
 

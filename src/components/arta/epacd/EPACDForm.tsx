@@ -1,8 +1,37 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Loader2, Send, RotateCcw, CheckCircle2, AlertCircle } from "lucide-react";
+import Script from "next/script";
+import { Loader2, Send, RotateCcw, CheckCircle2, AlertCircle, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
 import gsap from "gsap";
+
+// ---- reCAPTCHA v2 -------------------------------------------------------
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      reset: (widgetId?: number) => void;
+      getResponse: (widgetId?: number) => string;
+      render: (
+        container: HTMLElement,
+        params: Record<string, unknown>
+      ) => number;
+    };
+    onEpacdCaptchaVerified?: (token: string) => void;
+    onEpacdCaptchaExpired?: () => void;
+  }
+}
+
+// ---- Attachment rules ----------------------------------------------
+const ALLOWED_ATTACHMENT_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_TOTAL_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB combined
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
 
 // ---- PSGC address types ------------------------------------------------
 interface PsgcOption {
@@ -110,6 +139,15 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
   const [loadingBarangays, setLoadingBarangays] = useState(false);
   const [addressError, setAddressError] = useState("");
 
+  // Attachments (photos / PDFs), 5MB combined cap
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // reCAPTCHA v2
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+
   // ---- GSAP entrance animation on mount ----
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -170,6 +208,16 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
     }, cardRef);
 
     return () => ctx.revert();
+  }, []);
+
+  // ---- reCAPTCHA global callbacks (the widget calls these by name) ----
+  useEffect(() => {
+    window.onEpacdCaptchaVerified = (token: string) => setCaptchaToken(token);
+    window.onEpacdCaptchaExpired = () => setCaptchaToken(null);
+    return () => {
+      delete window.onEpacdCaptchaVerified;
+      delete window.onEpacdCaptchaExpired;
+    };
   }, []);
 
   // ---- Load regions on mount ----
@@ -359,6 +407,44 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
     setForm((prev) => ({ ...prev, message: "" }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? []);
+    // Allow re-selecting the same file after removing it
+    e.target.value = "";
+    if (picked.length === 0) return;
+
+    setFileError("");
+
+    const rejectedType = picked.find(
+      (f) => !ALLOWED_ATTACHMENT_TYPES.includes(f.type)
+    );
+    if (rejectedType) {
+      setFileError("Only JPG, PNG, WEBP images and PDF files are allowed.");
+      return;
+    }
+
+    setFiles((prev) => {
+      const combined = [...prev, ...picked];
+      const totalBytes = combined.reduce((sum, f) => sum + f.size, 0);
+      if (totalBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
+        setFileError(
+          `Attachments must not exceed 5MB in total (currently ${formatBytes(
+            totalBytes
+          )}).`
+        );
+        return prev;
+      }
+      return combined;
+    });
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setFileError("");
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const totalAttachmentBytes = files.reduce((sum, f) => sum + f.size, 0);
+
   const validate = useCallback((): string | null => {
     if (!form.givenName.trim() || !form.surname.trim()) {
       return "Given name and surname are required.";
@@ -383,8 +469,14 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
     if (form.message.length > 255) {
       return "Message must be 255 characters or fewer.";
     }
+    if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
+      return "Attachments must not exceed 5MB in total.";
+    }
+    if (!captchaToken) {
+      return "Please complete the CAPTCHA before submitting.";
+    }
     return null;
-  }, [form]);
+  }, [form, totalAttachmentBytes, captchaToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -400,10 +492,18 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
     setErrorMsg("");
 
     try {
+      const fd = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        fd.append(key, value);
+      });
+      files.forEach((file) => fd.append("attachments", file));
+      fd.append("recaptchaToken", captchaToken ?? "");
+
       const res = await fetch("/api/epacd", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        // No Content-Type header — the browser sets the correct
+        // multipart/form-data boundary automatically for FormData bodies.
+        body: fd,
       });
 
       const data = await res.json();
@@ -414,6 +514,10 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
 
       setStatus("success");
       setForm(initialState);
+      setFiles([]);
+      setFileError("");
+      setCaptchaToken(null);
+      window.grecaptcha?.reset();
 
       // Auto-close the modal shortly after a successful submission
       setTimeout(() => {
@@ -424,6 +528,10 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
       setErrorMsg(
         err instanceof Error ? err.message : "Something went wrong. Please try again."
       );
+      // A used or expired token can't be reused — force a fresh checkbox
+      // solve before the next attempt.
+      setCaptchaToken(null);
+      window.grecaptcha?.reset();
     }
   };
 
@@ -678,6 +786,85 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
             </p>
           </div>
 
+          {/* Attachments */}
+          <div>
+            <p className="text-[13px] font-medium text-gray-700 mb-1.5">
+              Attachments{" "}
+              <span className="text-gray-400 font-normal">
+                (optional — photos or PDF, 5MB total)
+              </span>
+            </p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              onChange={handleFileChange}
+              className="hidden"
+              id="attachments"
+            />
+
+            <label
+              htmlFor="attachments"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+              Add files
+            </label>
+
+            {files.length > 0 && (
+              <ul className="mt-2.5 space-y-1.5">
+                {files.map((file, i) => (
+                  <li
+                    key={`${file.name}-${i}`}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2 text-[13px] text-gray-700"
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      {file.type === "application/pdf" ? (
+                        <FileText className="h-4 w-4 text-gray-400 shrink-0" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4 text-gray-400 shrink-0" />
+                      )}
+                      <span className="truncate">{file.name}</span>
+                      <span className="text-gray-400 shrink-0">
+                        ({formatBytes(file.size)})
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(i)}
+                      className="text-gray-400 hover:text-red-600 shrink-0"
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <p className="mt-1.5 text-[12px] text-gray-400">
+              {formatBytes(totalAttachmentBytes)} / 5 MB used
+            </p>
+
+            {fileError && (
+              <p className="mt-1 text-[12.5px] text-red-600">{fileError}</p>
+            )}
+          </div>
+
+          {/* CAPTCHA */}
+          <div>
+            <Script src="https://www.google.com/recaptcha/api.js" strategy="afterInteractive" />
+            <div
+              ref={captchaContainerRef}
+              className="g-recaptcha"
+              data-sitekey={RECAPTCHA_SITE_KEY}
+              data-callback="onEpacdCaptchaVerified"
+              data-expired-callback="onEpacdCaptchaExpired"
+            />
+          </div>
+
           {/* Status messages */}
           {status === "success" && (
             <div className="flex items-start gap-2.5 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3">
@@ -708,7 +895,7 @@ export default function EPACDForm({ onClose }: EPACDFormProps) {
             </button>
             <button
               type="submit"
-              disabled={status === "submitting"}
+              disabled={status === "submitting" || !captchaToken}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 text-[13.5px] font-semibold text-white rounded-lg bg-emerald-700 hover:bg-emerald-800 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {status === "submitting" ? (

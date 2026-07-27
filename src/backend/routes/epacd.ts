@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import nodemailer from "nodemailer";
+import { supabase } from "../config/database";
 
 // EPACD (Electronic Public Assistance Complaints Desk) route
 // Receives complaint submissions from the public site and forwards
@@ -36,7 +37,124 @@ const epacdBody = t.Object({
   contact: t.String({ minLength: 11, maxLength: 11, pattern: "^[0-9]{11}$" }),
   email: t.Optional(t.String({ maxLength: 50 })),
   message: t.String({ minLength: 1, maxLength: 500 }),
+
+  // Google reCAPTCHA v2 checkbox token, verified server-side before sending.
+  recaptchaToken: t.String({ minLength: 1 }),
+
+  // attachments: photos / PDFs of the complaint, sent as multipart form
+  // fields. Individual type is restricted here; the *combined* 5MB size
+  // cap is enforced in the handler below since Elysia's t.File maxSize
+  // option only limits a single file, not the sum of several.
+  attachments: t.Optional(
+    t.Files({
+      type: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+    })
+  ),
 });
+
+// Combined size cap for all attachments on a single submission.
+const MAX_TOTAL_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
+
+// ---- Throttling --------------------------------------------------------
+// 3 submissions per IP per rolling hour. Backed by a Supabase table so the
+// limit holds even across multiple server instances/deploys.
+//
+// Run this once in Supabase SQL editor:
+//
+//   create table epacd_rate_limit (
+//     id uuid primary key default gen_random_uuid(),
+//     ip_address text not null,
+//     created_at timestamptz not null default now()
+//   );
+//   create index epacd_rate_limit_ip_created_idx
+//     on epacd_rate_limit (ip_address, created_at);
+//
+// This route uses the anon-key `supabase` client (public user), so RLS
+// must explicitly allow it to insert and select on this table, e.g.:
+//
+//   alter table epacd_rate_limit enable row level security;
+//   create policy "epacd anon insert" on epacd_rate_limit
+//     for insert to anon with check (true);
+//   create policy "epacd anon select" on epacd_rate_limit
+//     for select to anon using (true);
+//
+// Optionally add a cron/scheduled job to prune rows older than a day or two
+// so the table doesn't grow unbounded.
+const RATE_LIMIT_MAX_REQUESTS = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function getClientIp(headers: Record<string, string | undefined>): string {
+  // Behind a proxy/load balancer (Vercel, nginx, etc.) the real client IP
+  // is the first entry in X-Forwarded-For. Fall back to X-Real-IP, then
+  // "unknown" so a missing header never crashes the handler (it just won't
+  // be throttled correctly in that edge case).
+  const forwardedFor = headers["x-forwarded-for"];
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
+  }
+  return headers["x-real-ip"] ?? "unknown";
+}
+
+async function isRateLimited(ip: string): Promise<boolean> {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+
+  const { count, error } = await supabase
+    .from("epacd_rate_limit")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_address", ip)
+    .gte("created_at", windowStart);
+
+  if (error) {
+    // Fail open on infra errors rather than blocking legitimate submitters,
+    // but log loudly so it gets noticed.
+    console.error("EPACD rate limit check failed:", error);
+    return false;
+  }
+
+  return (count ?? 0) >= RATE_LIMIT_MAX_REQUESTS;
+}
+
+async function recordSubmission(ip: string): Promise<void> {
+  const { error } = await supabase
+    .from("epacd_rate_limit")
+    .insert({ ip_address: ip });
+  if (error) {
+    console.error("EPACD rate limit record failed:", error);
+  }
+}
+
+// ---- CAPTCHA -------------------------------------------------------------
+// Verifies a Google reCAPTCHA v2 token server-side. Requires
+// RECAPTCHA_SECRET_KEY in the environment (paired with
+// NEXT_PUBLIC_RECAPTCHA_SITE_KEY on the frontend).
+async function verifyRecaptcha(token: string, remoteIp: string): Promise<boolean> {
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret) {
+    console.error("RECAPTCHA_SECRET_KEY is not configured.");
+    return false;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      secret,
+      response: token,
+      remoteip: remoteIp,
+    });
+
+    const res = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+
+    const data = (await res.json()) as { success: boolean };
+    return data.success === true;
+  } catch (err) {
+    console.error("reCAPTCHA verification failed:", err);
+    return false;
+  }
+}
+
 
 // Configure via environment variables. Example for Gmail SMTP:
 // SMTP_HOST=smtp.gmail.com
@@ -94,7 +212,24 @@ function buildFullAddress(fields: {
 
 export const epacdRoutes = new Elysia({ prefix: "/epacd" }).post(
   "/",
-  async ({ body, set }) => {
+  async ({ body, set, headers }) => {
+    const clientIp = getClientIp(headers);
+
+    // ---- Throttle: 3 submissions / hour / IP ----
+    if (await isRateLimited(clientIp)) {
+      set.status = 429;
+      return {
+        success: false,
+        message:
+          "You've reached the submission limit. Please try again in a bit.",
+      };
+    }
+
+    // Count this as a submission attempt now, before CAPTCHA/processing —
+    // otherwise someone could hammer CAPTCHA verification indefinitely
+    // without ever tripping the throttle.
+    await recordSubmission(clientIp);
+
     const {
       givenName,
       middleName,
@@ -108,7 +243,36 @@ export const epacdRoutes = new Elysia({ prefix: "/epacd" }).post(
       contact,
       email,
       message,
+      attachments,
+      recaptchaToken,
     } = body;
+
+    // ---- CAPTCHA ----
+    const captchaOk = await verifyRecaptcha(recaptchaToken, clientIp);
+    if (!captchaOk) {
+      set.status = 400;
+      return {
+        success: false,
+        message: "CAPTCHA verification failed. Please try again.",
+      };
+    }
+
+    // Normalize: Elysia gives a single File when exactly one is uploaded,
+    // or an array when multiple are. Treat "no files" as an empty array.
+    const files: File[] = attachments
+      ? Array.isArray(attachments)
+        ? attachments
+        : [attachments]
+      : [];
+
+    const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+    if (totalBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
+      set.status = 400;
+      return {
+        success: false,
+        message: "Attachments must not exceed 5MB in total.",
+      };
+    }
 
     const fullName = buildFullName(givenName, middleName, surname, suffix);
     const fullAddress = buildFullAddress({
@@ -156,12 +320,21 @@ export const epacdRoutes = new Elysia({ prefix: "/epacd" }).post(
     `;
 
     try {
+      const mailAttachments = await Promise.all(
+        files.map(async (file) => ({
+          filename: file.name || "attachment",
+          content: Buffer.from(await file.arrayBuffer()),
+          contentType: file.type || "application/octet-stream",
+        }))
+      );
+
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: RECIPIENT_EMAIL,
         replyTo: email && email.length > 0 ? email : undefined,
         subject: `EPACD Complaint — ${fullName}`,
         html,
+        attachments: mailAttachments,
       });
 
       return { success: true, message: "Complaint sent successfully." };
