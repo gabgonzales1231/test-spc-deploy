@@ -10,25 +10,10 @@ import Image from "next/image";
 import Section from "@/components/city-government/Section";
 import SectionHeader from "@/components/city-government/SectionHeader";
 import ServiceStandardStack from "@/components/mission-vision/service-standard";
+import { useGetServiceStandards } from "@/hooks/useServiceStandard";
 
 export default function AboutUsPage() {
-  const serviceStandards = [
-    "When we go to work, we will come in complete uniform and display our identification cards.",
-    "We will greet our clients with a sincere smile.",
-    "When you enter our office premises, we will introduce ourselves to you so that you can address us back in an appropriate manner.",
-    "We will attend our clients' inquiries within three (3) minutes.",
-    "Appropriate action will immediately follow your queries and you will be referred accordingly.",
-    "We will make you comfortable inside our facilities while you wait for your service request.",
-    "Express/special lanes are provided for Senior Citizens, pregnant women and People With Disabilities.",
-    "We will teach the clients, needed requirements that can expedite their service request.",
-    "We will promptly return your denied request and explain to you the reason for such, which in turn will allow us to reprocess it.",
-    "Our service stations will be properly labeled that will include our organizational chart and service flow chart.",
-    "Directional signs will be displayed conspicuously as guide so that you can establish familiarity with our work place.",
-    "Public Assistance Complaints Desk (PACD) is at your service in strategic locations.",
-    "An information and hotline service is available 24/7 for anyone who has queries.",
-    "No noon-break policy is followed and we are to serve beyond office hours if needed.",
-    "A satisfied client is our happiness in the government service.",
-  ];
+  const { standards, loading, error } = useGetServiceStandards();
 
   const strategicDirections = [
     "Existing policies of the city/agency have to be reviewed and revisited by the implementing office.",
@@ -166,7 +151,19 @@ Learn about our mission, vision, leadership, and commitment to <br /> serving ev
           subtitle="Our commitment to excellence in public service delivery"
           icon={<Star />}
         />
-        <ServiceStandardStack standards={serviceStandards} />
+        {loading && (
+          <p className="text-center text-muted-foreground py-8">
+            Loading service standards...
+          </p>
+        )}
+        {error && (
+          <p className="text-center text-destructive py-8">
+            Unable to load service standards. Please try again later.
+          </p>
+        )}
+        {!loading && !error && standards.length > 0 && (
+          <ServiceStandardStack standards={standards} />
+        )}
       </Section>
 
       {/* Strategic Directions */}
