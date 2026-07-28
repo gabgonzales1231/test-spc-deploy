@@ -311,7 +311,7 @@ const footerNote  = useFadeUp();
                             <td className="px-5 py-4 text-start">
                               {v.pdfUrl ? (
                                 <a  href={v.pdfUrl}
-                                  target="_blank"
+                           
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center justify-center gap-1.5 text-emerald-700 hover:text-emerald-900 font-medium underline underline-offset-2 transition-colors"
                                   aria-label={`View PDF submitted on ${formatDate(v.datePosted)}`}
@@ -352,7 +352,7 @@ const footerNote  = useFadeUp();
                         >
                           {v.pdfUrl ? (
                             <a  href={v.pdfUrl}
-                              target="_blank"
+                          
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 text-emerald-700 hover:text-emerald-900 font-medium underline underline-offset-2 transition-colors text-sm"
                               aria-label={`View PDF submitted on ${formatDate(v.datePosted)}`}

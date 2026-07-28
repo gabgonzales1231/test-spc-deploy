@@ -58,7 +58,7 @@ function YearAccordion({
                   {doc.pdf_url ? (
                     
                     <a href={doc.pdf_url}
-                      target="_blank"
+  
                       rel="noopener noreferrer"
                       className="text-base text-gray-800 hover:text-emerald-700 hover:underline underline-offset-2 leading-snug transition-colors inline-flex items-start gap-1"
                     >
@@ -154,7 +154,7 @@ function GlobalSearchResults({
                     {doc.pdf_url ? (
                       
                        <a href={doc.pdf_url}
-                        target="_blank"
+         
                         rel="noopener noreferrer"
                         className="text-base text-gray-800 hover:text-emerald-700 hover:underline underline-offset-2 leading-snug transition-colors inline-flex items-start gap-1"
                       >
