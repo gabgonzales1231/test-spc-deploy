@@ -17,7 +17,7 @@ export const serviceStandardRoutes = new Elysia({ prefix: "/service-standard" })
         .order("order_index", { ascending: true });
 
       if (error) {
-        throw new AppError(error.message, 500);
+        throw new AppError(error.message, "INTERNAL_ERROR", 500);
       }
 
       // Resolve each file_path (storage-relative, e.g. 'service-standard/001.png')
@@ -31,6 +31,10 @@ export const serviceStandardRoutes = new Elysia({ prefix: "/service-standard" })
 
       return successResponse(withUrls);
     } catch (err) {
-      return errorResponse(err);
+      if (err instanceof AppError) {
+        return errorResponse(err.code, err.message, err.details);
+      }
+      const message = err instanceof Error ? err.message : "Internal server error";
+      return errorResponse("INTERNAL_ERROR", message);
     }
   });
