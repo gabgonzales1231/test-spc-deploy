@@ -135,7 +135,7 @@ export function injectContent(template: string, _cms: CMSContent): string {
 
 export async function submitFeedback(
   payload: ComplaintPayload & { source_node?: string }
-): Promise<{ success: boolean; conversation_id?: number; visitor_token?: string; error?: string }> {
+): Promise<{ success: boolean; conversation_id?: number; visitor_token?: string; status?: string; error?: string }> {
   try {
     const res = await fetch("/api/chat/conversations", {
       method:  "POST",
@@ -157,6 +157,7 @@ export async function submitFeedback(
       success:        true,
       conversation_id: data.conversation_id,
       visitor_token:  data.visitor_token,
+      status:         data.status,
     };
   } catch {
     return { success: false, error: "Network error. Subukan ulit." };
@@ -167,7 +168,7 @@ export async function sendFollowUp(
   conversationId: number,
   content: string,
   visitorToken: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; closed?: boolean; error?: string }> {
   try {
     const res = await fetch(`/api/chat/conversations/${conversationId}/messages`, {
       method:  "POST",
@@ -176,7 +177,7 @@ export async function sendFollowUp(
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
-      return { success: false, error: data?.error ?? "Hindi natanggap ang mensahe." };
+      return { success: false, closed: data?.closed, error: data?.error ?? "Hindi natanggap ang mensahe." };
     }
     return { success: true };
   } catch {

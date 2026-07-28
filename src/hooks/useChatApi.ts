@@ -10,6 +10,28 @@ const CNT_KEY       = "jp_msg_count";
 const LAST_SENT_KEY = "jp_last_sent";
 const SPAM_RE       = /https?:\/\/|(\S)\1{6,}|[^\w\s,.!?'"()\-:]{4,}/i;
 
+// ── Help desk session cutoff (5:00 PM Philippine Standard Time, UTC+8, no DST) ──
+const CUTOFF_HOUR_PH = 17;
+
+export function isAfterCutoffPH(): boolean {
+  const now = new Date();
+  const phHour = (now.getUTCHours() + 8) % 24;
+  return phHour >= CUTOFF_HOUR_PH;
+}
+
+export function msUntilCutoffPH(): number {
+  const now = new Date();
+  const phMillisToday =
+    ((now.getUTCHours() + 8) % 24) * 3_600_000 +
+    now.getUTCMinutes() * 60_000 +
+    now.getUTCSeconds() * 1_000 +
+    now.getUTCMilliseconds();
+  const cutoffMillis = CUTOFF_HOUR_PH * 3_600_000;
+  const diff = cutoffMillis - phMillisToday;
+  // If we're already past cutoff, this is negative/zero — caller should treat as "now".
+  return diff > 0 ? diff : 0;
+}
+
 export function sanitizeInput(raw: string): string {
   return raw
     .replace(/<[^>]*>/g, "")

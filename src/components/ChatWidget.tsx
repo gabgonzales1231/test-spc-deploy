@@ -18,7 +18,10 @@ import { ChatEnded }     from "./chat/ChatEnded";
 import { PreOpenBubble } from "./chat/ui/PreOpenBubble";
 import { JPAvatar }      from "./chat/ui/JPAvatar";
 
-import { useInputGuard } from "@/hooks/useChatApi";
+import { useInputGuard, isAfterCutoffPH, msUntilCutoffPH } from "@/hooks/useChatApi";
+
+const CLOSED_HOURS_MESSAGE =
+  "Ang chat support ay bukas lamang hanggang 5:00 PM. Ang usapang ito ay awtomatikong natapos. Maaari kang magsimula muli bukas.";
 
 const supabaseRealtime = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -131,6 +134,30 @@ const { validate, validateAttachment, sanitizeInput, error: inputError, clearErr
       })
       .catch(() => setCms(p => ({ ...p, loaded: true, error: "CMS unavailable." })));
   }, []);
+
+  // ── 5PM PH help-desk cutoff ────────────────────────────────────────────
+  // Mirrors the backend's enforceCutoff: if it's already past 5PM PH, close
+  // immediately; otherwise schedule a check for exactly when 5PM PH hits,
+  // plus a periodic safety-net check in case the tab was backgrounded/slept.
+
+  useEffect(() => {
+    if (!liveMode || convStatus === "closed") return;
+
+    function checkCutoff() {
+      if (isAfterCutoffPH()) {
+        setConvStatus("closed");
+        setMessages(prev => [...prev, {
+          id: generateId(), role: "bot", text: CLOSED_HOURS_MESSAGE, timestamp: new Date(),
+        }]);
+      }
+    }
+
+    checkCutoff();
+    const atCutoff  = setTimeout(checkCutoff, msUntilCutoffPH());
+    const safetyNet = setInterval(checkCutoff, 60_000);
+
+    return () => { clearTimeout(atCutoff); clearInterval(safetyNet); };
+  }, [liveMode, convStatus]);
 
   // ── Bubble / open-chat event ──────────────────────────────────────────
 
@@ -316,9 +343,20 @@ const { validate, validateAttachment, sanitizeInput, error: inputError, clearErr
     async function doSend(t: string) {
       // Already talking to a human agent — just forward the follow-up.
       if (liveMode && conversationId && visitorToken) {
+        if (isAfterCutoffPH()) {
+          setConvStatus("closed");
+          pushBotMessage(CLOSED_HOURS_MESSAGE);
+          return;
+        }
         pushUserMessage(t);
         sendFollowUp(conversationId, t, visitorToken).then(result => {
           if (!result.success) {
+            if (result.closed) {
+              setConvStatus("closed");
+              setIsTyping(true);
+              setTimeout(() => { pushBotMessage(CLOSED_HOURS_MESSAGE); setIsTyping(false); }, 400);
+              return;
+            }
             setIsTyping(true);
             setTimeout(() => { pushBotMessage(`May error: ${result.error}`); setIsTyping(false); }, 400);
           }
@@ -348,7 +386,8 @@ const { validate, validateAttachment, sanitizeInput, error: inputError, clearErr
           setConvId(result.conversation_id);
           setVisitorToken(result.visitor_token);
           setLiveMode(true);
-          setConvStatus("open");
+          const closedOnArrival = result.status === "closed" || isAfterCutoffPH();
+          setConvStatus(closedOnArrival ? "closed" : "open");
 
           try {
             localStorage.setItem(SESSION_CONV_KEY,  String(result.conversation_id));
@@ -360,7 +399,9 @@ const { validate, validateAttachment, sanitizeInput, error: inputError, clearErr
 
           setTimeout(() => {
             pushBotMessage(
-              "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff. Maaari kang mag-type ng karagdagang tanong habang naghihintay."
+              closedOnArrival
+                ? CLOSED_HOURS_MESSAGE
+                : "✅ Natanggap ang iyong mensahe! Abangan ang tugon ng aming staff. Maaari kang mag-type ng karagdagang tanong habang naghihintay."
             );
           }, 600);
 
@@ -422,6 +463,13 @@ const { validate, validateAttachment, sanitizeInput, error: inputError, clearErr
         const fallbackLabel = file.type.startsWith("image/") ? "📷 Photo" : "📎 File";
         const initialMessage = caption || fallbackLabel;
 
+        // Existing live conversation — don't let it slip an attachment past cutoff.
+        if (convId && token && isAfterCutoffPH()) {
+          setConvStatus("closed");
+          pushBotMessage(CLOSED_HOURS_MESSAGE);
+          return;
+        }
+
         // No conversation yet — create one first (same as a Help Desk text message would).
         if (!convId || !token) {
           const created = await submitFeedback({
@@ -445,7 +493,13 @@ const { validate, validateAttachment, sanitizeInput, error: inputError, clearErr
           setConvId(convId);
           setVisitorToken(token);
           setLiveMode(true);
-          setConvStatus("open");
+          const closedOnArrival = created.status === "closed" || isAfterCutoffPH();
+          setConvStatus(closedOnArrival ? "closed" : "open");
+
+          if (closedOnArrival) {
+            pushBotMessage(CLOSED_HOURS_MESSAGE);
+            return;
+          }
 
           try {
             localStorage.setItem(SESSION_CONV_KEY,  String(convId));

@@ -13,6 +13,29 @@ function sanitizeName(name: string) {
   return name.trim().replace(/[^a-zA-Z0-9]+/g, "-");
 }
 
+// ── Help desk session cutoff (5:00 PM Philippine Standard Time, UTC+8, no DST) ──
+const CUTOFF_HOUR_PH = 17;
+
+function isAfterCutoffPH(): boolean {
+  const now = new Date();
+  const phHour = (now.getUTCHours() + 8) % 24;
+  return phHour >= CUTOFF_HOUR_PH;
+}
+
+// Closes a conversation server-side the moment it's touched after cutoff.
+// Returns the effective status to use for the rest of the request.
+async function enforceCutoff(conversationId: number, currentStatus: string): Promise<string> {
+  if (currentStatus === "closed") return "closed";
+  if (!isAfterCutoffPH()) return currentStatus;
+
+  await supabase
+    .from("conversations")
+    .update({ status: "closed" })
+    .eq("id", conversationId);
+
+  return "closed";
+}
+
 export const chatRoutes = new Elysia({ prefix: "/chat" })
 
   .post("/conversations", async ({ body, request, set }) => {
@@ -36,10 +59,10 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
         message:       message.trim(),
         source_node:   source_node?.trim() || null,
         ip_address,
-        status:        "open",
+        status:        isAfterCutoffPH() ? "closed" : "open",
         visitor_token,
       })
-      .select("id")
+      .select("id, status")
       .single();
 
     if (convError || !conversation) {
@@ -63,7 +86,12 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
     }
 
     // Return token to client — stored in sessionStorage
-    return { success: true, conversation_id: conversation.id, visitor_token };
+    return {
+      success:         true,
+      conversation_id: conversation.id,
+      visitor_token,
+      status:          conversation.status,
+    };
   }, {
     body: t.Object({
       full_name:   t.String({ minLength: 1 }),
@@ -96,9 +124,14 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: "Unauthorized" };
     }
 
-    if (conversation.status === "closed") {
+    const status = await enforceCutoff(conversation.id, conversation.status);
+    if (status === "closed") {
       set.status = 400;
-      return { success: false, error: "This conversation has been closed" };
+      return {
+        success: false,
+        error:   "Chat support hours have ended for today (after 5:00 PM). Please start a new chat tomorrow.",
+        closed:  true,
+      };
     }
 
     const { error } = await supabase
@@ -146,9 +179,14 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: "Unauthorized" };
     }
 
-    if (conversation.status === "closed") {
+    const status = await enforceCutoff(conversation.id, conversation.status);
+    if (status === "closed") {
       set.status = 400;
-      return { success: false, error: "This conversation has been closed" };
+      return {
+        success: false,
+        error:   "Chat support hours have ended for today (after 5:00 PM). Please start a new chat tomorrow.",
+        closed:  true,
+      };
     }
 
     if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
@@ -244,6 +282,8 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: "Unauthorized" };
     }
 
+    const status = await enforceCutoff(conversation.id, conversation.status);
+
     const { data, error } = await supabase
       .from("chat_messages")
       .select("id, sender_type, content, created_at, attachment_url, attachment_type, attachment_size")
@@ -255,7 +295,7 @@ export const chatRoutes = new Elysia({ prefix: "/chat" })
       return { success: false, error: error.message };
     }
 
-    return { success: true, status: conversation.status, data: data ?? [] };
+    return { success: true, status, data: data ?? [] };
   }, {
     params: t.Object({ id: t.String() }),
     query:  t.Object({ token: t.Optional(t.String()) }),
