@@ -42,7 +42,7 @@ const navItems: NavItem[] = [
     hasDropdown: true,
     subItems: [
       { label: "Citizen's Charter", href: "/arta/citizens-charter" },
-      { label: "E-PACD", href: "/arta/epacd" },
+      // { label: "E-PACD", href: "/arta/epacd" },
       { label: "Redress Mechanism", href: "#redress", isRedress: true },
     ],
   },
