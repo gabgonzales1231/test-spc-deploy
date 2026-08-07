@@ -154,6 +154,7 @@ const CONTENT: Record<
     sendingBtn: string;
     successTitle: string;
     successMsg: string;
+    pdfFailedNote: string;
     redirectMsg: string;
     errClientType: string;
     errDate: string;
@@ -222,11 +223,13 @@ const CONTENT: Record<
     emailPlaceholder: "juan@email.com",
     backBtn: "Back",
     nextBtn: "Next",
-    submitBtn: "Submit",
+    submitBtn: "Submit and Download Form",
     sendingBtn: "Sending...",
     successTitle: "Feedback sent successfully",
     successMsg: "Thank you for helping us serve you better.",
-    redirectMsg: "You are now being redirected back to the previous page...",
+    pdfFailedNote:
+      "Your feedback was saved, but we couldn't generate your copy of the form. No action is needed on your part.",
+    redirectMsg: "You are now being redirected back to the previous page, or you can leave this page now.",
     errClientType: "Please select a client type.",
     errDate: "Please select the transaction date.",
     errRegion: "Please select your region of residence.",
@@ -300,11 +303,13 @@ const CONTENT: Record<
     emailPlaceholder: "juan@email.com",
     backBtn: "Bumalik",
     nextBtn: "Susunod",
-    submitBtn: "Ipasa",
+    submitBtn: "Ipasa at I-download ang Form",
     sendingBtn: "Ipinapadala...",
     successTitle: "Matagumpay na naipadala ang puna",
     successMsg: "Salamat sa pagtulong sa amin na maglingkod nang mas mabuti.",
-    redirectMsg: "Ibinabalik ka na sa nakaraang pahina...",
+    pdfFailedNote:
+      "Naisave ang inyong puna, ngunit hindi namin nagawang buuin ang kopya ng form. Walang kailangan pang gawin sa inyong panig.",
+    redirectMsg: "Maaari ka nang umalis sa page na ito.",
     errClientType: "Piliin ang uri ng kliyente.",
     errDate: "Piliin ang petsa ng transaksyon.",
     errRegion: "Piliin ang rehiyon ng inyong paninirahan.",
@@ -417,6 +422,7 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initialState);
   const [status, setStatus] = useState<SubmitStatus>("idle");
+  const [pdfDownloadFailed, setPdfDownloadFailed] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
@@ -583,6 +589,7 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
 
     setStatus("submitting");
     setErrorMsg("");
+    setPdfDownloadFailed(false);
 
     try {
       const res = await fetch("/api/csm-response", {
@@ -615,15 +622,53 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data?.message || t.errGeneric);
+      const contentType = res.headers.get("content-type") || "";
+
+      // Validation/server errors always come back as JSON, regardless of the
+      // success-path content type below.
+      if (!res.ok) {
+        let message = t.errGeneric;
+        try {
+          const data = await res.json();
+          message = data?.message || message;
+        } catch {
+          // response body wasn't JSON (e.g. a raw 500) — fall back to generic message
+        }
+        throw new Error(message);
       }
 
-      setStatus("success");
+      if (contentType.includes("application/pdf")) {
+        // Submission succeeded and the server generated the filled-in form —
+        // trigger a browser download of it.
+        const blob = await res.blob();
+        const disposition = res.headers.get("content-disposition") || "";
+        const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+        const filename = filenameMatch ? filenameMatch[1] : "CSM-form.pdf";
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+
+        setStatus("success");
+      } else {
+        // Submission succeeded but the PDF couldn't be generated server-side
+        // (see pdfError flag) — the response row was still saved.
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data?.message || t.errGeneric);
+        }
+        setStatus("success");
+        setPdfDownloadFailed(Boolean(data.pdfError));
+      }
+
       setTimeout(() => {
         router.back();
-      }, 3000);
+      }, 6000);
     } catch (err) {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : t.errGeneric);
@@ -1147,6 +1192,11 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
             </div>
             <h3 className="mt-4 text-[16px] font-semibold text-gray-900">{t.successTitle}</h3>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-500">{t.successMsg}</p>
+            {pdfDownloadFailed && (
+              <p className="mt-3 text-[12.5px] leading-relaxed text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                {t.pdfFailedNote}
+              </p>
+            )}
             <div className="mt-6 flex items-center justify-center gap-2 text-[12.5px] text-gray-400">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               {t.redirectMsg}
