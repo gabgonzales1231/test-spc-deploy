@@ -20,6 +20,7 @@ import { epacdRoutes } from './routes/epacd'
 import { psgcRoutes } from './routes/psgc'
 import { officesRoutes } from './routes/offices'
 import { serviceStandardRoutes } from './routes/service-standard'
+import { csmRoutes } from './routes/csm'
 
 export const app = new Elysia()
   .use(cors({
@@ -95,6 +96,7 @@ export const app = new Elysia()
       .use(psgcRoutes)
       .use(officesRoutes)
       .use(serviceStandardRoutes)
+      .use(csmRoutes)
   })
   // Static assets
   .use(staticPlugin({
