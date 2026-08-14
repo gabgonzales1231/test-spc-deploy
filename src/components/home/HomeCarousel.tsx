@@ -59,7 +59,7 @@ function ImageCarouselItem({
             alt={alt}
             width={1600}
             height={900}
-            unoptimized
+            
             className="w-full h-auto object-contain rounded-2xl"
             sizes="100vw"
             priority={isPriority}
@@ -94,7 +94,7 @@ function ImageCarouselItem({
               src={src}
               alt=""
               fill
-              unoptimized
+              
               className="object-cover scale-110 blur-2xl opacity-60"
               sizes="10vw"
               priority={isPriority}
@@ -107,7 +107,7 @@ function ImageCarouselItem({
             src={src}
             alt={alt}
             fill
-            unoptimized
+            
             className={`object-contain transition-all duration-700 ease-out
               ${isActive ? "scale-[1.00]" : "scale-100"}`}
             sizes="(max-width: 1024px) 90vw, 1200px"
