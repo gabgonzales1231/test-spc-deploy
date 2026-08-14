@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -229,7 +229,7 @@ const CONTENT: Record<
     successMsg: "Thank you for helping us serve you better.",
     pdfFailedNote:
       "Your feedback was saved, but we couldn't generate your copy of the form. No action is needed on your part.",
-    redirectMsg: "You are now being redirected back to the previous page, or you can leave this page now.",
+    redirectMsg: "You can leave this page now.",
     errClientType: "Please select a client type.",
     errDate: "Please select the transaction date.",
     errRegion: "Please select your region of residence.",
@@ -419,6 +419,7 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
   const [officeError, setOfficeError] = useState("");
   const [officeNotFound, setOfficeNotFound] = useState(false);
 
+  const formTopRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initialState);
   const [status, setStatus] = useState<SubmitStatus>("idle");
@@ -510,8 +511,12 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
     }
   }, [cc1IsNotAware]);
 
-  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+  const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
+
+  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    setFieldError((prev) => (prev && prev.field === (key as string) ? null : prev));
+  };
 
   // Reset the selected service whenever the office changes (or is cleared)
   // so a stale value from a previously-selected office's list can never be
@@ -528,57 +533,85 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
   };
 
   // ---- Per-step validation ----
-  const stepError = useMemo((): string | null => {
+  // Returns which field failed (so we can scroll/highlight it) alongside the message.
+  const stepError = useMemo((): { field: string; message: string } | null => {
     if (step === 0) {
-      if (!form.clientType) return t.errClientType;
-      if (!form.transactionDate) return t.errDate;
-      if (!form.region) return t.errRegion;
-      if (!form.service.trim()) return t.errService;
-      if (form.age && (Number(form.age) < 1 || Number(form.age) > 129)) return t.errAge;
+      if (!form.clientType) return { field: "clientType", message: t.errClientType };
+      if (!form.transactionDate) return { field: "transactionDate", message: t.errDate };
+      if (!form.region) return { field: "region", message: t.errRegion };
+      if (!form.service.trim()) return { field: "service", message: t.errService };
+      if (form.age && (Number(form.age) < 1 || Number(form.age) > 129))
+        return { field: "age", message: t.errAge };
       return null;
     }
     if (step === 1) {
-      if (!form.cc1) return t.errCc1;
-      if (!cc1IsNotAware && !form.cc2) return t.errCc2;
-      if (!cc1IsNotAware && !form.cc3) return t.errCc3;
+      if (!form.cc1) return { field: "cc1", message: t.errCc1 };
+      if (!cc1IsNotAware && !form.cc2) return { field: "cc2", message: t.errCc2 };
+      if (!cc1IsNotAware && !form.cc3) return { field: "cc3", message: t.errCc3 };
       return null;
     }
     if (step === 2) {
       const keys: (keyof FormState)[] = [
         "sqd0", "sqd1", "sqd2", "sqd3", "sqd4", "sqd5", "sqd6", "sqd7", "sqd8",
       ];
-      const missing = keys.some((k) => !form[k]);
-      if (missing) return t.errSqd;
+      const missingKey = keys.find((k) => !form[k]);
+      if (missingKey) return { field: missingKey, message: t.errSqd };
       return null;
     }
     if (step === 3) {
-      if (form.emailAddress && !/^\S+@\S+\.\S+$/.test(form.emailAddress)) return t.errEmail;
+      if (form.emailAddress && !/^\S+@\S+\.\S+$/.test(form.emailAddress))
+        return { field: "emailAddress", message: t.errEmail };
       return null;
     }
     return null;
   }, [step, form, cc1IsNotAware, t]);
 
+  // Refs to each field's container, keyed by field name, so a validation
+  // failure can pan to (and highlight) the specific field instead of
+  // showing a generic message at the bottom of the form.
+  const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const registerField = (name: string) => (el: HTMLDivElement | null) => {
+    fieldRefs.current[name] = el;
+  };
+
+  const scrollToField = (field: string) => {
+    const el = fieldRefs.current[field];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      scrollToFormTop();
+    }
+  };
+
+  const scrollToFormTop = () => {
+    formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const goNext = () => {
     if (stepError) {
-      setErrorMsg(stepError);
-      setStatus("error");
+      setFieldError(stepError);
+      scrollToField(stepError.field);
       return;
     }
+    setFieldError(null);
     setErrorMsg("");
     setStatus("idle");
     setStep((s) => Math.min(s + 1, t.steps.length - 1));
+    scrollToFormTop();
   };
 
   const goBack = () => {
+    setFieldError(null);
     setErrorMsg("");
     setStatus("idle");
     setStep((s) => Math.max(s - 1, 0));
+    scrollToFormTop();
   };
 
   const handleSubmit = async () => {
     if (stepError) {
-      setErrorMsg(stepError);
-      setStatus("error");
+      setFieldError(stepError);
+      scrollToField(stepError.field);
       return;
     }
     if (!office) {
@@ -694,7 +727,7 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -40 }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
-            className="fixed inset-0 z-50 overflow-hidden bg-gradient-to-b from-white via-emerald-50/40 to-white flex items-center justify-center px-4"
+            className="fixed inset-0 z-[9999] overflow-hidden bg-gradient-to-b from-white via-emerald-50/40 to-white flex items-center justify-center px-4"
           >
             {/* Decorative background accents */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -839,12 +872,13 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
       {/* Main form content */}
       {!showIntro && (
         <motion.div
-          className="w-full max-w-2xl mx-auto mt-10"
+          ref={formTopRef}
+          className="w-full max-w-2xl mx-auto mt-12 scroll-mt-6"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
         >
-      <div className="bg-gray-50/60 rounded-2xl overflow-hidden">
+      <div className="bg-white rounded-2xl overflow-hidden drop-shadow-lg shadow-gray-900/5 border border-gray-200">
         {/* Header */}
         <motion.div
           variants={fadeInUp}
@@ -910,7 +944,7 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
         >
           {step === 0 && (
             <div className="space-y-5">
-              <div>
+              <div ref={registerField("clientType")}>
                 <p className="text-[13px] font-medium text-gray-700 mb-1.5">
                   {t.clientTypeLabel} <span className="text-emerald-600">*</span>
                 </p>
@@ -926,10 +960,13 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                     </button>
                   ))}
                 </div>
+                {fieldError?.field === "clientType" && (
+                  <p className="mt-1.5 text-[12px] text-red-600">{fieldError.message}</p>
+                )}
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
-                <div>
+                <div ref={registerField("transactionDate")}>
                   <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
                     {t.dateLabel} <span className="text-emerald-600">*</span>
                   </label>
@@ -939,6 +976,9 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                     onChange={(e) => setField("transactionDate", e.target.value)}
                     className={inputClass}
                   />
+                  {fieldError?.field === "transactionDate" && (
+                    <p className="mt-1.5 text-[12px] text-red-600">{fieldError.message}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-[13px] font-medium text-gray-700 mb-1.5">
@@ -960,7 +1000,7 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
-                <div>
+                <div ref={registerField("age")}>
                   <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
                     {t.ageLabel} <span className="text-gray-400 font-normal">{t.optionalTag}</span>
                   </label>
@@ -973,8 +1013,11 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                     placeholder={t.agePlaceholder}
                     className={inputClass}
                   />
+                  {fieldError?.field === "age" && (
+                    <p className="mt-1.5 text-[12px] text-red-600">{fieldError.message}</p>
+                  )}
                 </div>
-                <div>
+                <div ref={registerField("region")}>
                   <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
                     {t.regionLabel} <span className="text-emerald-600">*</span>
                   </label>
@@ -992,10 +1035,13 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                     ))}
                   </select>
                   {regionError && <p className="mt-1 text-[12px] text-red-600">{regionError}</p>}
+                  {fieldError?.field === "region" && (
+                    <p className="mt-1.5 text-[12px] text-red-600">{fieldError.message}</p>
+                  )}
                 </div>
               </div>
 
-              <div>
+              <div ref={registerField("service")}>
                 <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
                   {t.serviceLabel} <span className="text-emerald-600">*</span>
                 </label>
@@ -1030,6 +1076,9 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                     </>
                   );
                 })()}
+                {fieldError?.field === "service" && (
+                  <p className="mt-1.5 text-[12px] text-red-600">{fieldError.message}</p>
+                )}
               </div>
             </div>
           )}
@@ -1041,6 +1090,8 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
               <RadioGroup
                 title={t.cc1Title}
                 required
+                fieldRef={registerField("cc1")}
+                errorText={fieldError?.field === "cc1" ? fieldError.message : undefined}
                 options={t.cc1Options.map((label, i) => ({ value: i + 1, label }))}
                 value={form.cc1}
                 onChange={(v) => setField("cc1", v)}
@@ -1051,6 +1102,8 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                 required
                 disabled={cc1IsNotAware}
                 helperText={cc1IsNotAware ? t.naNote : undefined}
+                fieldRef={registerField("cc2")}
+                errorText={fieldError?.field === "cc2" ? fieldError.message : undefined}
                 options={t.cc2Options.map((label, i) => ({ value: i + 1, label }))}
                 value={form.cc2}
                 onChange={(v) => setField("cc2", v)}
@@ -1061,6 +1114,8 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                 required
                 disabled={cc1IsNotAware}
                 helperText={cc1IsNotAware ? t.naNote : undefined}
+                fieldRef={registerField("cc3")}
+                errorText={fieldError?.field === "cc3" ? fieldError.message : undefined}
                 options={t.cc3Options.map((label, i) => ({ value: i + 1, label }))}
                 value={form.cc3}
                 onChange={(v) => setField("cc3", v)}
@@ -1078,6 +1133,8 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                     title={`SQD${idx}. ${t.sqdItems[idx]}`}
                     required
                     compact
+                    fieldRef={registerField(key)}
+                    errorText={fieldError?.field === key ? fieldError.message : undefined}
                     options={t.sqdOptions.map((label, i) => ({ value: i, label }))}
                     value={sqdDisplayIndex(form[key])}
                     onChange={(displayIndex) => setSqd(key, displayIndex)}
@@ -1103,7 +1160,7 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                 <p className="mt-1 text-[12px] text-gray-400">{form.comments.length}/1000</p>
               </div>
 
-              <div>
+              <div ref={registerField("emailAddress")}>
                 <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
                   {t.emailLabel} <span className="text-gray-400 font-normal">{t.optionalTag}</span>
                 </label>
@@ -1115,6 +1172,9 @@ export default function CSMForm({ officeSlug }: CSMFormProps) {
                   placeholder={t.emailPlaceholder}
                   className={inputClass}
                 />
+                {fieldError?.field === "emailAddress" && (
+                  <p className="mt-1.5 text-[12px] text-red-600">{fieldError.message}</p>
+                )}
               </div>
             </div>
           )}
@@ -1222,6 +1282,8 @@ function RadioGroup({
   disabled,
   compact,
   helperText,
+  fieldRef,
+  errorText,
 }: {
   title: string;
   options: { value: number; label: string }[];
@@ -1231,9 +1293,11 @@ function RadioGroup({
   disabled?: boolean;
   compact?: boolean;
   helperText?: string;
+  fieldRef?: (el: HTMLDivElement | null) => void;
+  errorText?: string;
 }) {
   return (
-    <div className={disabled ? "opacity-50" : ""}>
+    <div ref={fieldRef} className={disabled ? "opacity-50" : ""}>
       <p className="text-[13px] font-medium text-gray-700 mb-2 leading-relaxed">
         {title} {required && <span className="text-emerald-600">*</span>}
       </p>
@@ -1251,6 +1315,7 @@ function RadioGroup({
           </button>
         ))}
       </div>
+      {errorText && <p className="mt-1.5 text-[12px] text-red-600">{errorText}</p>}
     </div>
   );
 }

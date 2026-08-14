@@ -10,6 +10,8 @@ export interface CityOffice {
   hours?: string | null;
   image?: string | null;
   sort_order?: number;
+  /** Short blurb shown under the office name in the sidebar/panel. */
+  description?: string | null;
   /** IDs of other CityOffice rows located inside this destination (e.g. offices inside a building). */
   offices?: string[];
 }

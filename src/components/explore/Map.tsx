@@ -4,7 +4,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
-import { Search, X, MapPin, Phone, Clock, WifiOff, ChevronDown } from "lucide-react";
+import { Search, X, MapPin, Phone, Clock, WifiOff, ChevronDown, ArrowLeft } from "lucide-react";
 import type { CityOffice } from "@/data/map/map";
 import { useMapOffices } from "@/hooks/useMap";
 import "leaflet/dist/leaflet.css";
@@ -20,8 +20,8 @@ const officeIcon = L.divIcon({
   className: styles.markerWrapper,
   html: `
     <svg width="22" height="29" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 26 16 26s16-15 16-26C32 7.163 24.837 0 16 0z" fill="#047857"/>
-      <circle cx="16" cy="16" r="6.5" fill="white"/>
+      <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 26 16 26s16-15 16-26C32 7.163 24.837 0 16 0z" fill="white" stroke="#047857" stroke-width="1.5"/>
+      <circle cx="16" cy="16" r="6.5" fill="#047857"/>
     </svg>
   `,
   iconSize: [22, 29],
@@ -41,6 +41,51 @@ const activeOfficeIcon = L.divIcon({
   iconAnchor: [14, 35],
   popupAnchor: [0, -32],
 });
+
+// Simple Levenshtein edit-distance — used to find the closest-named office
+// when a search doesn't have a direct substring match (e.g. typos).
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+// Finds the best office match for a typed query: prefers a substring match
+// (shortest name wins among those), and falls back to the closest name by
+// edit distance so a typo like "vise mayor" still finds "Vice Mayor's Office".
+function findClosestOffice(query: string, offices: CityOffice[]): CityOffice | null {
+  const q = query.trim().toLowerCase();
+  if (!q || offices.length === 0) return null;
+
+  const substringMatches = offices.filter((o) => o.name.toLowerCase().includes(q));
+  if (substringMatches.length > 0) {
+    return substringMatches.reduce((best, o) =>
+      o.name.length < best.name.length ? o : best
+    );
+  }
+
+  let closest: CityOffice | null = null;
+  let bestDistance = Infinity;
+  for (const office of offices) {
+    const distance = levenshtein(q, office.name.toLowerCase());
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      closest = office;
+    }
+  }
+  return closest;
+}
 
 // Small helper component that lives inside <MapContainer> so it can call
 // useMap() to fly to a selected office. Always flies to the *marker*
@@ -70,23 +115,48 @@ function OfficesDropdown({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="relative mb-4 w-full">
-      <select
-        value={selectedId}
-        onChange={(e) => onSelect(e.target.value)}
-        className="w-full appearance-none border border-gray-200 bg-gray-50 text-sm text-gray-700 pl-3 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-      >
-        <option value="" disabled hidden>
-          Offices
-        </option>
-        {subOffices.map((sub) => (
-          <option key={sub.id} value={sub.id}>
-            {sub.name}
+    <div className="mb-3 w-full">
+      <div className="group relative w-full">
+        <select
+          value={selectedId}
+          onChange={(e) => onSelect(e.target.value)}
+          className="w-full appearance-none rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 pl-3.5 pr-10 py-2.5 shadow-sm transition-colors duration-150 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
+        >
+          <option value="" disabled hidden>
+            Select an office
           </option>
-        ))}
-      </select>
-      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+          {subOffices.map((sub) => (
+            <option key={sub.id} value={sub.id}>
+              {sub.name}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 pointer-events-none transition-transform duration-150 group-focus-within:rotate-180" />
+      </div>
     </div>
+  );
+}
+
+// "Return to building" — shown when a sub-office's details are being
+// displayed, lets the visitor jump back up to the parent destination's
+// own info without having to reselect it from the dropdown or search.
+function ReturnToBuildingButton({
+  buildingName,
+  onClick,
+}: {
+  buildingName: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="mb-4 flex w-full items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3.5 py-2.5 text-left text-sm font-medium text-emerald-700 transition-colors duration-150 hover:bg-emerald-100/80 hover:border-emerald-200"
+    >
+      <ArrowLeft className="w-4 h-4 shrink-0" />
+      <span className="truncate">
+        Return to <span className="font-semibold">{buildingName}</span>
+      </span>
+    </button>
   );
 }
 
@@ -143,15 +213,28 @@ function DestinationSidebar({
 
             {/* Details */}
             <div className="flex-1 overflow-y-auto p-5">
-              <h2 className="text-lg font-semibold text-emerald-800 mb-4">
+              <h2 className="text-lg font-semibold text-emerald-800 mb-1">
                 {displayedOffice.name}
               </h2>
 
-              {subOffices.length > 0 && (
+              {displayedOffice.description && (
+                <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                  {displayedOffice.description}
+                </p>
+              )}
+
+              {subOffices.length > 0 && selectedSubId === parentOffice.id && (
                 <OfficesDropdown
                   subOffices={subOffices}
-                  selectedId={selectedSubId === parentOffice.id ? "" : selectedSubId}
+                  selectedId=""
                   onSelect={onSelectSub}
+                />
+              )}
+
+              {selectedSubId !== null && selectedSubId !== parentOffice.id && (
+                <ReturnToBuildingButton
+                  buildingName={parentOffice.name}
+                  onClick={() => onSelectSub(parentOffice.id)}
                 />
               )}
 
@@ -232,15 +315,28 @@ function MobileDestinationPanel({
             )}
           </div>
 
-          <span className="flex-1 text-left text-md font-medium text-emerald-800 truncate mb-2 block">
+          <span className="flex-1 text-left text-md font-medium text-emerald-800 truncate block">
             {displayedOffice.name}
           </span>
 
-          {subOffices.length > 0 && (
+          {displayedOffice.description && (
+            <p className="text-xs text-gray-500 leading-relaxed mb-2">
+              {displayedOffice.description}
+            </p>
+          )}
+
+          {subOffices.length > 0 && selectedSubId === parentOffice.id && (
             <OfficesDropdown
               subOffices={subOffices}
-              selectedId={selectedSubId === parentOffice.id ? "" : selectedSubId}
+              selectedId=""
               onSelect={onSelectSub}
+            />
+          )}
+
+          {selectedSubId !== null && selectedSubId !== parentOffice.id && (
+            <ReturnToBuildingButton
+              buildingName={parentOffice.name}
+              onClick={() => onSelectSub(parentOffice.id)}
             />
           )}
 
@@ -274,6 +370,10 @@ export default function Map() {
   const { offices: cityOffices, loading, error, isStale } = useMapOffices();
 
   const [query, setQuery] = useState("");
+  // Whether the search results dropdown is visible. Separate from
+  // `query` so a successful search (Enter or clicking a result) can
+  // collapse the list while leaving the matched name in the input.
+  const [resultsOpen, setResultsOpen] = useState(false);
   // selectedId = the destination whose marker is active / map flies to.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // selectedSubId = which office's details are shown in the sidebar.
@@ -334,11 +434,34 @@ export default function Map() {
   // Selecting from search: if the chosen office is itself a sub-office
   // (embedded in another destination), fly to its parent's marker but show
   // the sub-office's own details in the sidebar.
+  // Curated shortlist of frequently-searched destinations, shown as a
+  // quick-access panel so visitors don't have to type. Preserves this
+  // order regardless of the underlying data order.
+  const POPULAR_DESTINATION_NAMES = [
+    "San Pablo City Hall",
+    "One Stop Processing Center",
+    "San Pablo Mega Capitol",
+  ];
+  const popularOffices = useMemo(() => {
+    return POPULAR_DESTINATION_NAMES.map((name) =>
+      cityOffices.find((o) => o.name === name)
+    ).filter((o): o is CityOffice => Boolean(o));
+  }, [cityOffices]);
+
   const handleSelect = (office: CityOffice) => {
     const parentId = parentByOfficeId[office.id] ?? office.id;
     setSelectedId(parentId);
     setSelectedSubId(office.id);
     setQuery(office.name);
+    setResultsOpen(false);
+  };
+
+  // Pressing Enter searches for the closest-matching office (substring
+  // match preferred, falling back to edit distance for typos) and selects
+  // it directly, collapsing the results dropdown.
+  const handleSearchSubmit = () => {
+    const match = findClosestOffice(query, cityOffices);
+    if (match) handleSelect(match);
   };
 
   const handleMarkerClick = (office: CityOffice) => {
@@ -348,6 +471,7 @@ export default function Map() {
 
   const clearSearch = () => {
     setQuery("");
+    setResultsOpen(false);
     setSelectedId(null);
     setSelectedSubId(null);
   };
@@ -369,8 +493,15 @@ export default function Map() {
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
+                setResultsOpen(true);
                 setSelectedId(null);
                 setSelectedSubId(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSearchSubmit();
+                }
               }}
               placeholder="Search for a City Office..."
               className="w-full pl-8 pr-8 py-2.5 md:pl-9 md:pr-9 md:py-2.5 border border-gray-200 bg-white/95 backdrop-blur-sm shadow-md text-xs md:text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none "
@@ -387,7 +518,7 @@ export default function Map() {
           </div>
 
           {/* Results dropdown */}
-          {query.trim() && (
+          {query.trim() && resultsOpen && (
             <div className="bg-white/95 backdrop-blur-sm shadow-md border border-gray-100 max-h-40 md:max-h-56 overflow-y-auto">
               {filteredOffices.length > 0 ? (
                 filteredOffices.map((office) => (
@@ -402,6 +533,35 @@ export default function Map() {
               ) : (
                 <p className="px-3 py-2 md:px-4 md:py-2.5 text-xs md:text-sm text-gray-400">No offices found</p>
               )}
+            </div>
+          )}
+
+          {/* Popular destinations — quick-access shortcuts shown right
+              below the search box while it's idle (hidden once the
+              visitor starts typing, so it doesn't collide with the
+              results dropdown above). Desktop only — the 260px mobile
+              map height is too tight for this alongside everything else. */}
+          {!query.trim() && popularOffices.length > 0 && (
+            <div className="hidden md:block mt-2 bg-white/95 backdrop-blur-sm shadow-md border border-gray-100 rounded-xl overflow-hidden">
+              <p className="px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700/70">
+                Popular Destinations
+              </p>
+              <div className="pb-1">
+                {popularOffices.map((office) => (
+                  <button
+                    key={office.id}
+                    onClick={() => handleSelect(office)}
+                    className={`w-full flex items-center gap-2 text-left px-4 py-2 text-sm transition-colors ${
+                      selectedId === office.id
+                        ? "bg-emerald-50 text-emerald-800 font-medium"
+                        : "text-gray-700 hover:bg-emerald-50"
+                    }`}
+                  >
+                    <MapPin className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                    <span className="truncate">{office.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

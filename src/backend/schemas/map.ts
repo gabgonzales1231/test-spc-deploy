@@ -12,6 +12,7 @@ export const cityOfficeSchema = t.Object({
   image: t.Optional(t.Union([t.String(), t.Null()])),
   sort_order: t.Optional(t.Number()),
   offices: t.Optional(t.Array(t.String())),
+  description: t.Optional(t.Union([t.String(), t.Null()])),
 });
 
 export const cityOfficeListResponse = t.Object({

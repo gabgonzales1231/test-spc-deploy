@@ -16,10 +16,35 @@ export default function PrivacyPolicy() {
         </div>
       </section>
 
-      {/* Content Section */}
-      <section className="py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-lg p-8">
+      {/* Two Column Layout: Badge (left, sticky) + Content (right) */}
+      <section className="py-10 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] gap-3 items-start">
+
+            {/* Left Column: Sticky NPC Badge */}
+            <div className="lg:sticky lg:top-30">
+              <a
+                href="https://npcregistration.privacy.gov.ph/certificate/organizationRegistration/67e0c664de42154e800b135b"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block bg-white rounded-2xl shadow-md border border-gray-200 p-8 text-center transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-1 hover:border-emerald-300 active:scale-95 active:shadow-md"
+              >
+                <img
+                  src="/npc.png"
+                  alt="National Privacy Commission DPO/DPS Registered Badge"
+                  className="mx-auto h-70 w-auto transition-transform duration-300 ease-out group-hover:scale-105"
+                />
+                <p className="mt-5 text-sm font-medium text-gray-700 transition-colors duration-300 group-hover:text-emerald-700">
+                  Registered with the National Privacy Commission
+                </p>
+                <p className="mt-1 text-xs text-gray-400 transition-colors duration-300 group-hover:text-emerald-500">
+                  Click to view certificate
+                </p>
+              </a>
+            </div>
+
+            {/* Right Column: Content Section */}
+            <div className="bg-white rounded-lg shadow-lg p-8">
             
             {/* Last Updated */}
             <div className="bg-emerald-50 border-l-4 border-emerald-400 p-4 mb-8">
@@ -255,6 +280,8 @@ export default function PrivacyPolicy() {
               <p className="text-sm text-gray-600 text-center">
                 This Privacy Policy is issued in compliance with the Data Privacy Act of 2012 (RA 10173) and DICT Government Website Template Design Guidelines.
               </p>
+            </div>
+
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ import { psgcRoutes } from './routes/psgc'
 import { officesRoutes } from './routes/offices'
 import { serviceStandardRoutes } from './routes/service-standard'
 import { csmRoutes } from './routes/csm'
+import { tourismRoutes } from './routes/tourism'
 
 export const app = new Elysia()
   .use(cors({
@@ -97,6 +98,7 @@ export const app = new Elysia()
       .use(officesRoutes)
       .use(serviceStandardRoutes)
       .use(csmRoutes)
+      .use(tourismRoutes)
   })
   // Static assets
   .use(staticPlugin({

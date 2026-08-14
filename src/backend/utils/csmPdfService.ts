@@ -1,17 +1,26 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import { supabase } from "../config/database"; // adjust import to your actual supabase client export
 import {
-  CHECKBOXES,
-  OFFICE_NAME_FIELD,
-  PAGE_HEIGHT,
-  SQD_COLUMN_X,
-  SQD_ROW_Y,
-  TEXT_FIELDS,
-  TextFieldSpec,
+  CHECKBOXES_TAGALOG,
+  OFFICE_NAME_FIELD_TAGALOG,
+  PAGE_HEIGHT_TAGALOG,
+  PagedTextFieldSpec,
+  SQD_COLUMN_X_TAGALOG,
+  SQD_ROW_Y_TAGALOG,
+  TEXT_FIELDS_TAGALOG,
 } from "./csmPdfCoordinates";
 
 const TEMPLATE_BUCKET = "documents";
-const TEMPLATE_PATH = "forms/csm/csmform.pdf";
+// TEMPORARY: using the Tagalog template for all generation regardless of any
+// language preference on the response. Swap back to csmform.pdf (English,
+// single page) + the non-`_TAGALOG` coordinate exports once EN/TL selection
+// is wired up properly.
+// Template updated to the single-page Tagalog form — replaces the old
+// 2-page csmform_tagalog.pdf. Page-indexed helpers below (getPage, the
+// controlNo specs array, PagedPoint/page fields in csmPdfCoordinates.ts)
+// are kept as-is (all `page: 0`) even though there's only one page now,
+// per team decision to preserve the paged shape for future templates.
+const TEMPLATE_PATH = "forms/csm/csm_onepage.pdf";
 
 const TEXT_COLOR = rgb(0, 0, 0);
 const LINE_HEIGHT_RATIO = 1.15;
@@ -43,9 +52,15 @@ export interface CsmResponseForPdf {
   office_name?: string | null;
 }
 
-/** Convert a top-based y (distance from top of page) to pdf-lib's bottom-left origin. */
+/** Convert a top-based y (distance from top of page) to pdf-lib's bottom-left origin.
+ * Uses the Tagalog page height (1008pt) — the single-page template's page height. */
 function topToPdfY(top: number): number {
-  return PAGE_HEIGHT - top;
+  return PAGE_HEIGHT_TAGALOG - top;
+}
+
+/** Looks up the correct PDFPage for a page-indexed field/checkbox. */
+function getPage(pdfDoc: PDFDocument, pageIndex: number): PDFPage {
+  return pdfDoc.getPage(pageIndex);
 }
 
 /**
@@ -136,9 +151,9 @@ function fitMultiLine(
 }
 
 function drawSingleLineField(
-  page: PDFPage,
+  pdfDoc: PDFDocument,
   font: PDFFont,
-  spec: TextFieldSpec,
+  spec: PagedTextFieldSpec,
   value: string | number | null | undefined
 ) {
   if (value === null || value === undefined || value === "") return;
@@ -150,9 +165,17 @@ function drawSingleLineField(
     spec.maxFontSize,
     spec.minFontSize
   );
+  const page = getPage(pdfDoc, spec.page);
   page.drawText(fitted, {
     x: spec.x,
-    y: topToPdfY(spec.top) - size, // top-align the text within its line
+    // spec.top is the field's BASELINE (the underline's bottom edge), not a
+    // box top — deliberately NOT offset by `size` here. Font-fit shrinking
+    // changes `size` per value (e.g. a long region name vs. a short one),
+    // and subtracting a variable size from a fixed top would make the
+    // baseline drift upward as text shrinks, floating text above its
+    // underline instead of sitting on it. Anchoring directly to a fixed
+    // baseline keeps every value visually on its line regardless of size.
+    y: topToPdfY(spec.top),
     size,
     font,
     color: TEXT_COLOR,
@@ -165,9 +188,17 @@ function drawSingleLineField(
  * name placeholder above the title, where names vary in length.
  */
 function drawCenteredField(
-  page: PDFPage,
+  pdfDoc: PDFDocument,
   font: PDFFont,
-  spec: { boxLeft: number; boxRight: number; top: number; maxWidth: number; maxFontSize: number; minFontSize: number },
+  spec: {
+    page: number;
+    boxLeft: number;
+    boxRight: number;
+    top: number;
+    maxWidth: number;
+    maxFontSize: number;
+    minFontSize: number;
+  },
   value: string | null | undefined
 ) {
   if (!value) return;
@@ -181,6 +212,7 @@ function drawCenteredField(
   const textWidth = font.widthOfTextAtSize(fitted, size);
   const boxCenter = (spec.boxLeft + spec.boxRight) / 2;
   const x = boxCenter - textWidth / 2;
+  const page = getPage(pdfDoc, spec.page);
   page.drawText(fitted, {
     x,
     y: topToPdfY(spec.top) - size,
@@ -191,9 +223,9 @@ function drawCenteredField(
 }
 
 function drawMultiLineField(
-  page: PDFPage,
+  pdfDoc: PDFDocument,
   font: PDFFont,
-  spec: TextFieldSpec,
+  spec: PagedTextFieldSpec,
   value: string | null | undefined
 ) {
   if (!value) return;
@@ -207,6 +239,7 @@ function drawMultiLineField(
     spec.minFontSize,
     lineHeightRatio
   );
+  const page = getPage(pdfDoc, spec.page);
   let y = topToPdfY(spec.top) - size;
   for (const line of lines) {
     page.drawText(line, { x: spec.x, y, size, font, color: TEXT_COLOR });
@@ -214,8 +247,16 @@ function drawMultiLineField(
   }
 }
 
-/** Draws a checkmark (✓) as vector line segments, centered at (centerX, centerTop). */
-function drawCheckmark(page: PDFPage, centerX: number, centerTop: number, sizePt = 9) {
+/** Draws a checkmark (✓) as vector line segments, centered at (centerX, centerTop),
+ * on the given page index. */
+function drawCheckmark(
+  pdfDoc: PDFDocument,
+  pageIndex: number,
+  centerX: number,
+  centerTop: number,
+  sizePt = 9
+) {
+  const page = getPage(pdfDoc, pageIndex);
   const cx = centerX;
   const cy = topToPdfY(centerTop);
   const half = sizePt / 2;
@@ -228,27 +269,29 @@ function drawCheckmark(page: PDFPage, centerX: number, centerTop: number, sizePt
   page.drawLine({ start: p2, end: p3, thickness: 1.3, color: TEXT_COLOR });
 }
 
-function checkClientType(page: PDFPage, value: CsmResponseForPdf["client_type"]) {
-  const pt = CHECKBOXES.clientType[value];
-  if (pt) drawCheckmark(page, pt.x, pt.y);
+function checkClientType(pdfDoc: PDFDocument, value: CsmResponseForPdf["client_type"]) {
+  const pt = CHECKBOXES_TAGALOG.clientType[value];
+  if (pt) drawCheckmark(pdfDoc, pt.page, pt.x, pt.y);
 }
 
-function checkSex(page: PDFPage, value: CsmResponseForPdf["sex"]) {
+function checkSex(pdfDoc: PDFDocument, value: CsmResponseForPdf["sex"]) {
   if (!value) return;
-  const pt = CHECKBOXES.sex[value];
-  if (pt) drawCheckmark(page, pt.x, pt.y);
+  const pt = CHECKBOXES_TAGALOG.sex[value];
+  if (pt) drawCheckmark(pdfDoc, pt.page, pt.x, pt.y);
 }
 
-function checkCC(page: PDFPage, group: "cc1" | "cc2" | "cc3", code: number) {
-  const pt = (CHECKBOXES[group] as Record<number, { x: number; y: number }>)[code];
-  if (pt) drawCheckmark(page, pt.x, pt.y);
+function checkCC(pdfDoc: PDFDocument, group: "cc1" | "cc2" | "cc3", code: number) {
+  const pt = (CHECKBOXES_TAGALOG[group] as Record<number, { x: number; y: number; page: number }>)[
+    code
+  ];
+  if (pt) drawCheckmark(pdfDoc, pt.page, pt.x, pt.y);
 }
 
-function checkSqd(page: PDFPage, rowKey: keyof typeof SQD_ROW_Y, phrase: string) {
-  const colX = (SQD_COLUMN_X as Record<string, number>)[phrase];
-  const rowY = SQD_ROW_Y[rowKey];
-  if (colX === undefined || rowY === undefined) return;
-  drawCheckmark(page, colX, rowY);
+function checkSqd(pdfDoc: PDFDocument, rowKey: keyof typeof SQD_ROW_Y_TAGALOG, phrase: string) {
+  const colX = (SQD_COLUMN_X_TAGALOG as Record<string, number>)[phrase];
+  const row = SQD_ROW_Y_TAGALOG[rowKey];
+  if (colX === undefined || row === undefined) return;
+  drawCheckmark(pdfDoc, row.page, colX, row.y);
 }
 
 function formatDate(iso: string): string {
@@ -257,11 +300,7 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("en-PH", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
-/**
- * Fetches the CSM template from Supabase Storage and returns overlaid PDF bytes
- * for a single response row.
- */
-export async function generateCsmPdf(response: CsmResponseForPdf): Promise<Uint8Array> {
+async function loadTemplate(): Promise<PDFDocument> {
   const { data: templateBlob, error } = await supabase.storage
     .from(TEMPLATE_BUCKET)
     .download(TEMPLATE_PATH);
@@ -271,66 +310,94 @@ export async function generateCsmPdf(response: CsmResponseForPdf): Promise<Uint8
   }
 
   const templateBytes = new Uint8Array(await templateBlob.arrayBuffer());
-  const pdfDoc = await PDFDocument.load(templateBytes);
-  const page = pdfDoc.getPage(0);
+  return PDFDocument.load(templateBytes);
+}
+
+/**
+ * Fetches the CSM template from Supabase Storage and returns overlaid PDF bytes
+ * for a single response row.
+ *
+ * TEMPORARY: always uses the Tagalog template (csm_onepage.pdf), regardless
+ * of the response's actual language, until EN/TL selection is wired up.
+ * `controlNo` is stamped by looping over `TEXT_FIELDS_TAGALOG.controlNo`
+ * (an array of one spec now that the template is single-page) — kept as an
+ * array/`.forEach()` rather than a single spec so this still works
+ * unchanged if a future multi-page template reintroduces repeated
+ * "Control No:" labels.
+ */
+export async function generateCsmPdf(response: CsmResponseForPdf): Promise<Uint8Array> {
+  const pdfDoc = await loadTemplate();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
   // --- Text fields ---
-  drawSingleLineField(page, font, TEXT_FIELDS.controlNo, response.control_no);
-  drawCenteredField(page, font, OFFICE_NAME_FIELD, response.office_name);
-  drawSingleLineField(page, font, TEXT_FIELDS.date, formatDate(response.transaction_date));
-  drawSingleLineField(page, font, TEXT_FIELDS.age, response.age ?? "N/A");
-  drawSingleLineField(page, font, TEXT_FIELDS.region, response.region);
-  drawSingleLineField(page, font, TEXT_FIELDS.service, response.service);
-  drawSingleLineField(page, font, TEXT_FIELDS.email, response.email_address ?? "");
-  drawMultiLineField(page, font, TEXT_FIELDS.comments, response.comments ?? "");
+  const controlNoSpecs = Array.isArray(TEXT_FIELDS_TAGALOG.controlNo)
+    ? TEXT_FIELDS_TAGALOG.controlNo
+    : [TEXT_FIELDS_TAGALOG.controlNo];
+  controlNoSpecs.forEach((spec) => drawSingleLineField(pdfDoc, font, spec, response.control_no));
+
+  drawCenteredField(pdfDoc, font, OFFICE_NAME_FIELD_TAGALOG, response.office_name);
+  drawSingleLineField(
+    pdfDoc,
+    font,
+    TEXT_FIELDS_TAGALOG.date as PagedTextFieldSpec,
+    formatDate(response.transaction_date)
+  );
+  drawSingleLineField(pdfDoc, font, TEXT_FIELDS_TAGALOG.age as PagedTextFieldSpec, response.age ?? "N/A");
+  drawSingleLineField(pdfDoc, font, TEXT_FIELDS_TAGALOG.region as PagedTextFieldSpec, response.region);
+  drawSingleLineField(pdfDoc, font, TEXT_FIELDS_TAGALOG.service as PagedTextFieldSpec, response.service);
+  drawSingleLineField(
+    pdfDoc,
+    font,
+    TEXT_FIELDS_TAGALOG.email as PagedTextFieldSpec,
+    response.email_address ?? ""
+  );
+  drawMultiLineField(
+    pdfDoc,
+    font,
+    TEXT_FIELDS_TAGALOG.comments as PagedTextFieldSpec,
+    response.comments ?? ""
+  );
 
   // --- Checkboxes ---
-  checkClientType(page, response.client_type);
-  checkSex(page, response.sex ?? undefined);
-  checkCC(page, "cc1", response.cc1);
-  checkCC(page, "cc2", response.cc2);
-  checkCC(page, "cc3", response.cc3);
+  checkClientType(pdfDoc, response.client_type);
+  checkSex(pdfDoc, response.sex ?? undefined);
+  checkCC(pdfDoc, "cc1", response.cc1);
+  checkCC(pdfDoc, "cc2", response.cc2);
+  checkCC(pdfDoc, "cc3", response.cc3);
 
   (["sqd0", "sqd1", "sqd2", "sqd3", "sqd4", "sqd5", "sqd6", "sqd7", "sqd8"] as const).forEach(
-    (key) => checkSqd(page, key, response[key])
+    (key) => checkSqd(pdfDoc, key, response[key])
   );
 
   return pdfDoc.save();
 }
 
 /**
- * Calibration helper — NOT used in production. Loads the template and stamps
- * a checkmark on every single checkbox coordinate in the map simultaneously
- * (client type x3, sex x2, cc1 x4, cc2 x5, cc3 x4, sqd0-8 x6 = 54 marks),
- * ignoring the fact that a real submission only ever selects one option per
- * group. Use this while trial-and-error tuning csmPdfCoordinates.ts so you
- * can see every checkbox's position in a single render instead of one at a time.
+ * Calibration helper — NOT used in production. Loads the Tagalog template and
+ * stamps a checkmark on every single checkbox coordinate in the map
+ * simultaneously (client type x3, sex x2, cc1 x4, cc2 x5, cc3 x4, sqd0-8 x6 =
+ * 54 marks, all on the single page now), ignoring the fact that a real
+ * submission only ever selects one option per group. Use this while
+ * trial-and-error tuning the `_TAGALOG` exports in csmPdfCoordinates.ts so
+ * you can see every checkbox's position — and the still-unverified
+ * office-name placement — in a single render instead of one at a time.
  */
 export async function generateCalibrationPdf(): Promise<Uint8Array> {
-  const { data: templateBlob, error } = await supabase.storage
-    .from(TEMPLATE_BUCKET)
-    .download(TEMPLATE_PATH);
-
-  if (error || !templateBlob) {
-    throw new Error(`Failed to load CSM PDF template: ${error?.message ?? "not found"}`);
-  }
-
-  const templateBytes = new Uint8Array(await templateBlob.arrayBuffer());
-  const pdfDoc = await PDFDocument.load(templateBytes);
-  const page = pdfDoc.getPage(0);
+  const pdfDoc = await loadTemplate();
   const calibrationFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  drawCenteredField(page, calibrationFont, OFFICE_NAME_FIELD, "City Treasurer's Office");
+  drawCenteredField(pdfDoc, calibrationFont, OFFICE_NAME_FIELD_TAGALOG, "City Treasurer's Office");
 
-  Object.values(CHECKBOXES.clientType).forEach((pt) => drawCheckmark(page, pt.x, pt.y));
-  Object.values(CHECKBOXES.sex).forEach((pt) => drawCheckmark(page, pt.x, pt.y));
-  Object.values(CHECKBOXES.cc1).forEach((pt) => drawCheckmark(page, pt.x, pt.y));
-  Object.values(CHECKBOXES.cc2).forEach((pt) => drawCheckmark(page, pt.x, pt.y));
-  Object.values(CHECKBOXES.cc3).forEach((pt) => drawCheckmark(page, pt.x, pt.y));
+  Object.values(CHECKBOXES_TAGALOG.clientType).forEach((pt) =>
+    drawCheckmark(pdfDoc, pt.page, pt.x, pt.y)
+  );
+  Object.values(CHECKBOXES_TAGALOG.sex).forEach((pt) => drawCheckmark(pdfDoc, pt.page, pt.x, pt.y));
+  Object.values(CHECKBOXES_TAGALOG.cc1).forEach((pt) => drawCheckmark(pdfDoc, pt.page, pt.x, pt.y));
+  Object.values(CHECKBOXES_TAGALOG.cc2).forEach((pt) => drawCheckmark(pdfDoc, pt.page, pt.x, pt.y));
+  Object.values(CHECKBOXES_TAGALOG.cc3).forEach((pt) => drawCheckmark(pdfDoc, pt.page, pt.x, pt.y));
 
-  (Object.keys(SQD_ROW_Y) as (keyof typeof SQD_ROW_Y)[]).forEach((rowKey) => {
-    Object.keys(SQD_COLUMN_X).forEach((phrase) => checkSqd(page, rowKey, phrase));
+  (Object.keys(SQD_ROW_Y_TAGALOG) as (keyof typeof SQD_ROW_Y_TAGALOG)[]).forEach((rowKey) => {
+    Object.keys(SQD_COLUMN_X_TAGALOG).forEach((phrase) => checkSqd(pdfDoc, rowKey, phrase));
   });
 
   return pdfDoc.save();
