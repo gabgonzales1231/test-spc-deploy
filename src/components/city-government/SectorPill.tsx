@@ -69,6 +69,7 @@ export default function SectorPill({ sector, isOpen, onToggle }: SectorPillProps
                 <p className="text-gray-900 font-medium">{office.name || "N/A"}</p>
                 <p className="text-gray-600 text-sm">{office.head || "N/A"}</p>
                 <p className="text-emerald-700 text-sm">{office.email || "N/A"}</p>
+                <p className="text-gray-600 text-sm">{office.contactNo || "N/A"}</p>
                 <p className="text-gray-600 text-sm">{office.address || "N/A"}</p>
               </div>
             ))}
@@ -86,7 +87,7 @@ export default function SectorPill({ sector, isOpen, onToggle }: SectorPillProps
                     Head
                   </th>
                   <th className="text-left px-5 py-3.5 font-semibold text-gray-600 border-b border-gray-200 w-[30%]">
-                    Email
+                    Contact Details
                   </th>
                   <th className="text-left px-5 py-3.5 font-semibold text-gray-600 border-b border-gray-200 w-[28%]">
                     Address
@@ -103,7 +104,12 @@ export default function SectorPill({ sector, isOpen, onToggle }: SectorPillProps
                   >
                     <td className="px-5 py-3.5 text-gray-900 font-medium">{office.name || "N/A"}</td>
                     <td className="px-5 py-3.5 text-gray-600">{office.head || "N/A"}</td>
-                    <td className="px-5 py-3.5 text-emerald-700 whitespace-nowrap">{office.email || "N/A"}</td>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-emerald-700">{office.email || "N/A"}</span>
+                        <span className="text-gray-600">{office.contactNo || "N/A"}</span>
+                      </div>
+                    </td>
                     <td className="px-5 py-3.5 text-gray-600">{office.address || "N/A"}</td>
                   </tr>
                 ))}

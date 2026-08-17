@@ -43,7 +43,13 @@ export default function DepartmentsSection() {
       const offices: DepartmentOffice[] = data
         .filter((o) => o.sector === id)
         .sort((a, b) => a.sort_order - b.sort_order)
-        .map(({ name, head, email, address }) => ({ name, head, email, address }));
+        .map(({ name, head, contact_info, address }) => ({
+          name,
+          head,
+          email: contact_info?.email ?? "",
+          contactNo: contact_info?.contact_no ?? null,
+          address,
+        }));
 
       return { id, label: meta.label, icon: meta.icon, offices };
     });
