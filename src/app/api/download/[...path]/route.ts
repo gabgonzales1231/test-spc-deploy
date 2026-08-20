@@ -10,6 +10,16 @@ const RATE_WINDOW = 30 * 60_000; // 30 minutes
 const ALLOWED_BUCKETS = new Set(["documents"]);
 
 // key = `${clientId}:${fileId}` -> tracks downloads per client, per file
+//
+// NOTE: as of [date], responses are served with `Cache-Control: public,
+// s-maxage=86400`, so most requests are served from Vercel's edge cache and
+// never reach this handler at all. This rate limiter only runs on cache
+// misses (first request for a file, or after the 24h edge cache expires),
+// so it no longer reliably enforces MAX_DOWNLOADS per client. This is a
+// known, accepted tradeoff — CDN caching was prioritized over strict rate
+// limiting to reduce Supabase egress. Do not treat inconsistent 429s here
+// as a bug; if strict rate limiting is needed again, switch Cache-Control
+// back to `private, max-age=3600` (this will disable edge caching for PDFs).
 const downloadMap = new Map<string, { count: number; resetAt: number }>();
 
 // periodic cleanup so the map doesn't grow forever
@@ -104,9 +114,8 @@ export async function GET(
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
+  if (!supabaseUrl) {
     return new NextResponse("Server misconfiguration", { status: 500 });
   }
 
@@ -114,9 +123,10 @@ export async function GET(
 
   let upstream: Response;
   try {
-    upstream = await fetch(storageUrl, {
-      headers: { Authorization: `Bearer ${supabaseKey}` },
-    });
+    // File is served from the "public" object path, so no auth header is
+    // needed here — the service role key was previously (and unnecessarily)
+    // attached to this request.
+    upstream = await fetch(storageUrl);
   } catch {
     return new NextResponse("Failed to fetch file", { status: 502 });
   }
@@ -129,7 +139,10 @@ export async function GET(
   const headers = new Headers({
     "Content-Type": "application/pdf",
     "Content-Disposition": `inline; filename="${pathSegments.at(-1)}"`,
-    "Cache-Control": "private, max-age=3600",
+    // `public` + `s-maxage` lets Vercel's edge cache PDFs, cutting repeat
+    // Supabase egress. Traded off against strict per-client rate limiting
+    // (see note on downloadMap above).
+    "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",
   });

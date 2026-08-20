@@ -39,7 +39,7 @@ export default function NewsCard({
   src={imgSrc}
   alt={title || "News Image"}
   fill
-  unoptimized
+  
   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
   className="object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-110"
   onError={() => setImgSrc("https://placehold.co/500x300?text=No+Image")}
