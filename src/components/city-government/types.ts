@@ -45,6 +45,7 @@ export type DepartmentOffice = {
   name: string;
   head: string;
   email: string;
+  contactNo?: string | null;
   address: string;
 };
 

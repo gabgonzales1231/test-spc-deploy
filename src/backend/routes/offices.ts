@@ -8,7 +8,7 @@ export const officesRoutes = new Elysia({ prefix: "/offices" })
   .get("/", async ({ set }) => {
     const { data, error } = await supabase
       .from("offices")
-      .select("id, sector, name, slug, head, email, address, sort_order, services")
+      .select("id, sector, name, slug, head, contact_info, address, sort_order, services, office_no")
       .order("sector", { ascending: true })
       .order("sort_order", { ascending: true });
 
@@ -25,7 +25,7 @@ export const officesRoutes = new Elysia({ prefix: "/offices" })
     async ({ params, set }) => {
       const { data, error } = await supabase
         .from("offices")
-        .select("id, sector, name, slug, head, email, address, sort_order, services")
+        .select("id, sector, name, slug, head, contact_info, address, sort_order, services, office_no")
         .eq("slug", params.slug)
         .maybeSingle();
 
