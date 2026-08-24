@@ -13,7 +13,7 @@ export function JPAvatar({ size, rounded = true }: JPAvatarProps) {
       }`}
     >
       <Image
-        src="/vm-avatar.png"
+        src="/carmela-avatar.png"
         alt="Juan Pablo"
         width={size}
         height={size}
