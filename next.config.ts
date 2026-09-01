@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ["react-pdf", "pdfjs-dist"],
 
   experimental: {
-    optimizeCss: false,
+    optimizeCss: true,
     optimizePackageImports: [
       "lucide-react",
       "@tabler/icons-react",

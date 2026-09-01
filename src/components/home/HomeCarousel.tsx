@@ -59,6 +59,7 @@ function ImageCarouselItem({
             alt={alt}
             width={1600}
             height={900}
+            unoptimized
             
             className="w-full h-auto object-contain rounded-2xl"
             sizes="100vw"
@@ -100,6 +101,7 @@ function ImageCarouselItem({
               priority={isPriority}
               {...(isPriority ? { fetchPriority: "low" } : { loading: "lazy" })}
               aria-hidden="true"
+              unoptimized
             />
           )}
 
@@ -107,6 +109,7 @@ function ImageCarouselItem({
             src={src}
             alt={alt}
             fill
+            unoptimized
             
             className={`object-contain transition-all duration-700 ease-out
               ${isActive ? "scale-[1.00]" : "scale-100"}`}
