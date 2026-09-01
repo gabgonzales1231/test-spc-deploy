@@ -2,7 +2,7 @@ import { UserInfo } from "@/lib/chatTypes";
 import { JPAvatar } from "./ui/JPAvatar";
 import { OnlineDot } from "./ui/OnlineDot";
 
-const BOT_NAME = "Juan Pablo";
+const BOT_NAME = "Juana";
 
 interface ChatFormProps {
   userInfo: UserInfo;

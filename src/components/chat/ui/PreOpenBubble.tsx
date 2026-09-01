@@ -1,4 +1,4 @@
-const BOT_NAME = "Juan Pablo";
+const BOT_NAME = "Juana";
 
 interface PreOpenBubbleProps {
   onDismiss: () => void;

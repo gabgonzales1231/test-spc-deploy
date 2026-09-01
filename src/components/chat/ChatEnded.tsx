@@ -1,6 +1,6 @@
 import { JPAvatar } from "./ui/JPAvatar";
 
-const BOT_NAME = "Juan Pablo";
+const BOT_NAME = "Juana";
 
 interface ChatEndedProps {
   onNewChat: () => void;
