@@ -3,7 +3,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Send } from "lucide-re
 import { choiceBtnClass, fadeInUp, inputClass } from "./csmContent";
 import { RadioGroup } from "./RadioGroup";
 import type { ClientType, Sex } from "./types";
-import type { UseCSMFormReturn } from "./useCSMForm";
+import type { UseCSMFormReturn } from "@/hooks/useCSMForm";
 
 type Props = { csm: UseCSMFormReturn };
 
