@@ -219,7 +219,7 @@ export function CSMIntroSplash({
             transition={{ duration: 0.4, ease: "easeOut", delay: 0.15 }}
             className="relative mt-5 text-[13px] font-medium text-emerald-600 underline underline-offset-2 transition-colors hover:text-emerald-700"
           >
-            Return to home
+            Return to Home
           </motion.button>
         </motion.section>
       )}

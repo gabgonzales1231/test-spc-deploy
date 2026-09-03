@@ -10,7 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
-  Phone,
+Phone,
   Mail,
   Clock,
   ChevronUp,

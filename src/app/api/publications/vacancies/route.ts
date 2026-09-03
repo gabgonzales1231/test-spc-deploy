@@ -10,6 +10,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("publications")
     .select("publication_id, filename, file_path, created_at")
+    .eq("is_archived", false)
     .order("created_at", { ascending: false })
     .limit(500);
 
